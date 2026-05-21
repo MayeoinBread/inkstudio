@@ -53,8 +53,11 @@ class _ImageComparePageState extends State<ImageComparePage> {
 
   PaletteFramebuffer? _framebuffer;
 
-  // DitherMode? _ditherMode;
   DitherMode _ditherMode = DitherMode.floydSteinberg;
+  FitStrategy _fitStrategy = FitStrategy.crop;
+  SwatchType _swatchType = SwatchType.noise;
+
+  final _noteController = TextEditingController();
 
   ImageFilter _filter = ImageFilter.normal;
   bool _simulateDevice = false;
@@ -66,11 +69,7 @@ class _ImageComparePageState extends State<ImageComparePage> {
   bool _processing = false;
 
   double _brightness = 0.0;
-  double _pendingBrightness = 0.0;
   double _contrast = 1.0;
-  double _pendingContrast = 1.0;
-
-  Timer? _sliderTimer;
 
   Future<void> _prepareWorkingImage() async {
     final bytes = _originalImage;
@@ -82,7 +81,7 @@ class _ImageComparePageState extends State<ImageComparePage> {
 
     final pipeline = ImagePipeline();
 
-    final prepared = pipeline.prepareBaseImage(decoded, FitStrategy.crop);
+    final prepared = pipeline.prepareBaseImage(decoded, _fitStrategy);
 
     setState(() {
       _workingImage = prepared;
@@ -107,8 +106,8 @@ class _ImageComparePageState extends State<ImageComparePage> {
         simulateDevice: _simulateDevice,
         width: 400,
         height: 300,
-        fit: FitStrategy.crop,
-        dither: DitherMode.floydSteinberg,
+        fit: _fitStrategy,
+        dither: _ditherMode,
         adjustments: ImageAdjustments(brightness: _brightness, contrast: _contrast)
       ),
     );
@@ -122,6 +121,28 @@ class _ImageComparePageState extends State<ImageComparePage> {
     });
   }
 
+  Future<void> _loadImageBytes(Uint8List bytes) async {
+    setState(() {
+      _originalImage = bytes;
+    });
+
+    await _prepareWorkingImage();
+    await _reprocess();
+
+    if (_framebuffer == null) return;
+
+    final packed = FramebufferPacker.pack(_framebuffer!);
+
+    debugPrint("Packed bytes: ${packed.length}");
+
+    final packets = UploadSession.build(
+      packedImageData: packed
+    );
+
+    debugPrint("Packets: ${packets.length}");
+    debugPrint("First packet size: ${packets.first.bytes.length}");
+  }
+
   Future<void> _pickImage() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
@@ -131,24 +152,37 @@ class _ImageComparePageState extends State<ImageComparePage> {
     if (result == null || result.files.isEmpty) return;
 
     final bytes = result.files.first.bytes;
+    
     if (bytes == null) return;
 
-    setState(() {
-      _originalImage = bytes;
-    });
+    await _loadImageBytes(bytes);
+  }
 
-    await _prepareWorkingImage();
+  Future<void> _loadSwatch() async {
+    final swatch = SwatchGenerator.generate(
+      _swatchType,
+      width: DeviceConstants.imageWidth,
+      height: DeviceConstants.imageHeight
+    );
+    final bytes = Uint8List.fromList(
+      img.encodePng(swatch)
+    );
 
-    await _reprocess();
+    await _loadImageBytes(bytes);
+  }
 
-    if (_framebuffer == null) return;
+  Future<void> _generateNote() async {
+    final note = NoteRenderer.render(
+      text: _noteController.text,
+      w: DeviceConstants.imageWidth,
+      h: DeviceConstants.imageHeight
+    );
 
-    final packed = FramebufferPacker.pack(_framebuffer!);
-    debugPrint("Packed bytes: ${packed.length}");
+    final bytes = Uint8List.fromList(
+      img.encodePng(note)
+    );
 
-    final packets = UploadSession.build(packedImageData: packed);
-    debugPrint("Packets: ${packets.length}");
-    debugPrint("First packet size: ${packets.first.bytes.length}");
+    await _loadImageBytes(bytes);
   }
 
   Future<void> scanAndConnect() async {
@@ -190,6 +224,23 @@ class _ImageComparePageState extends State<ImageComparePage> {
                   onPressed: scanAndConnect,
                   child: Text( _device == null ? "Scan for Frame" : "Connected"),
                 ),
+
+                DropdownButton<SwatchType>(
+                  value: _swatchType,
+                  onChanged: (value) async {
+                    if (value == null) return;
+                    setState(() {
+                      _swatchType = value;
+                    });
+                    await _loadSwatch();
+                  },
+                  items: SwatchType.values.map((t) {
+                    return DropdownMenuItem(
+                      value: t,
+                      child: Text(t.name)
+                    );
+                  }).toList()
+                ),
                 
                 DropdownButton<DitherMode>(
                   value: _ditherMode,
@@ -206,16 +257,27 @@ class _ImageComparePageState extends State<ImageComparePage> {
                       debugPrint("Packed bytes: ${packed.length}");
                     }
                   },
-                  items: const [
-                    DropdownMenuItem(
-                      value: DitherMode.floydSteinberg,
-                      child: Text("Floyd-Steinberg")
-                    ),
-                    DropdownMenuItem(
-                      value: DitherMode.atkinson,
-                      child: Text("Atkinson")
-                    )
-                  ],
+                  items: DitherMode.values.map((t) {
+                    return DropdownMenuItem(
+                      value: t,
+                      child: Text(t.name)
+                    );
+                  }).toList()
+                ),
+
+                DropdownButton<FitStrategy>(
+                  value: _fitStrategy,
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() => _fitStrategy = v);
+                    _reprocess();
+                  },
+                  items: FitStrategy.values.map((t) {
+                    return DropdownMenuItem(
+                      value: t,
+                      child: Text(t.name)
+                    );
+                  }).toList()
                 ),
 
                 DropdownButton<ImageFilter>(
@@ -225,12 +287,12 @@ class _ImageComparePageState extends State<ImageComparePage> {
                     setState(() => _filter = v);
                     _reprocess();
                   },
-                  items: const [
-                    DropdownMenuItem(value: ImageFilter.normal, child: Text("Normal")),
-                    DropdownMenuItem(value: ImageFilter.vibrant, child: Text("Vibrant")),
-                    DropdownMenuItem(value: ImageFilter.grayscale, child: Text("Grayscale")),
-                    DropdownMenuItem(value: ImageFilter.highContrast, child: Text("High Contrast"))
-                  ]
+                  items: ImageFilter.values.map((t) {
+                    return DropdownMenuItem(
+                      value: t,
+                      child: Text(t.name)
+                    );
+                  }).toList()
                 ),
 
                 SwitchListTile(title: const Text("Simulate Device Colours"), value: _simulateDevice,
@@ -261,35 +323,61 @@ class _ImageComparePageState extends State<ImageComparePage> {
                   child: const Text("Send to Frame"),
                 ),
 
-                Slider(
-                  value: _brightness,
-                  divisions: 20,
-                  min: -1.0,
-                  max: 1.0,
-                  onChanged: (v) {
-                    setState(() {
-                      _brightness = v;
-                    });
-                  },
-                  onChangeEnd: (_) {
-                    _reprocess();
-                  }
+                ElevatedButton(
+                  onPressed: _generateNote,
+                  child: const Text("Generate Note")
                 ),
 
-                Slider(
-                  value: _contrast,
-                  divisions: 20,
-                  min: 0.0,
-                  max: 2.0,
-                  onChanged: (v) {
-                    setState(() {
-                      _contrast = v;
-                    });
-                  },
-                  onChangeEnd: (_) {
-                    _reprocess();
-                  },
-                )
+                TextField(
+                  controller: _noteController,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    labelText: "Note Text",
+                    border: OutlineInputBorder()
+                  ),
+                ),
+
+                Column (
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Brightness"),
+                    Slider(
+                      value: _brightness,
+                      divisions: 20,
+                      min: -1.0,
+                      max: 1.0,
+                      onChanged: (v) {
+                        setState(() {
+                          _brightness = v;
+                        });
+                      },
+                      onChangeEnd: (_) {
+                        _reprocess();
+                      }
+                    )
+                  ]
+                ),
+
+                Column (
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text("Contrast"),
+                    Slider(
+                      value: _contrast,
+                      divisions: 20,
+                      min: 0.0,
+                      max: 2.0,
+                      onChanged: (v) {
+                        setState(() {
+                          _contrast = v;
+                        });
+                      },
+                      onChangeEnd: (_) {
+                        _reprocess();
+                      },
+                    )
+                  ]
+                ),
               ],
             ),
           ),

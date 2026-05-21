@@ -2,11 +2,11 @@ import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_core/src/palette/protocol_palette.dart';
+import 'package:picpak_image/src/dithering/dither_engine.dart';
 import 'package:picpak_image/src/pipeline/palette_framebuffer.dart';
 import '../palette/palette_mapper.dart';
-import 'dither_algorithm.dart';
 
-class AtkinsonDither implements DitherAlgorithm {
+class AtkinsonDither implements DitherEngine {
   @override
   String get name => "Atkinson";
 

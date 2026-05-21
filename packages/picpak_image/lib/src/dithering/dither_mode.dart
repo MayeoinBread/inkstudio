@@ -1,4 +1,7 @@
 enum DitherMode {
+  none,
   floydSteinberg,
-  atkinson
+  atkinson,
+  ordered,
+  sierra
 }

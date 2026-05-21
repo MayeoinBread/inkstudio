@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
+import 'package:picpak_image/src/dithering/dither_register.dart';
+import 'package:picpak_image/src/dithering/no_dither.dart';
 import 'package:picpak_image/src/pipeline/framebuffer_preview_renderer.dart';
 import 'package:picpak_image/src/pipeline/palette_framebuffer.dart';
 import 'package:picpak_image/src/pipeline/pipeline_result.dart';
@@ -37,12 +39,8 @@ class ImagePipeline {
     );
 
     final adjusted = ImageAdjustmentProcessor.apply(filtered, adjustments);
-    
-    // TODO dithering engine rather than this
-    final PaletteFramebuffer framebuffer = switch(dither) {
-      DitherMode.atkinson => AtkinsonDither().apply(adjusted),
-      DitherMode.floydSteinberg => FloydSteinbergDither().apply(adjusted)
-    };
+
+    final framebuffer = DitherRegistry.create(dither).apply(adjusted);
 
     final preview = FramebufferPreviewRenderer.render(
       framebuffer, simulateDevice: simulateDevice
@@ -67,24 +65,24 @@ class ImagePipeline {
           height: targetHeight
         );
       case FitStrategy.crop:
-      final ratioSrc = src.width / src.height;
-      final ratioTarget = targetWidth / targetHeight;
+        final ratioSrc = src.width / src.height;
+        final ratioTarget = targetWidth / targetHeight;
 
-      img.Image cropped;
+        img.Image cropped;
 
-      if (ratioSrc > ratioTarget) {
-        final newWidth = (src.height * ratioTarget).round();
-        final xOffset = ((src.width - newWidth) / 2).round();
+        if (ratioSrc > ratioTarget) {
+          final newWidth = (src.height * ratioTarget).round();
+          final xOffset = ((src.width - newWidth) / 2).round();
 
-        cropped = img.copyCrop(src, x: xOffset, y: 0, width: newWidth, height: src.height);
-      } else {
-        final newHeight = (src.width / ratioTarget).round();
-        final yOffset = ((src.height - newHeight) / 2).round();
+          cropped = img.copyCrop(src, x: xOffset, y: 0, width: newWidth, height: src.height);
+        } else {
+          final newHeight = (src.width / ratioTarget).round();
+          final yOffset = ((src.height - newHeight) / 2).round();
 
-        cropped = img.copyCrop(src, x: 0, y: yOffset, width: src.width, height: newHeight);
-      }
+          cropped = img.copyCrop(src, x: 0, y: yOffset, width: src.width, height: newHeight);
+        }
 
-      return img.copyResize(cropped, width: targetWidth, height: targetHeight);
+        return img.copyResize(cropped, width: targetWidth, height: targetHeight);
     }
   }
 }

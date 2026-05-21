@@ -2,11 +2,11 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
+import 'package:picpak_image/src/dithering/dither_engine.dart';
 import '../palette/palette_mapper.dart';
 import '../pipeline/palette_framebuffer.dart';
-import 'dither_algorithm.dart';
 
-class FloydSteinbergDither implements DitherAlgorithm {
+class FloydSteinbergDither implements DitherEngine {
   @override
   String get name => "Floyd-Steinberg";
 
