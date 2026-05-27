@@ -21,6 +21,43 @@ class BleManager {
 
   Function(PaletteFramebuffer frameBuffer)? onImageDownloaded;
 
+  Function(DeviceInfo info)? onDeviceInfo;
+
+  Future<BluetoothDevice?> scanForDevice({
+    Duration timeout = const Duration(seconds: 5)
+  }) async {
+    BluetoothDevice? found;
+
+    await FlutterBluePlusWindows.startScan(timeout: timeout);
+
+    final sub = FlutterBluePlusWindows.scanResults.listen((results) {
+      for (final r in results) {
+        final name = r.device.platformName.toLowerCase();
+        if (name.contains('picpak')) {
+          found = r.device;
+          break;
+        }
+      }
+    });
+
+    await Future.delayed(timeout);
+
+    await sub.cancel();
+    await FlutterBluePlusWindows.stopScan();
+
+    return found;
+  }
+
+  Future<BluetoothDevice?> scanAndConnect() async {
+    final device = await scanForDevice();
+
+    if (device == null) return null;
+
+    await connect(device);
+
+    return device;
+  }
+
   Future<BluetoothDevice?> _resolveDevice(BluetoothDevice scanDevice) async {
     final devices = FlutterBluePlusWindows.connectedDevices;
 
@@ -182,6 +219,8 @@ class BleManager {
     debugPrint("Hardware: $hardware");
     debugPrint("Firmware: $firmware");
     debugPrint("Serial: $serial");
+
+    onDeviceInfo?.call(deviceInfo);
 
     return deviceInfo;
   }
