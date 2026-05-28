@@ -27,6 +27,7 @@ class DashboardActions {
       );
 
       await ble.requestDeviceInfo();
+      await ble.imageList();
     } catch (e) {
       updateSession( (s) => s.copyWith(connection: ConnectionState.disconnected));
       return;
@@ -63,7 +64,9 @@ class DashboardActions {
     }
 
     updateSession((s) => s.copyWith(transfer: TransferState.downloading));
+    ble.onDownloadComplete = () {
+      updateSession((s) => s.copyWith(transfer: TransferState.idle));
+    };
     await ble.getImageInSlot(slot);
-    updateSession((s) => s.copyWith(transfer: TransferState.idle));
   }
 }

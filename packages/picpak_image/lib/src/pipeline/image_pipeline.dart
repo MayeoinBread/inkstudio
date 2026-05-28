@@ -79,6 +79,8 @@ class ImagePipeline {
         }
 
         return img.copyResize(cropped, width: targetWidth, height: targetHeight);
+      case _:
+        return src;
     }
   }
 }

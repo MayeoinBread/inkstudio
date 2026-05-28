@@ -19,7 +19,9 @@ class DeviceSessionState {
   final TransferState transfer;
 
   final double progress;  //0-1
+
   final int? activeSlot;
+  final List<int> availableSlots;
 
   final String deviceName;
   final int batteryPercent;
@@ -32,6 +34,7 @@ class DeviceSessionState {
     required this.deviceName,
     required this.batteryPercent,
     required this.firmware,
+    required this.availableSlots,
     this.activeSlot
   });
 
@@ -41,6 +44,8 @@ class DeviceSessionState {
   bool get canConnect => connection == ConnectionState.disconnected;
   bool get canDisconnect => isConnected && isIdle;
   bool get canTransfer => isConnected && isIdle;
+  bool get hasSelectedSlot => activeSlot != null;
+  bool get canDownload => canTransfer && activeSlot != null;
 
   String get statusText {
     switch (connection) {
@@ -67,6 +72,7 @@ class DeviceSessionState {
     TransferState? transfer,
     double? progress,
     int? activeSlot,
+    List<int>? availableSlots,
     String? deviceName,
     int? batteryPercent,
     String? firmware
@@ -76,6 +82,7 @@ class DeviceSessionState {
       transfer: transfer ?? this.transfer,
       progress: progress ?? this.progress,
       activeSlot: activeSlot ?? this.activeSlot,
+      availableSlots: availableSlots ?? this.availableSlots,
       deviceName: deviceName ?? this.deviceName,
       batteryPercent: batteryPercent ?? this.batteryPercent,
       firmware: firmware ?? this.firmware

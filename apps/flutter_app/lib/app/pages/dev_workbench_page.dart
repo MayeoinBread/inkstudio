@@ -56,10 +56,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
   void initState() {
     super.initState();
 
-    debugPrint("UI BLE INSTANCE: ${identityHashCode(_ble)}");
-
     _ble.onImageDownloaded = (fb) {
-      debugPrint(fb.pixels.length.toString());
       // TODO move the img.encode into the renderFrameBuffer?
       final previewBytes = Uint8List.fromList(
         img.encodePng(PanelRerender.renderFramebuffer(fb))

@@ -23,6 +23,14 @@ class BleManager {
 
   Function(DeviceInfo info)? onDeviceInfo;
 
+  Function(List<int> slots)? onSlotList;
+
+  Function()? onDownloadComplete;
+
+  final ValueNotifier<double> uploadProgress = ValueNotifier<double>(0.0);
+
+  Function()? onUploadComplete;
+
   Future<BluetoothDevice?> scanForDevice({
     Duration timeout = const Duration(seconds: 5)
   }) async {
@@ -131,14 +139,13 @@ class BleManager {
     
     switch (opcode) {
       case 0x02:
-        // debugPrint("Image Data: $data");
         _handleReadPacket(data);
         break;
       case 0x08:
         _parseDeviceInfo(data);
         break;
       case 0x31:
-        debugPrint("Slot list: $data");
+        _handleSlotList(data);
         break;
       case 0x33:
         debugPrint("Delete ACK: $data");
@@ -152,8 +159,21 @@ class BleManager {
       throw Exception("No active BLE session");
     }
 
+    uploadProgress.value = 0.0;
+
     for (int i=0; i<packets.length; i++){
-      await char.write(packets[i].bytes, withoutResponse: false);
+      debugPrint("Sending packet $i");
+      try {
+        await char.write(packets[i].bytes, withoutResponse: false);
+      } catch (e, st) {
+        debugPrint("BLE WRITE FAILED at $i: $e");
+        debugPrintStack(stackTrace: st);
+        rethrow;
+      }
+      // final progress = (i + 1) / packets.length;
+      
+      // uploadProgress.value = progress;
+      
       await Future.delayed(const Duration(milliseconds: 3));
     }
   }
@@ -173,6 +193,9 @@ class BleManager {
       await char.write(packet.bytes, withoutResponse: false);
 
       await Future.delayed(const Duration(milliseconds: 30));
+
+      uploadProgress.value = 1.0;
+      onUploadComplete?.call();
   }
 
   Future<void> requestDeviceInfo() async {
@@ -262,8 +285,23 @@ class BleManager {
       
       onImageDownloaded?.call(framebuffer);
 
+      onDownloadComplete?.call();
+
       _readSession!.complete = true;
     }
+  }
+
+  void _handleSlotList(List<int> data) {
+    if (data.length < 4) return;
+    final slots = <int>[];
+    
+    for(int i=2; i<data.length - 1; i++) {
+      if (data[i] == 1) {
+        slots.add(i - 1);
+      }
+    }
+
+    onSlotList?.call(slots);
   }
 }
 

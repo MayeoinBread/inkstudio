@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:picpak_image/picpak_image.dart';
 
-class DitheringControls extends StatelessWidget {
+class DitheringControls extends StatefulWidget {
   final DitherMode selectedAlgorithm;
 
   final ValueChanged<DitherMode> onAlgorithmChanged;
@@ -13,33 +13,35 @@ class DitheringControls extends StatelessWidget {
   });
 
   @override
+  State<DitheringControls> createState() => _DitheringControlsState();
+}
+
+class _DitheringControlsState extends State<DitheringControls> {
+  @override
   Widget build(BuildContext context) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Dithering', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 16),
-            DropdownButtonFormField<DitherMode>(
-              initialValue: selectedAlgorithm,
-              decoration: const InputDecoration(
-                labelText: 'Algorithm',
-                border: OutlineInputBorder()
-              ),
-              items: DitherMode.values.map((alg) {
-                return DropdownMenuItem(
-                  value: alg,
-                  child: Text(alg.name)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: DitherMode.values.map((dither) {
+                final selected = dither == widget.selectedAlgorithm;
+                return ChoiceChip(
+                  label: Text(dither.name),
+                  selected: selected,
+                  showCheckmark: false,
+                  onSelected: (_) {
+                    widget.onAlgorithmChanged(dither);
+                  },
                 );
               }).toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  onAlgorithmChanged(value);
-                }
-              },
-            )
+            ),
           ],
         )
       )

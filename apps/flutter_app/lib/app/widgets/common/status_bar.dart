@@ -47,7 +47,7 @@ class StatusBar extends StatelessWidget {
             ]
           ),
           const SizedBox(width: 16),
-          // Firmware
+          // Transfer state
           Text(
             'Transfer State: ${state.transfer.name.toUpperCase()}',
             style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)
@@ -60,7 +60,10 @@ class StatusBar extends StatelessWidget {
               value: state.transfer == TransferState.idle
                 ? 0
                 : state.progress
-            ))
+            )
+          ),
+          if (state.transfer == TransferState.uploading)
+            Text('${(state.progress * 100).toStringAsFixed(0)}%')
         ]
       )
     );
