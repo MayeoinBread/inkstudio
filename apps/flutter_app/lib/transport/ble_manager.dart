@@ -110,6 +110,17 @@ class BleManager {
     _ff02Sub = ff02!.lastValueStream.listen(_handleBleData);
   }
 
+  Future<void> disconnect() async {
+    if (session.device == null) return;
+
+    _ff01Sub = null;
+    _ff02Sub = null;
+
+    await session.device?.disconnect();
+
+    session.device = null;
+  }
+
   void _handleBleData(List<int> data) {
     if (data.length < 3) return;
 

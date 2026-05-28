@@ -1,11 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart' hide ConnectionState;
+import 'package:flutter_app/app/services/dashboard_actions.dart';
 import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/app/widgets/common/image_preview_panel.dart';
 import 'package:flutter_app/app/widgets/common/status_bar.dart';
 import 'package:flutter_app/app/widgets/controls/dithering_controls.dart';
 import 'package:flutter_app/app/widgets/controls/image_adjustment_controls.dart';
+import 'package:flutter_app/app/widgets/device/device_actions_panel.dart';
 import 'package:flutter_app/app/widgets/device/device_info_card.dart';
 import 'package:flutter_app/transport/ble_manager.dart';
 import 'package:image/image.dart' as img;
@@ -30,6 +32,10 @@ class _DashboardPageState extends State<DashboardPage> {
 
   final BleManager ble = BleManager();
 
+  void updateSession(DeviceSessionState Function(DeviceSessionState current) updater) {
+    setState(() { session = updater(session);});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +46,11 @@ class _DashboardPageState extends State<DashboardPage> {
       );
       setState(() {
         _deviceImageBytes = previewBytes;
+        session = session.copyWith(
+          transfer: TransferState.idle,
+          progress: 0,
+          activeSlot: null
+        );
       });
     };
 
@@ -51,47 +62,6 @@ class _DashboardPageState extends State<DashboardPage> {
         );
       });
     };
-  }
-
-  Future<void> connect() async {
-    setState(() {
-      session = session.copyWith(
-        connection: ConnectionState.scanning
-      );
-    });
-
-    final device = await ble.scanForDevice();
-
-    if (device == null) {
-      setState(() {
-        session = session.copyWith(
-          connection: ConnectionState.disconnected
-        );
-      });
-      return;
-    }
-
-    setState(() {
-      session = session.copyWith(connection: ConnectionState.connecting);
-    });
-
-    try {
-      await ble.connect(device);
-      setState(() {
-        session = session.copyWith(
-          connection: ConnectionState.connected,
-          deviceName: device.platformName
-        );
-      });
-
-      await ble.requestDeviceInfo();
-    } catch (e) {
-      setState(() {
-        session = session.copyWith(
-          connection: ConnectionState.disconnected
-        );
-      });
-    }
   }
 
   @override
@@ -111,11 +81,38 @@ class _DashboardPageState extends State<DashboardPage> {
                   width: 300,
                   child: Container(
                     padding: const EdgeInsets.all(16),
-                    color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerLow,
-                    child: DeviceInfoCard(state: session)
-                  )
+                    color: Theme.of(context).colorScheme.surfaceContainerLow,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        DeviceInfoCard(state: session),
+                        const SizedBox(height: 16),
+                        // ElevatedButton(
+                        //   onPressed: session.canConnect ? () => DashboardActions.connect(ble: ble, updateSession: updateSession) : null,
+                        //   child: const Text('Connect')
+                        // ),
+                        // const SizedBox(height: 8),
+                        // ElevatedButton(
+                        //   onPressed: session.canDisconnect ? () => DashboardActions.disconnect(ble: ble, updateSession: updateSession) : null,
+                        //   child: const Text('Disconnect')
+                        // )
+                        DeviceActionsPanel(
+                          onConnect: session.canConnect
+                            ? () => DashboardActions.connect(ble: ble, updateSession: updateSession)
+                            : null,
+                          onDisconnect: session.canDisconnect
+                            ? () => DashboardActions.disconnect(ble: ble, updateSession: updateSession)
+                            : null,
+                          onDownload: session.canTransfer
+                            ? () => DashboardActions.downloadSlot(ble: ble, slot: session.activeSlot, updateSession: updateSession)
+                            : null,
+                          onUpload: session.canTransfer
+                            ? () {}
+                            : null
+                        )
+                      ],
+                    ),
+                  ),
                 ),
 
                 // CENTER
@@ -136,33 +133,35 @@ class _DashboardPageState extends State<DashboardPage> {
                 SizedBox(
                   width: 340,
                   child: Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Theme.of(context)
-                      .colorScheme
-                      .surfaceContainerLowest,
+                    color: Theme.of(context).colorScheme.surfaceContainerLowest,
                     child: Column(
                       children: [
-                        DitheringControls(
-                          selectedAlgorithm: algorithm,
-                          onAlgorithmChanged: (newAlg) {
-                            setState(() {
-                              algorithm = newAlg;
-                            });
-                          }
+                        Expanded(
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: [
+                                DitheringControls(
+                                  selectedAlgorithm: algorithm,
+                                  onAlgorithmChanged: (newAlg) {
+                                    setState(() {
+                                      algorithm = newAlg;
+                                    });
+                                  }
+                                ),
+                                const SizedBox(height: 16),
+                                ImageAdjustmentControls(
+                                  adjustments: adjustments,
+                                  onChanged: (newAdjustments) {
+                                    setState(() {
+                                      adjustments = newAdjustments;
+                                    });
+                                  }
+                                )
+                              ]
+                            )
+                          )
                         ),
-
-                        ImageAdjustmentControls(
-                          adjustments: adjustments,
-                          onChanged: (newAdjustments) {
-                            setState(() {
-                              adjustments = newAdjustments;
-                            });
-                          }
-                        ),
-                        ElevatedButton(onPressed: connect, child: const Text('Connect')),
-                        ElevatedButton(onPressed: () {
-                          ble.getImageInSlot(1);
-                        }, child: const Text('Download slot 1'))
                       ],
                     )
                   )
@@ -170,7 +169,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ]
             )
           ),
-
           // STATUS BAR
           StatusBar(state: session)
         ],

@@ -36,6 +36,11 @@ class DeviceSessionState {
   });
 
   bool get isConnected => connection == ConnectionState.connected;
+  bool get isIdle => transfer == TransferState.idle;
+  bool get isBusy => transfer != TransferState.idle;
+  bool get canConnect => connection == ConnectionState.disconnected;
+  bool get canDisconnect => isConnected && isIdle;
+  bool get canTransfer => isConnected && isIdle;
 
   String get statusText {
     switch (connection) {

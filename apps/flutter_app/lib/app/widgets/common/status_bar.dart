@@ -49,7 +49,8 @@ class StatusBar extends StatelessWidget {
           const SizedBox(width: 16),
           // Firmware
           Text(
-            state.firmware, style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)
+            'Transfer State: ${state.transfer.name.toUpperCase()}',
+            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)
           ),
           const SizedBox(width: 16),
           // Progress (only meaningful during transfer)
