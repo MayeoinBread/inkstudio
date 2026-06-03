@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter_app/app/services/device_session_service.dart';
+import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/transport/ble_session.dart';
 import 'package:flutter_app/transport/device_info.dart';
 import 'package:flutter_blue_plus_windows/flutter_blue_plus_windows.dart';
@@ -11,7 +13,7 @@ import 'package:picpak_image/src/encoding/framebuffer_decoder.dart';
 import 'package:picpak_protocol/picpak_protocol.dart';
 
 class BleManager {
-  final BleSession session = BleSession();
+  final BleSession bleSession = BleSession();
   BluetoothCharacteristic? ff01;  // frameBuffer
   BluetoothCharacteristic? ff02;
 
@@ -19,6 +21,8 @@ class BleManager {
   StreamSubscription? _ff02Sub;
 
   ImageReadSession? _readSession;
+
+  final session = DeviceSessionService.instance;
 
   // Function(PaletteFramebuffer frameBuffer)? onImageDownloaded;
 
@@ -29,11 +33,6 @@ class BleManager {
   Function(List<int> slots)? onSlotList;
 
   Function()? onDownloadComplete;
-
-  // final ValueNotifier<double> uploadProgress = ValueNotifier<double>(0.0);
-  final StreamController<double> _progressController = StreamController<double>.broadcast();
-
-  Stream<double> get uploadProgressStream => _progressController.stream;
 
   Function()? onUploadComplete;
 
@@ -111,7 +110,7 @@ class BleManager {
     await FlutterBluePlus.stopScan();
 
     // Always use THIS instance from now on
-    session.device = device;
+    bleSession.device = device;
 
     await device.connect(autoConnect: false);
     
@@ -130,7 +129,7 @@ class BleManager {
   }
 
   Future<void> disconnect() async {
-    if (session.device == null) return;
+    if (bleSession.device == null) return;
 
     await _ff01Sub?.cancel();
     await _ff02Sub?.cancel();
@@ -138,8 +137,8 @@ class BleManager {
     _ff01Sub = null;
     _ff02Sub = null;
 
-    await session.device?.disconnect();
-    session.device = null;
+    await bleSession.device?.disconnect();
+    bleSession.device = null;
   }
 
   void _handleBleData(List<int> data) {
@@ -172,8 +171,6 @@ class BleManager {
       throw Exception("No active BLE session");
     }
 
-    _progressController.add(0.0);
-
     for (int i=0; i<packets.length; i++){
       // debugPrint("Sending packet $i");
       try {
@@ -184,8 +181,12 @@ class BleManager {
         rethrow;
       }
       final progress = (i + 1) / packets.length;
-      _progressController.add(progress);
 
+      session.state = session.state.copyWith(
+        transfer: TransferState.uploading,
+        progress: progress
+      );
+      
       // debugPrint("Upload percentage: $progress%");
       
       await Future.delayed(const Duration(milliseconds: 3));
@@ -208,7 +209,6 @@ class BleManager {
 
       await Future.delayed(const Duration(milliseconds: 30));
 
-      _progressController.add(0.0);
       onUploadComplete?.call();
   }
 

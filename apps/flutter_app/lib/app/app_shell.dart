@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/services/ble_service.dart';
 import 'package:flutter_app/app/services/device_session_service.dart';
+import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/app/widgets/common/status_bar.dart';
 
 import 'pages/dashboard_page.dart';
@@ -27,23 +28,13 @@ class _AppShellState extends State<AppShell> {
   final session = DeviceSessionService.instance;
   final ble = BleService.instance.manager;
 
-  late final ValueNotifier<double> uploadProgress;
-  StreamSubscription? _progressSub;
-
   @override
   void initState() {
     super.initState();
-
-    uploadProgress = ValueNotifier<double>(0.0);
-
-    _progressSub = ble.uploadProgressStream.listen((v) {
-      uploadProgress.value = v;
-    });
   }
 
   @override
   void dispose() {
-    _progressSub?.cancel();
     super.dispose();
   }
 
@@ -134,10 +125,19 @@ class _AppShellState extends State<AppShell> {
             ),
           ),
 
-          StatusBar(
-            state: session.state,
-            progressListenable: uploadProgress,
-          ),
+          // StatusBar(
+          //   state: session.state,
+          //   progressListenable: uploadProgress,
+          // ),
+
+          ValueListenableBuilder<DeviceSessionState>(
+            valueListenable: session,
+            builder: (context, state, _) {
+              return StatusBar(
+                state: state
+              );
+            }
+          )
         ],
       ),
     );

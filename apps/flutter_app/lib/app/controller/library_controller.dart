@@ -67,6 +67,13 @@ class LibraryController extends ChangeNotifier {
 
     for (int i=0; i<total; i++) {
       final slot = availableSlots[i];
+
+      session.state = session.state.copyWith(
+        transfer: TransferState.downloading,
+        activeSlot: slot,
+        progress: (i + 1) / total
+      );
+
       final framebuffer = await ble.downloadFramebuffer(slot);
 
       final png = img.encodePng(
@@ -78,11 +85,6 @@ class LibraryController extends ChangeNotifier {
       debugPrint("$pngData");
 
       onSlotReady(slot - 1, pngData);
-
-      session.state = session.state.copyWith(
-        transfer: TransferState.downloading,
-        progress: (i + 1) / total
-      );
     }
 
     session.state = session.state.copyWith(

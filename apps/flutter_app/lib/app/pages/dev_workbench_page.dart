@@ -245,7 +245,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
                 ElevatedButton(
                   onPressed: scanAndConnect,
-                  child: Text(ble.session.isConnected ? "Connected" : "Scan for Frame"),
+                  child: Text(ble.bleSession.isConnected ? "Connected" : "Scan for Frame"),
                 ),
 
                 ElevatedButton(
@@ -329,7 +329,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
                 ElevatedButton(
                   onPressed: () async {
-                    if (!ble.session.isConnected || _originalImage == null) {
+                    if (!ble.bleSession.isConnected || _originalImage == null) {
                       return;
                     }
                     _reprocess();
