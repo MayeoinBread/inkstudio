@@ -29,7 +29,8 @@ class DeviceActionsPanel extends StatelessWidget {
         ElevatedButton(
           onPressed: onConnect,
           child: const Text('Connect'),
-        ),
+        ),  
+        const Text('onConnect Disabled'),
 
         const SizedBox(height: 8),
 

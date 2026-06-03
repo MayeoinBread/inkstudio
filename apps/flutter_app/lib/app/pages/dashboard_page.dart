@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:file_picker/file_picker.dart';
@@ -9,7 +10,6 @@ import 'package:flutter_app/app/services/device_session_service.dart';
 import 'package:flutter_app/app/services/image_pipeline_controller.dart';
 import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/app/widgets/common/image_preview_panel.dart';
-import 'package:flutter_app/app/widgets/common/status_bar.dart';
 import 'package:flutter_app/app/widgets/controls/dithering_controls.dart';
 import 'package:flutter_app/app/widgets/controls/image_adjustment_controls.dart';
 import 'package:flutter_app/app/widgets/controls/processing_options_panel.dart';
@@ -52,32 +52,54 @@ class _DashboardPageState extends State<DashboardPage> {
 
   late final void Function(PaletteFramebuffer) _imageListener;
 
+  late StreamSubscription sub;
+
   void updateSession(DeviceSessionState Function(DeviceSessionState current) updater) {
+    debugPrint('Dashboard updateSession');
     setState(() { session.state = updater(session.state);});
   }
 
   @override
   void initState() {
+    debugPrint('Dashboard initState');
     super.initState();
 
-    ble.onImageDownloaded = (framebuffer) {
-      pipeline.framebuffer = framebuffer;
+    sub = ble.imageStream.stream.listen((fb) {
+      debugPrint('Dashboard imageStream Listen');
+      if (!mounted) return;
 
+      pipeline.framebuffer = fb;
       pipeline.previewBytes = Uint8List.fromList(
-        img.encodePng(PanelRerender.renderFramebuffer(framebuffer))
+        img.encodePng(PanelRerender.renderFramebuffer(fb))
       );
-
 
       setState(() {
         session.state = session.state.copyWith(
           transfer: TransferState.idle,
-          progress: 0,
+          progress: 0.0,
           activeSlot: null
         );
       });
-    };
+    });
+
+    // ble.onImageDownloaded = (framebuffer) {
+    //   pipeline.framebuffer = framebuffer;
+
+    //   pipeline.previewBytes = Uint8List.fromList(
+    //     img.encodePng(PanelRerender.renderFramebuffer(framebuffer))
+    //   );
+
+    //   setState(() {
+    //     session.state = session.state.copyWith(
+    //       transfer: TransferState.idle,
+    //       progress: 0,
+    //       activeSlot: null
+    //     );
+    //   });
+    // };
 
     ble.onDeviceInfo = (info) {
+      debugPrint('Dashboard onDeviceInfo');
       setState(() {
         session.state = session.state.copyWith(
           batteryPercent: info.battery,
@@ -87,6 +109,7 @@ class _DashboardPageState extends State<DashboardPage> {
     };
 
     ble.onSlotList = (slots) {
+      debugPrint('Dashboard onSlotList');
       final safeActive = session.state.activeSlot;
 
       setState(() {
@@ -99,6 +122,7 @@ class _DashboardPageState extends State<DashboardPage> {
     };
 
     ble.onUploadComplete = () {
+      debugPrint('Dashboard onUploadComplete');
       setState(() {
         session.state = session.state.copyWith(
           transfer: TransferState.idle,
@@ -106,34 +130,17 @@ class _DashboardPageState extends State<DashboardPage> {
         );
       });
     };
-
-    _imageListener = (fb) {
-      if (!mounted) return;
-
-      pipeline.framebuffer = fb;
-      pipeline.previewBytes = Uint8List.fromList(
-        img.encodePng(PanelRerender.renderFramebuffer(fb))
-      );
-
-      setState(() {
-        session.update((s) => s.copyWith(
-          transfer: TransferState.idle,
-          progress: 0,
-          activeSlot: null
-        ));
-      });
-    };
-
-    ble.addImageListener(_imageListener);
   }
 
   @override
   void dispose() {
-    ble.removeImageListener(_imageListener);
+    debugPrint('Dashboard dispose');
+    sub.cancel();
     super.dispose();
   }
 
   Future<void> _prepareWorkingImage() async {
+    debugPrint('Dashboard _prepareWorkingImage');
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
@@ -141,6 +148,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _reprocess() async {
+    debugPrint('Dashboard _reprocess');
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
@@ -160,6 +168,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _loadImageBytes(Uint8List bytes) async {
+    debugPrint('Dashboard _loadImageBytes');
     setState(() {
       if (!listEquals(_originalImageBytes, bytes)) {
         _originalImageBytes = bytes;
@@ -171,6 +180,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _pickImage() async {
+    debugPrint('Dashboard _pickImage');
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true,
@@ -186,6 +196,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _uploadImage() async {
+    debugPrint('Dashboard _uploadImage');
     final fb = pipeline.framebuffer;
     if (fb == null) return;
 
@@ -207,6 +218,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
+    debugPrint('Dashboard build');
     return Scaffold(
       appBar: AppBar(
         title: const Text('PicPak Open')
@@ -345,16 +357,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ]
             )
           ),
-          // STATUS BAR
-          // ValueListenableBuilder<double>(
-          //   valueListenable: ble.uploadProgress,
-          //   builder: (context, value, _) {
-          //     return StatusBar(
-          //       state: session.state,
-          //       progressListenable: ble.uploadProgress,
-          //     );
-          //   }
-          // )
         ],
       )
     );

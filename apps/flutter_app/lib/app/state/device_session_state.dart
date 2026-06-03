@@ -68,9 +68,7 @@ class DeviceSessionState {
   }
 
   bool hasImageInSlot(int slot) {
-    return slot >= 0 &&
-      slot < availableSlots.length &&
-      availableSlots.contains(slot);
+    return availableSlots.contains(slot);
   }
 
   DeviceSessionState copyWith({

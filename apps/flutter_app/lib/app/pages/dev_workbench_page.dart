@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_app/app/services/ble_service.dart';
 import 'package:flutter_app/transport/ble_manager.dart';
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
@@ -44,7 +45,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
   ImageFilter _filter = ImageFilter.normal;
   bool _simulateDevice = false;
 
-  final BleManager _ble = BleManager();
+  final ble = BleService.instance.manager;
 
   int _processToken = 0;
   bool _processing = false;
@@ -52,19 +53,37 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
   double _brightness = 0.0;
   double _contrast = 1.0;
 
+  late StreamSubscription sub;
+
   @override
   void initState() {
     super.initState();
 
-    _ble.onImageDownloaded = (fb) {
-      // TODO move the img.encode into the renderFrameBuffer?
+    // _ble.onImageDownloaded = (fb) {
+    //   // TODO move the img.encode into the renderFrameBuffer?
+    //   final previewBytes = Uint8List.fromList(
+    //     img.encodePng(PanelRerender.renderFramebuffer(fb))
+    //   );
+    //   setState(() {
+    //     _deviceImageBytes = previewBytes;
+    //   });
+    // };
+    sub = ble.imageStream.stream.listen((fb) {
+      if (!mounted) return;
       final previewBytes = Uint8List.fromList(
         img.encodePng(PanelRerender.renderFramebuffer(fb))
       );
+
       setState(() {
         _deviceImageBytes = previewBytes;
       });
-    };
+    });
+  }
+
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
   }
 
   Future<void> _prepareWorkingImage() async {
@@ -200,7 +219,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
     });
 
     if (device == null) return;
-    await _ble.connect(device);
+    await ble.connect(device);
     setState(() {});
   }
 
@@ -226,11 +245,11 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
                 ElevatedButton(
                   onPressed: scanAndConnect,
-                  child: Text(_ble.session.isConnected ? "Connected" : "Scan for Frame"),
+                  child: Text(ble.session.isConnected ? "Connected" : "Scan for Frame"),
                 ),
 
                 ElevatedButton(
-                  onPressed: () => _ble.getImageInSlot(1),
+                  onPressed: () => ble.getImageInSlot(1),
                   child: Text("Read image 1")
                 ),
 
@@ -310,7 +329,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
                 ElevatedButton(
                   onPressed: () async {
-                    if (!_ble.session.isConnected || _originalImage == null) {
+                    if (!ble.session.isConnected || _originalImage == null) {
                       return;
                     }
                     _reprocess();
@@ -318,9 +337,9 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
                     final packed = FramebufferPacker.pack(flipped);
                     final packets = UploadSession.build(imageNumber: 3, packedImageData: packed);
 
-                    await _ble.sendImage(packets);
+                    await ble.sendImage(packets);
 
-                    await _ble.sendMd5Trigger(imageNumber: 3, imageData: packed);
+                    await ble.sendMd5Trigger(imageNumber: 3, imageData: packed);
 
                     debugPrint("Upload compelte");
                   },

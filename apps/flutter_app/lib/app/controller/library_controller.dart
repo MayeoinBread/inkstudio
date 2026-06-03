@@ -1,7 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_app/app/services/thumbnail_service.dart';
+import 'package:flutter_app/app/services/device_session_service.dart';
+import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/app/widgets/library/library_item.dart';
 import 'package:flutter_app/transport/ble_manager.dart';
 import 'package:image/image.dart' as img;
@@ -48,37 +49,45 @@ class LibraryController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateProgress(double value) {
-    progress = value;
-    notifyListeners();
-  }
-
   Future<void> syncLibrary({
     required BleManager ble,
+    required DeviceSessionService session,
     required List<int> availableSlots,
-    required void Function(int slot, Uint8List thumbnail) onSlotReady,
-    required void Function(double progress) onProgress
+    required void Function(int slot, Uint8List thumbnail) onSlotReady
   }) async {
+    
+    session.state = session.state.copyWith(
+      transfer: TransferState.downloading,
+      progress: 0,
+      activeSlot: null
+    );
+
+    debugPrint("Syncing from device");
     final total = availableSlots.length;
-    if (total == 0) return;
 
     for (int i=0; i<total; i++) {
-      final exists = availableSlots.contains(i);
-
-      if (!exists) {
-        onProgress((i + 1) / total);
-        continue;
-      }
-
-      final framebuffer = await ble.downloadFramebuffer(i);
+      final slot = availableSlots[i];
+      final framebuffer = await ble.downloadFramebuffer(slot);
 
       final png = img.encodePng(
         PanelRerender.renderFramebuffer(framebuffer)
       );
 
-      onSlotReady(i, Uint8List.fromList(png));
+      final pngData = Uint8List.fromList(png);
+      
+      debugPrint("$pngData");
 
-      onProgress((i + 1) / total);
+      onSlotReady(slot - 1, pngData);
+
+      session.state = session.state.copyWith(
+        transfer: TransferState.downloading,
+        progress: (i + 1) / total
+      );
     }
+
+    session.state = session.state.copyWith(
+      transfer: TransferState.idle,
+      progress: 0
+    );
   }
 }

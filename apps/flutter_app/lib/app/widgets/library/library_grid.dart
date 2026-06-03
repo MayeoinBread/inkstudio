@@ -4,11 +4,8 @@ import 'package:flutter_app/app/widgets/library/library_item.dart';
 import 'slot_tile.dart';
 
 class LibraryGrid extends StatelessWidget {
-
   final List<LibraryItem> items;
-
   final int? selectedSlot;
-
   final ValueChanged<int> onSelected;
 
   const LibraryGrid({

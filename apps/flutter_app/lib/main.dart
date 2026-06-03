@@ -1,16 +1,22 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_app/app/services/ble_service.dart';
 
 import 'app/app_shell.dart';
 
 void main() {
-  final ble = BleService.instance;
-
-  ble.manager.uploadProgress.addListener(() {
-    ble.uploadProgress.value = ble.manager.uploadProgress.value;
-  });
-
   runApp(const PicPakApp());
+
+  FlutterError.onError = (details) {
+    debugPrint("ERROR: ${details.exception}");
+    debugPrintStack(stackTrace: details.stack);
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+  debugPrint("PLATFORM ERROR: $error");
+  debugPrint(stack.toString());
+  return true;
+};
 }
 
 class PicPakApp extends StatefulWidget {

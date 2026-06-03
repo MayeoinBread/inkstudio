@@ -20,9 +20,9 @@ class BleManager {
 
   ImageReadSession? _readSession;
 
-  final List<void Function(PaletteFramebuffer)> _imageListeners = [];
+  // Function(PaletteFramebuffer frameBuffer)? onImageDownloaded;
 
-  Function(PaletteFramebuffer frameBuffer)? onImageDownloaded;
+  final StreamController<PaletteFramebuffer> imageStream = StreamController.broadcast();
 
   Function(DeviceInfo info)? onDeviceInfo;
 
@@ -30,19 +30,12 @@ class BleManager {
 
   Function()? onDownloadComplete;
 
-  final ValueNotifier<double> uploadProgress = ValueNotifier<double>(0.0);
+  // final ValueNotifier<double> uploadProgress = ValueNotifier<double>(0.0);
+  final StreamController<double> _progressController = StreamController<double>.broadcast();
+
+  Stream<double> get uploadProgressStream => _progressController.stream;
 
   Function()? onUploadComplete;
-
-  void addImageListener(
-    void Function(PaletteFramebuffer frameBuffer) listener
-  ) {
-    // _imageListeners.add(listener);
-  }
-
-  void removeImageListener(void Function(PaletteFramebuffer framebuffer) listener) {
-    // _imageListeners.remove(listener);
-  }
 
   Future<BluetoothDevice?> scanForDevice({
     Duration timeout = const Duration(seconds: 5)
@@ -124,8 +117,13 @@ class BleManager {
     
     await initChannels(device);
 
-    await ff01!.setNotifyValue(true);
-    await ff02!.setNotifyValue(true);
+    if (!(ff01?.isNotifying ?? false)) {
+      await ff01!.setNotifyValue(true);
+    }
+
+    if (!(ff02?.isNotifying ?? false)) {
+      await ff02!.setNotifyValue(true);
+    }
 
     _ff01Sub = ff01!.lastValueStream.listen(_handleBleData);
     _ff02Sub = ff02!.lastValueStream.listen(_handleBleData);
@@ -134,11 +132,13 @@ class BleManager {
   Future<void> disconnect() async {
     if (session.device == null) return;
 
+    await _ff01Sub?.cancel();
+    await _ff02Sub?.cancel();
+
     _ff01Sub = null;
     _ff02Sub = null;
 
     await session.device?.disconnect();
-
     session.device = null;
   }
 
@@ -172,7 +172,7 @@ class BleManager {
       throw Exception("No active BLE session");
     }
 
-    uploadProgress.value = 0.0;
+    _progressController.add(0.0);
 
     for (int i=0; i<packets.length; i++){
       // debugPrint("Sending packet $i");
@@ -184,7 +184,7 @@ class BleManager {
         rethrow;
       }
       final progress = (i + 1) / packets.length;
-      uploadProgress.value = progress;
+      _progressController.add(progress);
 
       // debugPrint("Upload percentage: $progress%");
       
@@ -208,7 +208,7 @@ class BleManager {
 
       await Future.delayed(const Duration(milliseconds: 30));
 
-      uploadProgress.value = 0.0;
+      _progressController.add(0.0);
       onUploadComplete?.call();
   }
 
@@ -236,24 +236,35 @@ class BleManager {
     await ff01!.write([0xAA, 0x03, lo, hi, 0xFF]);
   }
 
-  Future<PaletteFramebuffer> downloadFramebuffer(int slot) {
+  Future<PaletteFramebuffer> downloadFramebuffer(int slot) async {
     final completer = Completer<PaletteFramebuffer>();
 
-    late void Function(PaletteFramebuffer) handler;
+    late StreamSubscription sub;
 
-    handler = (framebuffer) {
-      removeImageListener(handler);
-
+    sub = imageStream.stream.listen((fb) {
       if (!completer.isCompleted) {
-        completer.complete(framebuffer);
+        completer.complete(fb);
       }
-    };
+    });
 
-    addImageListener(handler);
+    await getImageInSlot(slot);
+
+    final framebuffer = await completer.future;
+
+    await sub.cancel();
+
+    return framebuffer;
+
+    // OLD
+    // debugPrint('Requesting slot $slot');
     
-    getImageInSlot(slot);
+    // await getImageInSlot(slot);
 
-    return completer.future;
+    // final fb = imageStream.stream.first;
+
+    // debugPrint('Received framebuffer for slot $slot');
+
+    // return fb;
   }
 
   DeviceInfo? _parseDeviceInfo(List<int> data) {
@@ -317,10 +328,9 @@ class BleManager {
 
       final framebuffer = FramebufferDecoder.decode(framebufferBytes);
       
-      onImageDownloaded?.call(framebuffer);
-      for (final listener in List.from(_imageListeners)) {
-        listener(framebuffer);
-      }
+      // onImageDownloaded?.call(framebuffer);
+      debugPrint('Framebuffer completed');
+      imageStream.add(framebuffer);
 
       onDownloadComplete?.call();
 
@@ -337,6 +347,8 @@ class BleManager {
         slots.add(i - 1);
       }
     }
+
+    debugPrint("Slots: $slots");
 
     onSlotList?.call(slots);
   }
