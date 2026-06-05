@@ -77,11 +77,11 @@ class LibraryController extends ChangeNotifier {
 
       final framebuffer = await ble.downloadFramebuffer(slot);
 
-      final smallFb = PaletteFramebuffer.downscale(framebuffer, 300, 225);
+      // final smallFb = PaletteFramebuffer.downscale(framebuffer, 300, 300);
 
-      final image = PanelRerender.renderFramebuffer(smallFb);
-      // final thumbnailBytes = ThumbnailService.createFromImage(image);
-      final thumbnailBytes = Uint8List.fromList(img.encodePng(image));
+      final image = PanelRerender.renderFramebuffer(framebuffer);
+      final thumbnailBytes = ThumbnailService.createFromImage(image);
+      // final thumbnailBytes = Uint8List.fromList(img.encodePng(image));
 
       debugPrint('Synced bytes: ${thumbnailBytes.length}');
       

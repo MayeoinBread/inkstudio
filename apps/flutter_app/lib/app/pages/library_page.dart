@@ -10,7 +10,8 @@ import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/app/widgets/library/library_grid.dart';
 import 'package:flutter_app/app/widgets/library/slot_inspector.dart';
 import 'package:flutter_app/app/widgets/library/slot_metadata.dart';
-import 'package:flutter_app/app/widgets/popups/post_it_editor.dart';
+import 'package:flutter_app/app/widgets/popups/content_editor_dialog.dart';
+import 'package:flutter_app/app/widgets/popups/note_editor_tab.dart';
 import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
@@ -86,19 +87,46 @@ class _LibraryPageState extends State<LibraryPage> {
   Future<void> _onEdit(int slot) async {
     final item = controller.items[slot];
 
-    final metadata = await showPostItEditor(context, item.metadata);
+    await showDialog(
+      context: context,
+      builder: (_) => ContentEditorDialog(
+        item: item,
+        onSaved: (metadata, thumbnail) {
+          controller.updateSlot(
+            slot: slot,
+            exists: true,
+            thumbnailBytes: thumbnail,
+            metadata: metadata
+          );
+        }
+      )
+    );
+
+    // final metadata = await showPostItEditor(context, item.metadata);
     
-    if (metadata == null) return;
+    // if (metadata == null) return;
 
-    final image = NoteRenderer.render(text: metadata.text ?? '', w: DeviceConstants.imageWidth, h: DeviceConstants.imageHeight);
+    // final image = NoteRenderer.render(text: metadata.text ?? '', w: DeviceConstants.imageWidth, h: DeviceConstants.imageHeight);
 
-    final thumbnailBytes = ThumbnailService.createFromImage(image);
+    // final thumbnailBytes = ThumbnailService.createFromImage(image);
 
-    debugPrint('Thumbnail bytes: ${thumbnailBytes.length}');
+    // debugPrint('Thumbnail bytes: ${thumbnailBytes.length}');
 
-    controller.updateSlot(slot: slot, exists: true, thumbnailBytes: thumbnailBytes, metadata: metadata);
+    // controller.updateSlot(slot: slot, exists: true, thumbnailBytes: thumbnailBytes, metadata: metadata);
     
-    // controller.updateMetadata(slot, updated);
+    // // controller.updateMetadata(slot, updated);
+  }
+
+  Future<void> _onDelete(int slot) async {
+    final item = controller.items[slot];
+    final metadata = item.metadata;
+
+    // TODO this messes up if an image was "pending upload"
+    if (metadata.pendingAction == SlotPendingAction.delete) {
+      controller.updateMetadata(slot, metadata.copyWith(pendingAction: SlotPendingAction.none));
+    } else {
+      controller.updateMetadata(slot, metadata.copyWith(pendingAction: SlotPendingAction.delete));
+    }
   }
 
   @override
@@ -132,7 +160,8 @@ class _LibraryPageState extends State<LibraryPage> {
                       selectedSlot = slot;
                     });
                   },
-                  onEdit: _onEdit
+                  onEdit: _onEdit,
+                  onDelete: _onDelete,
                 ),
               ),
             ),

@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/widgets/library/slot_metadata.dart';
-import 'package:flutter_app/app/widgets/popups/post_it_editor.dart';
 
 class SlotTile extends StatelessWidget {
   final Uint8List? thumbnail;
@@ -12,8 +11,8 @@ class SlotTile extends StatelessWidget {
   final bool exists;
 
   final VoidCallback onTap;
-
-  final VoidCallback? onLongPress;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   final SlotMetadata metadata;
 
@@ -23,15 +22,44 @@ class SlotTile extends StatelessWidget {
     required this.selected,
     required this.exists,
     required this.onTap,
-    required this.metadata,
-    this.onLongPress
+    required this.onEdit,
+    required this.onDelete,
+    required this.metadata
   });
 
   @override
   Widget build(BuildContext context) {
+    final indicator = getStatusIndicator(metadata);
     return GestureDetector(
       onTap: onTap,
-      onLongPress: onLongPress,
+      onLongPress: onEdit,
+      onSecondaryTapDown: (details) async {
+        final result = await showMenu<String>(
+          context: context,
+          position: RelativeRect.fromLTRB(
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+            details.globalPosition.dx,
+            details.globalPosition.dy,
+          ),
+          items: const [
+            PopupMenuItem(
+              value: 'edit',
+              child: Text('Add/Edit')
+            ),
+            PopupMenuItem(
+              value: 'delete',
+              child: Text('Delete')
+            )
+          ]
+        );
+
+        if (result == 'edit') {
+          onEdit();
+        } else if (result == 'delete') {
+          onDelete();
+        }
+      },
       child: Container(
         decoration: BoxDecoration(
           border: Border.all(
@@ -43,22 +71,24 @@ class SlotTile extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            exists && thumbnail != null
-              ? Image.memory(
-                  thumbnail!,
-                  fit: BoxFit.cover,
-                )
-              : const Center(
-                  child: Icon(Icons.image_not_supported),
-                ),
-            if (metadata.syncState == SlotSyncState.modified)
+            SizedBox.expand(
+              child: exists && thumbnail != null
+                ? Opacity(
+                    opacity: metadata.pendingAction == SlotPendingAction.delete ? 0.4 : 1.0,
+                    child: Image.memory(
+                      thumbnail!,
+                      fit: BoxFit.cover
+                    )
+                  )
+                : const Center(child: Icon(Icons.image_not_supported_outlined))
+            ),
+            if (indicator != null)
               Positioned(
-                top: 4,
-                right: 4,
-                child: Icon (
-                  Icons.circle,
-                  size: 12,
-                  color: Colors.orange
+                top: 4, right: 4,
+                child: Icon(
+                  indicator.icon,
+                  size: indicator.size,
+                  color: indicator.colour
                 )
               )
           ]
