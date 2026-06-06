@@ -36,7 +36,7 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
   void initState() {
     super.initState();
     textController = TextEditingController(
-      text: widget.item.metadata.text ?? ''
+      text: widget.item.metadata.type == SlotContentType.note ? widget.item.metadata.text ?? '' : ''
     );
   }
 
@@ -62,7 +62,7 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
     final thumbnail = ThumbnailService.createFromImage(image);
 
     final metadata = SlotMetadata(
-      type: SlotContentType.postit,
+      type: SlotContentType.note,
       pendingAction: SlotPendingAction.upload,
       text: textController.text
     );

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_app/app/widgets/library/library_item.dart';
 import 'package:flutter_app/app/widgets/library/slot_metadata.dart';
 import 'package:flutter_app/app/widgets/popups/note_editor_tab.dart';
+import 'package:flutter_app/app/widgets/popups/qr_code_tab.dart';
 
 class ContentEditorDialog extends StatelessWidget {
   final LibraryItem item;
@@ -26,18 +27,23 @@ class ContentEditorDialog extends StatelessWidget {
         width: 900,
         height: 600,
         child: DefaultTabController(
-          length: 1,
+          length: 2,
           child: Column(
             children: [
               const TabBar(
                 tabs: [
-                  Tab(text: 'Note')
+                  Tab(text: 'Note'),
+                  Tab(text: 'QR')
                 ]
               ),
               Expanded(
                 child: TabBarView(
                   children: [
                     NoteEditorTab(
+                      item: item,
+                      onSaved: onSaved
+                    ),
+                    QrCodeTab(
                       item: item,
                       onSaved: onSaved
                     )
@@ -50,5 +56,4 @@ class ContentEditorDialog extends StatelessWidget {
       )
     );
   }
-  
 }

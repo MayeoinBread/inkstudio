@@ -27,38 +27,41 @@ class SlotTile extends StatelessWidget {
     required this.metadata
   });
 
+  void _showMenu(BuildContext context, TapDownDetails details) async {
+    final result = await showMenu<String>(
+      context: context,
+      position: RelativeRect.fromLTRB(
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+        details.globalPosition.dx,
+        details.globalPosition.dy,
+      ),
+      items: const [
+        PopupMenuItem(
+          value: 'edit',
+          child: Text('Add/Edit')
+        ),
+        PopupMenuItem(
+          value: 'delete',
+          child: Text('Delete')
+        )
+      ]
+    );
+    if (result == 'edit') {
+      onEdit();
+    } else if (result == 'delete') {
+      onDelete();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final indicator = getStatusIndicator(metadata);
     return GestureDetector(
       onTap: onTap,
       onLongPress: onEdit,
-      onSecondaryTapDown: (details) async {
-        final result = await showMenu<String>(
-          context: context,
-          position: RelativeRect.fromLTRB(
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-            details.globalPosition.dx,
-            details.globalPosition.dy,
-          ),
-          items: const [
-            PopupMenuItem(
-              value: 'edit',
-              child: Text('Add/Edit')
-            ),
-            PopupMenuItem(
-              value: 'delete',
-              child: Text('Delete')
-            )
-          ]
-        );
-
-        if (result == 'edit') {
-          onEdit();
-        } else if (result == 'delete') {
-          onDelete();
-        }
+      onSecondaryTapDown: (details) {
+        Future.microtask(() => _showMenu(context, details));
       },
       child: Container(
         decoration: BoxDecoration(
@@ -71,7 +74,9 @@ class SlotTile extends StatelessWidget {
         ),
         child: Stack(
           children: [
-            SizedBox.expand(
+            // SizedBox.expand(
+            AspectRatio(
+              aspectRatio: 1,
               child: exists && thumbnail != null
                 ? Opacity(
                     opacity: metadata.pendingAction == SlotPendingAction.delete ? 0.4 : 1.0,

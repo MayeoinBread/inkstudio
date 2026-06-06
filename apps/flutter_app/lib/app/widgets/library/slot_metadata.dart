@@ -5,7 +5,7 @@ enum SlotContentType {
   empty,
   image,
   qr,
-  postit,
+  note,
   generated
 }
 
@@ -59,7 +59,10 @@ class SlotMetadata {
   final SlotPendingAction pendingAction;
 
   final String? text;
-  final String? qrData;
+
+  final String? wifiSsid;
+  final String? wifiPassword;
+  final String? wifiSecurity;
 
   final ImageAdjustments adjustments;
 
@@ -72,7 +75,9 @@ class SlotMetadata {
     this.syncState = SlotSyncState.clean,
     this.pendingAction = SlotPendingAction.none,
     this.text,
-    this.qrData,
+    this.wifiSsid,
+    this.wifiPassword,
+    this.wifiSecurity,
 
     this.adjustments = const ImageAdjustments(brightness: 1.0, contrast: 1.0),
     this.dither = DitherMode.none,
@@ -85,7 +90,9 @@ class SlotMetadata {
     SlotSyncState? syncState,
     SlotPendingAction? pendingAction,
     String? text,
-    String? qrData,
+    String? wifiSsid,
+    String? wifiPassword,
+    String? wifiSecurity,
     ImageAdjustments? adjustments,
     DitherMode? dither,
     FitStrategy? fit,
@@ -96,7 +103,9 @@ class SlotMetadata {
       syncState: syncState ?? this.syncState,
       pendingAction: pendingAction ?? this.pendingAction,
       text: text ?? this.text,
-      qrData: qrData ?? this.qrData,
+      wifiSsid: wifiSsid ?? this.wifiSsid,
+      wifiPassword: wifiPassword ?? this.wifiPassword,
+      wifiSecurity: wifiSecurity ?? this.wifiSecurity,
       adjustments: adjustments ?? this.adjustments,
       dither: dither ?? this.dither,
       fit: fit ?? this.fit,

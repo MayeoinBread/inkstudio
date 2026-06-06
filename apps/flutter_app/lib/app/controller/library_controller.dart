@@ -18,6 +18,8 @@ class LibraryController extends ChangeNotifier {
 
   bool syncing = false;
 
+  bool _inResize = false;
+
   void initialise(int slotCount) {
     items.clear();
 

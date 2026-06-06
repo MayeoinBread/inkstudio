@@ -22,7 +22,9 @@ class LibraryGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
+    debugPrint('LibraryGrid build'
+    'items-${items.length}'
+    'selected-$selectedSlot');
     return GridView.builder(
       itemCount: items.length,
       gridDelegate:
@@ -30,12 +32,14 @@ class LibraryGrid extends StatelessWidget {
         crossAxisCount: 5,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
+        childAspectRatio: 1.0
       ),
       itemBuilder: (context, index) {
 
         final item = items[index];
 
         return SlotTile(
+          key: ValueKey(item.slot),
           thumbnail: item.thumbnailBytes,
           exists: item.exists,
           selected: selectedSlot == item.slot,

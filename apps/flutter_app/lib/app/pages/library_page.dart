@@ -5,16 +5,12 @@ import 'package:flutter_app/app/controller/library_controller.dart';
 import 'package:flutter_app/app/services/ble_service.dart';
 import 'package:flutter_app/app/services/device_session_service.dart';
 import 'package:flutter_app/app/services/image_pipeline_controller.dart';
-import 'package:flutter_app/app/services/thumbnail_service.dart';
 import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/app/widgets/library/library_grid.dart';
+import 'package:flutter_app/app/widgets/library/library_item.dart';
 import 'package:flutter_app/app/widgets/library/slot_inspector.dart';
 import 'package:flutter_app/app/widgets/library/slot_metadata.dart';
 import 'package:flutter_app/app/widgets/popups/content_editor_dialog.dart';
-import 'package:flutter_app/app/widgets/popups/note_editor_tab.dart';
-import 'package:image/image.dart' as img;
-import 'package:picpak_core/picpak_core.dart';
-import 'package:picpak_image/picpak_image.dart';
 
 class LibraryPage extends StatefulWidget {
 
@@ -39,7 +35,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
   final ImagePipelineController pipeline = ImagePipelineController();
 
-  late StreamSubscription sub;
+  late StreamSubscription? sub;
 
   int? selectedSlot;
 
@@ -51,20 +47,12 @@ class _LibraryPageState extends State<LibraryPage> {
     super.initState();
 
     controller.initialise(700);
-
-    // sub = ble.imageStream.stream.listen((fb) {
-    //   if (!mounted) return;
-
-    //   setState(() {
-
-    //   });
-    // });
   }
 
   @override
   void dispose() {
     debugPrint('Library dispose');
-    sub.cancel();
+    sub?.cancel();
     super.dispose();
   }
 
@@ -92,29 +80,23 @@ class _LibraryPageState extends State<LibraryPage> {
       builder: (_) => ContentEditorDialog(
         item: item,
         onSaved: (metadata, thumbnail) {
-          controller.updateSlot(
-            slot: slot,
-            exists: true,
-            thumbnailBytes: thumbnail,
-            metadata: metadata
-          );
+          final mslot = slot;
+
+          setState(() {
+            selectedSlot = null;
+          });
+
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            controller.updateSlot(
+              slot: mslot,
+              exists: true,
+              thumbnailBytes: thumbnail,
+              metadata: metadata
+            );
+          });
         }
       )
     );
-
-    // final metadata = await showPostItEditor(context, item.metadata);
-    
-    // if (metadata == null) return;
-
-    // final image = NoteRenderer.render(text: metadata.text ?? '', w: DeviceConstants.imageWidth, h: DeviceConstants.imageHeight);
-
-    // final thumbnailBytes = ThumbnailService.createFromImage(image);
-
-    // debugPrint('Thumbnail bytes: ${thumbnailBytes.length}');
-
-    // controller.updateSlot(slot: slot, exists: true, thumbnailBytes: thumbnailBytes, metadata: metadata);
-    
-    // // controller.updateMetadata(slot, updated);
   }
 
   Future<void> _onDelete(int slot) async {
@@ -132,10 +114,12 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) {
     debugPrint('Library build');
-    return AnimatedBuilder(
-      animation: controller,
+    // return AnimatedBuilder(
+      // animation: controller,
+    return ListenableBuilder(
+      listenable: controller,
       builder: (context, _) {
-
+        final items = List<LibraryItem>.from(controller.items);
         return Row(
           children: [
 
@@ -153,7 +137,8 @@ class _LibraryPageState extends State<LibraryPage> {
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: LibraryGrid(
-                  items: controller.items,
+                  // items: controller.items,
+                  items: items,
                   selectedSlot: selectedSlot,
                   onSelected: (slot) {
                     setState(() {
