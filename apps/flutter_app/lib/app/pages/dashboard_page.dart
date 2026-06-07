@@ -18,9 +18,7 @@ import 'package:flutter_app/app/widgets/device/device_info_card.dart';
 import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
-import 'package:picpak_image/src/encoding/framebuffer_packer.dart';
 import 'package:picpak_protocol/picpak_protocol.dart';
-import 'package:picpak_image/src/pipeline/fit_strategy.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -44,13 +42,7 @@ class _DashboardPageState extends State<DashboardPage> {
   final ImagePipelineController pipeline = ImagePipelineController();
   Uint8List? _originalImageBytes;
 
-  bool _processing = false;
-
-  DateTime _lastProgressUpdate = DateTime.fromMillisecondsSinceEpoch(0);
-
   final ble = BleService.instance.manager;
-
-  late final void Function(PaletteFramebuffer) _imageListener;
 
   late StreamSubscription sub;
 
@@ -152,8 +144,6 @@ class _DashboardPageState extends State<DashboardPage> {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    setState(() => _processing = true);
-
     await pipeline.process(
       dither: algorithm,
       filter: _filter,
@@ -161,10 +151,6 @@ class _DashboardPageState extends State<DashboardPage> {
       fit: _fitStrategy,
       adjustments: adjustments
     );
-
-    setState(() {
-      _processing = false;
-    });
   }
 
   Future<void> _loadImageBytes(Uint8List bytes) async {

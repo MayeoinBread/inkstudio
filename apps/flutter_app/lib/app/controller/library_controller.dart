@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_app/app/services/device_session_service.dart';
 import 'package:flutter_app/app/services/thumbnail_service.dart';
@@ -7,7 +5,6 @@ import 'package:flutter_app/app/state/device_session_state.dart';
 import 'package:flutter_app/app/widgets/library/library_item.dart';
 import 'package:flutter_app/app/widgets/library/slot_metadata.dart';
 import 'package:flutter_app/transport/ble_manager.dart';
-import 'package:image/image.dart' as img;
 import 'package:picpak_image/picpak_image.dart';
 
 class LibraryController extends ChangeNotifier {
@@ -17,8 +14,6 @@ class LibraryController extends ChangeNotifier {
   double progress = 0;
 
   bool syncing = false;
-
-  bool _inResize = false;
 
   void initialise(int slotCount) {
     items.clear();

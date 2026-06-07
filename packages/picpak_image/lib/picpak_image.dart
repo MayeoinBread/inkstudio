@@ -8,3 +8,7 @@ export 'src/processing/panel_rerender.dart';
 export 'src/pipeline/palette_framebuffer.dart';
 export 'src/models/image_adjustments.dart';
 export 'src/pipeline/fit_strategy.dart';
+export 'src/pipeline/image_pipeline.dart';
+export 'src/pipeline/pipeline_result.dart';
+export 'src/pipeline/pipeline_isolate.dart';
+export 'src/encoding/framebuffer_packer.dart';

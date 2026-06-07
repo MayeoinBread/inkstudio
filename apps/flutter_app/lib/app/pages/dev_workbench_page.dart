@@ -1,18 +1,10 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_app/app/services/ble_service.dart';
-import 'package:flutter_app/transport/ble_manager.dart';
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
-import 'package:picpak_image/src/pipeline/image_pipeline.dart';
-import 'package:picpak_image/src/pipeline/fit_strategy.dart';
-import 'package:picpak_image/src/encoding/framebuffer_packer.dart';
-import 'package:picpak_image/src/dithering/dither_mode.dart';
-import 'package:picpak_image/src/pipeline/palette_framebuffer.dart';
-import 'package:picpak_image/src/pipeline/pipeline_isolate.dart';
 import 'package:image/image.dart' as img;
 import 'package:picpak_protocol/picpak_protocol.dart';
 
