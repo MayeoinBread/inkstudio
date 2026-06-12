@@ -96,6 +96,7 @@ class _QrCodeTabState extends State<QrCodeTab> {
     final metadata = SlotMetadata(
       type: SlotContentType.qr,
       pendingAction: SlotPendingAction.upload,
+      qrType: qrType,
       text: (qrType == QrType.text || qrType == QrType.url) ? textController.text : null,
       wifiSsid: (qrType == QrType.wifi) ? ssidController.text : null,
       wifiPassword: (qrType == QrType.wifi) ? passwordController.text : null,

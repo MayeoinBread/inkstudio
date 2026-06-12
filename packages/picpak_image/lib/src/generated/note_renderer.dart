@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
 class NoteRenderer {

@@ -100,8 +100,8 @@ class LibraryController extends ChangeNotifier {
 
       // final smallFb = PaletteFramebuffer.downscale(framebuffer, 300, 300);
 
-      final framebuffer = flipVertical(deviceFramebuffer);
-      final image = PanelRerender.renderFramebuffer(framebuffer);
+      // final framebuffer = flipVertical(deviceFramebuffer);
+      final image = PanelRerender.renderFramebuffer(deviceFramebuffer);
       final thumbnailBytes = ThumbnailService.createFromImage(image);
       // final thumbnailBytes = Uint8List.fromList(img.encodePng(image));
 
@@ -156,12 +156,52 @@ class LibraryController extends ChangeNotifier {
               wifiPassword: dirtySlot.metadata.wifiPassword,
               wifiSecurity: dirtySlot.metadata.wifiSecurity
             );
-            packed = Uint8List.fromList(img.encodePng(image));
+
+            final pipeline = ImagePipeline();
+            final prepared = pipeline.prepareBaseImage(image, dirtySlot.metadata.fit);
+
+            final result = await compute(
+              runPipelineIsolate,
+              PipelineRequest(
+                workingImage: prepared,
+                filter: ImageFilter.normal,
+                simulateDevice: false,
+                width: DeviceConstants.imageWidth,
+                height: DeviceConstants.imageHeight,
+                fit: FitStrategy.contain,
+                dither: DitherMode.none,
+                adjustments: ImageAdjustments(brightness: 0.0, contrast: 1.0)
+              )
+            );
+
+            packed = FramebufferPacker.pack(flipVertical(result.framebuffer));
             break;
           
           case SlotContentType.note:
-            final image = NoteRenderer.render(text: dirtySlot.metadata.text!, w: DeviceConstants.imageWidth, h: DeviceConstants.imageHeight);
-            packed = Uint8List.fromList(img.encodePng(image));
+            final note = NoteRenderer.render(
+              text: dirtySlot.metadata.text!,
+              w: DeviceConstants.imageWidth,
+              h: DeviceConstants.imageHeight
+            );
+
+            final pipeline = ImagePipeline();
+            final prepared = pipeline.prepareBaseImage(note, dirtySlot.metadata.fit);
+
+            final result = await compute(
+              runPipelineIsolate,
+              PipelineRequest(
+                workingImage: prepared,
+                filter: ImageFilter.normal,
+                simulateDevice: false,
+                width: DeviceConstants.imageWidth,
+                height: DeviceConstants.imageHeight,
+                fit: FitStrategy.contain,
+                dither: DitherMode.none,
+                adjustments: ImageAdjustments(brightness: 0.0, contrast: 1.0)
+              )
+            );
+
+            packed = FramebufferPacker.pack(flipVertical(result.framebuffer));
             break;
 
           case SlotContentType.empty:
