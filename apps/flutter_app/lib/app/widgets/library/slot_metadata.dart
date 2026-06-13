@@ -75,6 +75,8 @@ class SlotMetadata {
 
   final String? imageId;
 
+  final Rect? cropRect;
+
   const SlotMetadata({
     required this.type,
     this.syncState = SlotSyncState.clean,
@@ -90,7 +92,9 @@ class SlotMetadata {
     this.fit = FitStrategy.contain,
     this.filter = ImageFilter.normal,
 
-    this.imageId
+    this.imageId,
+
+    this.cropRect
   });
 
   SlotMetadata copyWith({
@@ -107,6 +111,7 @@ class SlotMetadata {
     FitStrategy? fit,
     ImageFilter? filter,
     String? imageId,
+    Rect? cropRect
   }) {
     return SlotMetadata(
       type: type ?? this.type,
@@ -121,7 +126,8 @@ class SlotMetadata {
       dither: dither ?? this.dither,
       fit: fit ?? this.fit,
       filter: filter ?? this.filter,
-      imageId: imageId ?? this.imageId
+      imageId: imageId ?? this.imageId,
+      cropRect: cropRect ?? this.cropRect
     );
   }
 
@@ -139,7 +145,11 @@ class SlotMetadata {
       'contrast': adjustments.contrast,
       'dither': dither.name,
       'fit': fit.name,
-      'filter': filter.name
+      'filter': filter.name,
+      'cropX': cropRect?.left,
+      'cropY': cropRect?.top,
+      'cropW': cropRect?.width,
+      'cropH': cropRect?.height
     };
   }
 
@@ -183,7 +193,19 @@ class SlotMetadata {
       filter: ImageFilter.values.firstWhere(
         (e) => e.name == json['filter'],
         orElse: () => ImageFilter.normal,
-      )
+      ),
+
+      cropRect: (json['cropX'] != null &&
+                json['cropY'] != null &&
+                json['cropW'] != null &&
+                json['cropH'] != null)
+          ? Rect.fromLTWH(
+              (json['cropX'] as num).toDouble(),
+              (json['cropY'] as num).toDouble(),
+              (json['cropW'] as num).toDouble(),
+              (json['cropH'] as num).toDouble(),
+            )
+          : null
     );
   }
 }

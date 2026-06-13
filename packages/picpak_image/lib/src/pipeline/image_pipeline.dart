@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
@@ -48,7 +50,14 @@ class ImagePipeline {
     );
   }
 
-  img.Image prepareBaseImage(img.Image src, FitStrategy fit) {
+  img.Image prepareBaseImage(img.Image src, FitStrategy fit, Rect? cropRect) {
+
+    debugPrint("src: $src");
+
+    if (cropRect != null) {
+      src = img.copyCrop(src, x: cropRect.left.round(), y: cropRect.top.round(), width: cropRect.width.round(), height: cropRect.height.round());
+    }
+
     switch(fit) {
       case FitStrategy.scale:
         return img.copyResize(
@@ -57,6 +66,8 @@ class ImagePipeline {
           height: targetHeight
         );
       case FitStrategy.crop:
+        if (src.width == 0 || src.height == 0) return src;
+
         final ratioSrc = src.width / src.height;
         final ratioTarget = targetWidth / targetHeight;
 
@@ -78,5 +89,25 @@ class ImagePipeline {
       case _:
         return src;
     }
+  }
+
+  Rect defaultCrop(Size imageSize) {
+    final targetAspect = 4 / 3;
+    final imageAspect = imageSize.width / imageSize.height;
+
+    double cropW, cropH;
+
+    if (imageAspect > targetAspect) {
+      cropH = imageSize.height;
+      cropW = cropH * targetAspect;
+    } else {
+      cropW = imageSize.width;
+      cropH = cropW / targetAspect;
+    }
+
+    final left = (imageSize.width - cropW) / 2;
+    final top = (imageSize.height - cropH) / 2;
+
+    return Rect.fromLTWH(left, top, cropW, cropH);
   }
 }

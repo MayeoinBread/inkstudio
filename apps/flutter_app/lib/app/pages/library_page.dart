@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:picpak_open/app/controller/library_controller.dart';
-import 'package:picpak_open/app/repositories/image_repository.dart';
 import 'package:picpak_open/app/repositories/slot_repository.dart';
 import 'package:picpak_open/app/services/ble_service.dart';
 import 'package:picpak_open/app/services/device_session_service.dart';
@@ -51,6 +50,14 @@ class _LibraryPageState extends State<LibraryPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       controller.loadFromDatabase();
     });
+
+    // ble.onDeleteAck = (slot) async {
+    //   final empty = SlotMetadataDefaults.empty(slot);
+    //   controller.updateSlot(slot: slot, exists: false, thumbnailBytes: null, metadata: empty);
+    //   controller.updateMetadata(slot, empty);
+    //   await SlotRepository().saveSlot(slot: slot, imageId: null, metadata: empty);
+    //   setState((){});
+    // };
   }
 
   @override
@@ -112,16 +119,21 @@ class _LibraryPageState extends State<LibraryPage> {
     final item = controller.items[slot];
     final metadata = item.metadata;
 
-    SlotPendingAction newAction = SlotPendingAction.delete;
+    final newAction = metadata.pendingAction == SlotPendingAction.delete
+        ? SlotPendingAction.none
+        : SlotPendingAction.delete;
 
-    if (metadata.pendingAction == SlotPendingAction.delete) {
-      newAction = SlotPendingAction.none;
-    }
+    final updatedMetadata = metadata.copyWith(
+      pendingAction: newAction,
+    );
 
-    final updatedMetadata = metadata.copyWith(pendingAction: newAction);
     controller.updateMetadata(slot, updatedMetadata);
 
-    await SlotRepository().saveSlot(slot: slot, imageId: metadata.imageId, metadata: metadata);
+    await SlotRepository().saveSlot(
+      slot: slot,
+      imageId: metadata.imageId,
+      metadata: updatedMetadata,
+    );
   }
 
   @override

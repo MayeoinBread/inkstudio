@@ -135,7 +135,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    await pipeline.prepare(bytes, _fitStrategy);
+    await pipeline.prepare(bytes, _fitStrategy, null);
   }
 
   Future<void> _reprocess() async {

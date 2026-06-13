@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:picpak_image/picpak_image.dart';
@@ -10,12 +12,12 @@ class ImagePipelineController {
   PaletteFramebuffer? framebuffer;
   Uint8List? previewBytes;
 
-  Future<void> prepare(Uint8List bytes, FitStrategy fit) async {
+  Future<void> prepare(Uint8List bytes, FitStrategy fit, Rect? cropRect) async {
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return;
 
     final pipeline = ImagePipeline();
-    sourceImage = pipeline.prepareBaseImage(decoded, fit);
+    sourceImage = pipeline.prepareBaseImage(decoded, fit, cropRect);
   }
 
   Future<void> processMetadata({

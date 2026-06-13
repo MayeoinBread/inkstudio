@@ -88,7 +88,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
     final pipeline = ImagePipeline();
 
-    final prepared = pipeline.prepareBaseImage(decoded, _fitStrategy);
+    final prepared = pipeline.prepareBaseImage(decoded, _fitStrategy, null);
 
     setState(() {
       _workingImage = prepared;

@@ -31,6 +31,8 @@ class BleManager {
 
   Function(List<int> slots)? onSlotList;
 
+  Function(int slot)? onDeleteAck;
+
   Function()? onDownloadComplete;
 
   Function()? onUploadComplete;
@@ -159,7 +161,9 @@ class BleManager {
         _handleSlotList(data);
         break;
       case 0x33:
-        debugPrint("Delete ACK: $data");
+        _handleDeleteAck(data);
+        break;
+        // debugPrint("Delete ACK: $data");
     }
   }
 
@@ -350,6 +354,19 @@ class BleManager {
     debugPrint("Slots: $slots");
 
     onSlotList?.call(slots);
+  }
+
+  void _handleDeleteAck(List<int> data) {
+    if (data.length < 5) return;
+
+    final lo = data[2];
+    final hi = data[3];
+
+    final slot = (hi << 8) | lo;
+
+    debugPrint("Delete ACK for slot: $slot");
+
+    onDeleteAck?.call(slot);
   }
 }
 

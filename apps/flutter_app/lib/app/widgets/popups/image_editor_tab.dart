@@ -14,6 +14,7 @@ import 'package:picpak_open/app/widgets/library/library_item.dart';
 import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
+import 'package:picpak_open/app/widgets/popups/crop_dialog.dart';
 
 class ImageEditorTab extends StatefulWidget {
   final LibraryItem item;
@@ -37,6 +38,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   Uint8List? _originalImageBytes;
   Uint8List? previewBytes;
 
+  int _processVersion = 0;
+
   final ImagePipelineController pipeline = ImagePipelineController();
 
   // Image Adjustments/Dithering, etc.
@@ -45,6 +48,49 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   FitStrategy _fitStrategy = FitStrategy.crop;
   ImageFilter _filter = ImageFilter.normal;
   bool _simulateDeviceScreen = false;
+  Rect? cropRect;
+
+  @override
+  void initState() {
+    super.initState();
+
+    debugPrint("--HYDRATING--");
+
+    _hydrateFromItem();
+  }
+
+  Future<void> _hydrateFromItem() async {
+    // pipeline.clear();
+    final item = widget.item;
+
+    final metadata = item.metadata;
+
+    final imageId = metadata.imageId;
+    debugPrint("ImageID: $imageId");
+    if (imageId == null) return;
+
+    setState(() {
+      algorithm = metadata.dither;
+      adjustments = metadata.adjustments;
+      _fitStrategy = metadata.fit;
+      _filter = metadata.filter;
+      cropRect = metadata.cropRect;
+    });
+
+    _originalImageBytes = await ImageRepository().loadOriginalBytes(imageId);
+    debugPrint("bytes length: ${_originalImageBytes!.length}");
+    if (_originalImageBytes == null) return;
+
+    await pipeline.prepare(_originalImageBytes!, _fitStrategy, cropRect);
+    await pipeline.processMetadata(
+      metadata: metadata,
+      simulateDevice: _simulateDeviceScreen
+    );
+
+    if (!mounted) return;
+
+    setState(() {});
+  }
 
   Future<void> _pickImage() async {
     final result = await FilePicker.platform.pickFiles(
@@ -69,19 +115,21 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     });
 
     await _prepareWorkingImage();
-    _reprocess();
+    await _reprocess();
   }
 
   Future<void> _prepareWorkingImage() async {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    await pipeline.prepare(bytes, _fitStrategy);
+    await pipeline.prepare(bytes, _fitStrategy, cropRect);
   }
 
   Future<void> _reprocess() async {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
+
+    final int version = ++_processVersion;
 
     await pipeline.process(
       dither: algorithm,
@@ -90,6 +138,10 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       fit: _fitStrategy,
       adjustments: adjustments
     );
+
+    if (version != _processVersion) return;
+
+    setState((){});
   }
 
   void _save() async {
@@ -116,7 +168,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       dither: algorithm,
       fit: _fitStrategy,
       filter: _filter,
-      imageId: image.id
+      imageId: image.id,
+      cropRect: cropRect
     );
 
     widget.onSaved(metadata, thumbnail);
@@ -148,6 +201,28 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                       });
                       _reprocess();
                     }
+                  ),
+                  const SizedBox(height: 8),
+                  IconButton(
+                    icon: const Icon(Icons.crop),
+                    onPressed: () async {
+                      final rect = await showDialog<Rect>(
+                        context: context,
+                        builder: (_) => CropDialog(
+                          imageBytes: _originalImageBytes!,
+                          initialRect: cropRect,
+                        )
+                      );
+
+                      if (rect != null) {
+                        setState(() {
+                          cropRect = rect;
+                        });
+                      }
+
+                      await _prepareWorkingImage();
+                      await _reprocess();
+                    },
                   ),
                   const SizedBox(height: 8),
                   ImageAdjustmentControls(

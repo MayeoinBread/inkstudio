@@ -58,12 +58,6 @@ class LibraryController extends ChangeNotifier {
   Future<void> loadFromDatabase() async {
     items = await repository.loadLibrary();
 
-    // TODO just a placeholder for dev, to make sure never empty
-    //  Want to switch this out with the number of items slots coming from the device
-    if (items.isEmpty) {
-      initialise(20);
-    }
-
     notifyListeners();
   }
 
@@ -130,6 +124,8 @@ class LibraryController extends ChangeNotifier {
         debugPrint("Deleting image");
         await ble.deleteImage(slot);
         await SlotRepository().saveSlot(slot: slot, imageId: null, metadata: SlotMetadataDefaults.empty(slot));
+        items[slot] = items[slot].copyWith(exists: false, thumbnailBytes: null, metadata: SlotMetadataDefaults.empty(slot));
+        notifyListeners();
       } else if (dirtySlot.metadata.pendingAction == SlotPendingAction.upload) {
 
         final slotType = dirtySlot.metadata.type;
@@ -158,7 +154,7 @@ class LibraryController extends ChangeNotifier {
             );
 
             final pipeline = ImagePipeline();
-            final prepared = pipeline.prepareBaseImage(image, dirtySlot.metadata.fit);
+            final prepared = pipeline.prepareBaseImage(image, dirtySlot.metadata.fit, dirtySlot.metadata.cropRect);
 
             final result = await compute(
               runPipelineIsolate,
@@ -185,7 +181,7 @@ class LibraryController extends ChangeNotifier {
             );
 
             final pipeline = ImagePipeline();
-            final prepared = pipeline.prepareBaseImage(note, dirtySlot.metadata.fit);
+            final prepared = pipeline.prepareBaseImage(note, dirtySlot.metadata.fit, dirtySlot.metadata.cropRect);
 
             final result = await compute(
               runPipelineIsolate,
@@ -217,6 +213,8 @@ class LibraryController extends ChangeNotifier {
 
         final updated = dirtySlot.metadata.copyWith(syncState: SlotSyncState.clean, pendingAction: SlotPendingAction.none);
         await SlotRepository().saveSlot(slot: slot, imageId: imageId, metadata: updated);
+        items[slot] = items[slot].copyWith(metadata: updated);
+        notifyListeners();
       }
     }
   }
