@@ -306,6 +306,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     const SizedBox(height: 8),
                     ImageAdjustmentControls(
                       adjustments: adjustments,
+                      filter: _filter,
                       onChanged: (newAdjustments) async {
                         setState(() {
                           adjustments = newAdjustments;

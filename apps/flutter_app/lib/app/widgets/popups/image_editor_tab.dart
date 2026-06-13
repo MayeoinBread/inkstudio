@@ -218,36 +218,49 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                     }
                   ),
                   const SizedBox(height: 8),
-                  IconButton(
-                    icon: const Icon(Icons.crop),
-                    onPressed: () async {
-                      final rect = await showDialog<Rect>(
-                        context: context,
-                        builder: (_) => CropDialog(
-                          imageBytes: _originalImageBytes!,
-                          initialRect: cropRect,
-                        )
-                      );
 
-                      if (rect != null) {
-                        setState(() {
-                          cropRect = rect;
-                        });
-                      }
+                  Card(
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.crop),
+                          tooltip: 'Crop',
+                          onPressed: () async {
+                            final rect = await showDialog<Rect>(
+                              context: context,
+                              builder: (_) => CropDialog(
+                                imageBytes: _originalImageBytes!,
+                                initialRect: cropRect,
+                              )
+                            );
 
-                      await _prepareWorkingImage();
-                      await _reprocess();
-                    },
+                            if (rect != null) {
+                              setState(() {
+                                cropRect = rect;
+                              });
+                            }
+
+                            await _prepareWorkingImage();
+                            await _reprocess();
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.diamond_sharp),
+                          tooltip: 'Auto-Enhance',
+                          onPressed: () async {
+                            await _autoEnhance();
+                          }
+                        ),
+                      ],
+                    )
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.diamond_sharp),
-                    onPressed: () async {
-                      await _autoEnhance();
-                    }
-                  ),
+
                   const SizedBox(height: 8),
                   ImageAdjustmentControls(
                     adjustments: adjustments,
+                    filter: _filter,
                     onChanged: (newAdjustments) async {
                       setState(() {
                         adjustments = newAdjustments;

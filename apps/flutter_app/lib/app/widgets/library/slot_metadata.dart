@@ -88,7 +88,7 @@ class SlotMetadata {
     this.wifiPassword,
     this.wifiSecurity,
 
-    this.adjustments = const ImageAdjustments(brightness: 0.0, contrast: 1.0, saturation: 1.0),
+    this.adjustments = const ImageAdjustments(),
     this.dither = DitherMode.none,
     this.fit = FitStrategy.contain,
     this.filter = ImageFilter.normal,
@@ -139,24 +139,37 @@ class SlotMetadata {
   Map<String, dynamic> toJson() {
     return {
       'type': type.name,
+      
       'syncState': syncState.name,
       'pendingAction': pendingAction.name,
+      
       'text': text,
+      
       'wifiSsid': wifiSsid,
       'wifiPassword': wifiPassword,
       'wifiSecurity': wifiSecurity,
+      
       'imageId': imageId,
+      
       'brightness': adjustments.brightness,
       'contrast': adjustments.contrast,
       'saturation': adjustments.saturation,
       'sharpen': adjustments.sharpen,
+      'comicStrength': adjustments.comicStrength,
+      'inkThickness': adjustments.inkThickness,
+      'toneLevels': adjustments.toneLevels,
+
       'blackBias': paletteBias.black,
       'whiteBias': paletteBias.white,
       'redBias': paletteBias.red,
       'yellowBias': paletteBias.yellow,
+      
       'dither': dither.name,
+      
       'fit': fit.name,
+      
       'filter': filter.name,
+      
       'cropX': cropRect?.left,
       'cropY': cropRect?.top,
       'cropW': cropRect?.width,
@@ -190,7 +203,10 @@ class SlotMetadata {
         brightness: (json['brightness'] as num?)?.toDouble() ?? 0.0,
         contrast: (json['contrast'] as num?)?.toDouble() ?? 1.0,
         saturation: (json['saturation'] as num?)?.toDouble() ?? 1.0,
-        sharpen: (json['sharpen'] as num?)?.toDouble() ?? 0.0
+        sharpen: (json['sharpen'] as num?)?.toDouble() ?? 0.0,
+        comicStrength: (json['comicStrength'] as num?)?.toDouble() ?? 1.0,
+        inkThickness: (json['inkThickness'] as num?)?.toDouble() ?? 0.0,
+        toneLevels: (json['toneLevels'] as num?)?.toDouble() ?? 2.0
       ),
 
       paletteBias: PaletteBias(

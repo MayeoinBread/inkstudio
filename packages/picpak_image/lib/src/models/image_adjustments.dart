@@ -7,24 +7,51 @@ class ImageAdjustments {
   final double saturation;
   final double sharpen;
 
+  // 0.5 -> subtle line art
+  // 1.0 -> balanced comic
+  // 1.5 -> strong ink style
+  // 2.0 -> heavy stylisation
+  final double comicStrength;
+
+  // 0 -> pencil thin
+  // 1 -> standard ink
+  // 2 -> bold comic lines
+  // 3 -> graphic poster style
+  final double inkThickness;
+
+  // 2 -> poster-like flat shading
+  // 3 -> classic comic
+  // 4-5 -> semi-realistic stylisation
+  // 5-8 -> ???
+  final double toneLevels;
+
   const ImageAdjustments({
     this.brightness = 0.0,
     this.contrast = 1.0,
     this.saturation = 1.0,
-    this.sharpen = 0.0
+    this.sharpen = 0.0,
+    this.comicStrength = 1.0,
+    this.inkThickness = 0.0,
+    this.toneLevels = 2.0
   });
 
   ImageAdjustments copyWith({
     double? brightness,
     double? contrast,
     double? saturation,
-    double? sharpen
+    double? sharpen,
+    double? comicStrength,
+    double? inkThickness,
+    double? toneLevels
   }) {
     return ImageAdjustments(
       brightness: brightness ?? this.brightness,
       contrast: contrast ?? this.contrast,
       saturation: saturation ?? this.saturation,
-      sharpen: sharpen ?? this.sharpen
+      sharpen: sharpen ?? this.sharpen,
+      comicStrength: comicStrength ?? this.comicStrength,
+      inkThickness: inkThickness ?? this.inkThickness,
+      toneLevels: toneLevels ?? this.toneLevels
     );
   }
 

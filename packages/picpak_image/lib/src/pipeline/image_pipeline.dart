@@ -30,7 +30,7 @@ class ImagePipeline {
     final resized = workingImage;
 
     final filtered = ImageFilterProcessor.apply(
-      resized, filter
+      resized, filter, adjustments
     );
 
     final adjusted = ImageAdjustmentProcessor.apply(filtered, adjustments);
