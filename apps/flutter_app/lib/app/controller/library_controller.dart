@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_open/app/repositories/image_repository.dart';
 import 'package:picpak_open/app/repositories/slot_repository.dart';
 import 'package:picpak_open/app/services/device_session_service.dart';
-import 'package:picpak_open/app/services/image_pipeline_controller.dart';
 import 'package:picpak_open/app/services/thumbnail_service.dart';
 import 'package:picpak_open/app/state/device_session_state.dart';
 import 'package:picpak_open/app/widgets/library/library_item.dart';

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:picpak_image/picpak_image.dart';
-import 'package:picpak_open/app/widgets/popups/qr_code_tab.dart';
 
 enum SlotContentType {
   empty,
