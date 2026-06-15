@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:image/image.dart' as img;
 
 enum SwatchType {
@@ -10,16 +11,17 @@ enum SwatchType {
   textEdges,
   rgbSpectrum,
   warmRamp,
-  impossibleColours
+  impossibleColours,
+  testPanel
 }
 
 class SwatchGenerator {
-  static img.Image generate(
+  static Future<img.Image> generate(
     SwatchType type, {
       required int width,
       required int height
     }
-  ) {
+  ) async {
     return switch(type) {
       SwatchType.gradientHorizontal => _gradientHorizontal(width, height),
       SwatchType.gradientVertical => _gradientVertical(width, height),
@@ -30,8 +32,17 @@ class SwatchGenerator {
       SwatchType.textEdges => _textEdges(width, height),
       SwatchType.rgbSpectrum => _rgbSpectrum(width, height),
       SwatchType.warmRamp => _warmRamp(width, height),
-      SwatchType.impossibleColours => _impossibleColours(width, height)
+      SwatchType.impossibleColours => _impossibleColours(width, height),
+      SwatchType.testPanel => await _loadTestPanel()
     };
+  }
+
+  static Future<img.Image> _loadTestPanel() async {
+    final bytes = await rootBundle.load(
+      'assets/test_images/picpak_test_panel.png'
+    );
+
+    return img.decodeImage(bytes.buffer.asUint8List())!;
   }
 
   static img.Image _gradientHorizontal(int w, int h) {
