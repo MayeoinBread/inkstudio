@@ -1,4 +1,4 @@
-name: flutter_app
+name: picpak_open
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -34,6 +34,12 @@ dependencies:
   image: ^4.0.0
   flutter_blue_plus: ^1.34.0
   flutter_blue_plus_windows: ^1.26.1
+  qr: ^4.0.0
+  path_provider: ^2.1.5
+  uuid: ^4.5.3
+  crypto: ^3.0.7
+  sqflite_common_ffi: ^2.4.1
+  path: ^1.9.1
   picpak_core:
     path: ../../packages/picpak_core
   picpak_domain:
@@ -70,6 +76,9 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  assets:
+    - assets/test_images/picpak_test_panel.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

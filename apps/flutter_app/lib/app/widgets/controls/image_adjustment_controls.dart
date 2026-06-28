@@ -20,94 +20,84 @@ class ImageAdjustmentControls extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Image Adjustments', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 24),
+            Text('Adjustments', style: Theme.of(context).textTheme.titleMedium),
 
             // BRIGHTNESS
-            Text('Brightness', style: Theme.of(context).textTheme.titleMedium),
-
             Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: () {
-                    final v = (adjustments.brightness - 0.1).clamp(-1.0, 1.0);
-                    onChanged(adjustments.copyWith(brightness: v));
-                  },
+                SizedBox(
+                  width: 70,
+                  child: Text('Brightness', style: Theme.of(context).textTheme.bodyMedium)
                 ),
                 Expanded(
-                  child: Center(
-                    child: Text(adjustments.brightness.toStringAsFixed(2))
+                  child: Slider(
+                    min: -1.0, max: 1.0, divisions: 20,
+                    value: adjustments.brightness,
+                    label: adjustments.brightness.toStringAsFixed(2),
+                    onChanged: (value) {
+                      onChanged(adjustments.copyWith(brightness: value));
+                    }
                   )
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    final v = (adjustments.brightness + 0.1).clamp(-1.0, 1.0);
-                    onChanged(adjustments.copyWith(brightness: v));
-                  },
                 )
               ]
             ),
 
-            // ExcludeSemantics(
-            //   child: Slider(
-            //     value: adjustments.brightness,
-            //     min: -1.0,
-            //     max: 1.0,
-            //     onChanged: (value) {
-            //       // onChanged(adjustments.copyWith(brightness: value));
-            //     },
-            //     onChangeEnd: (value) {
-            //       onChanged(adjustments.copyWith(brightness: value));
-            //     },
-            //   )
-            // ),
-            // Text(adjustments.brightness.toStringAsFixed(2)),
-
-
-            const SizedBox(height: 24),
-
             // CONTRAST
-            Text('Contrast', style: Theme.of(context).textTheme.titleMedium),
             Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: () {
-                    final v = (adjustments.contrast - 0.1).clamp(0.0, 2.0);
-                    onChanged(adjustments.copyWith(contrast: v));
-                  },
+                SizedBox(
+                  width: 70,
+                  child: Text('Contrast', style: Theme.of(context).textTheme.bodyMedium)
                 ),
                 Expanded(
-                  child: Center(
-                    child: Text(adjustments.contrast.toStringAsFixed(2))
+                  child: Slider(
+                    min: 0.0, max: 2.0, divisions: 20,
+                    value: adjustments.contrast,
+                    label: adjustments.contrast.toStringAsFixed(2),
+                    onChanged: (value) {
+                      onChanged(adjustments.copyWith(contrast: value));
+                    }
                   )
+                )
+              ]
+            ),
+
+            Row(
+              children: [
+                SizedBox(
+                  width: 70,
+                  child: Text('Saturation', style: Theme.of(context).textTheme.bodyMedium)
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () {
-                    final v = (adjustments.contrast + 0.1).clamp(0.0, 2.0);
-                    onChanged(adjustments.copyWith(contrast: v));
-                  },
+                Expanded(
+                  child: Slider(
+                    min: 0.0, max: 2.0, divisions: 20,
+                    value: adjustments.saturation,
+                    label: adjustments.saturation.toStringAsFixed(2),
+                    onChanged: (value) {
+                      onChanged(adjustments.copyWith(saturation: value));
+                    }
+                  )
+                )
+              ]
+            ),
+
+            Row(
+              children: [
+                SizedBox(
+                  width: 70,
+                  child: Text('Sharpen', style: Theme.of(context).textTheme.bodyMedium)
+                ),
+                Expanded(
+                  child: Slider(
+                    min: 0.0, max: 2.0, divisions: 20,
+                    value: adjustments.sharpen,
+                    onChanged: (value) {
+                      onChanged(adjustments.copyWith(sharpen: value));
+                    }
+                  )
                 )
               ]
             )
-            
-            // ExcludeSemantics(
-            //   child: Slider(
-            //     value: adjustments.contrast,
-            //     min: 0.0,
-            //     max: 2.0,
-            //     onChanged: (value) {
-            //       // onChanged(adjustments.copyWith(contrast: value));
-            //     },
-            //     onChangeEnd: (value) {
-            //       onChanged(adjustments.copyWith(contrast: value));
-            //     },
-            //   )
-            // ),
-            // Text(adjustments.contrast.toStringAsFixed(2))
           ]
         )
       )

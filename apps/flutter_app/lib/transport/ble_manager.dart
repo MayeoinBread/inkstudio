@@ -2,15 +2,16 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter_app/transport/ble_session.dart';
-import 'package:flutter_app/transport/device_info.dart';
+import 'package:picpak_open/app/services/device_session_service.dart';
+import 'package:picpak_open/app/state/device_session_state.dart';
+import 'package:picpak_open/transport/ble_session.dart';
+import 'package:picpak_open/transport/device_info.dart';
 import 'package:flutter_blue_plus_windows/flutter_blue_plus_windows.dart';
-import 'package:picpak_image/src/pipeline/palette_framebuffer.dart';
-import 'package:picpak_image/src/encoding/framebuffer_decoder.dart';
 import 'package:picpak_protocol/picpak_protocol.dart';
+import 'package:picpak_image/picpak_image.dart';
 
 class BleManager {
-  final BleSession session = BleSession();
+  final BleSession bleSession = BleSession();
   BluetoothCharacteristic? ff01;  // frameBuffer
   BluetoothCharacteristic? ff02;
 
@@ -19,15 +20,19 @@ class BleManager {
 
   ImageReadSession? _readSession;
 
-  Function(PaletteFramebuffer frameBuffer)? onImageDownloaded;
+  Completer<String>? _slotHashCompleter;
+
+  final session = DeviceSessionService.instance;
+
+  final StreamController<PaletteFramebuffer> imageStream = StreamController.broadcast();
 
   Function(DeviceInfo info)? onDeviceInfo;
 
   Function(List<int> slots)? onSlotList;
 
-  Function()? onDownloadComplete;
+  Function(int slot)? onDeleteAck;
 
-  final ValueNotifier<double> uploadProgress = ValueNotifier<double>(0.0);
+  Function()? onDownloadComplete;
 
   Function()? onUploadComplete;
 
@@ -105,28 +110,35 @@ class BleManager {
     await FlutterBluePlus.stopScan();
 
     // Always use THIS instance from now on
-    session.device = device;
+    bleSession.device = device;
 
     await device.connect(autoConnect: false);
     
     await initChannels(device);
 
-    await ff01!.setNotifyValue(true);
-    await ff02!.setNotifyValue(true);
+    if (!(ff01?.isNotifying ?? false)) {
+      await ff01!.setNotifyValue(true);
+    }
+
+    if (!(ff02?.isNotifying ?? false)) {
+      await ff02!.setNotifyValue(true);
+    }
 
     _ff01Sub = ff01!.lastValueStream.listen(_handleBleData);
     _ff02Sub = ff02!.lastValueStream.listen(_handleBleData);
   }
 
   Future<void> disconnect() async {
-    if (session.device == null) return;
+    if (bleSession.device == null) return;
+
+    await _ff01Sub?.cancel();
+    await _ff02Sub?.cancel();
 
     _ff01Sub = null;
     _ff02Sub = null;
 
-    await session.device?.disconnect();
-
-    session.device = null;
+    await bleSession.device?.disconnect();
+    bleSession.device = null;
   }
 
   void _handleBleData(List<int> data) {
@@ -148,7 +160,10 @@ class BleManager {
         _handleSlotList(data);
         break;
       case 0x33:
-        debugPrint("Delete ACK: $data");
+        _handleDeleteAck(data);
+        break;
+      case 0x04:
+        _parseSlotHash(data);
     }
   }
 
@@ -159,10 +174,7 @@ class BleManager {
       throw Exception("No active BLE session");
     }
 
-    uploadProgress.value = 0.0;
-
     for (int i=0; i<packets.length; i++){
-      // debugPrint("Sending packet $i");
       try {
         await char.write(packets[i].bytes, withoutResponse: false);
       } catch (e, st) {
@@ -171,9 +183,11 @@ class BleManager {
         rethrow;
       }
       final progress = (i + 1) / packets.length;
-      uploadProgress.value = progress;
 
-      // debugPrint("Upload percentage: $progress%");
+      session.state = session.state.copyWith(
+        transfer: TransferState.uploading,
+        progress: progress
+      );
       
       await Future.delayed(const Duration(milliseconds: 3));
     }
@@ -195,7 +209,6 @@ class BleManager {
 
       await Future.delayed(const Duration(milliseconds: 30));
 
-      uploadProgress.value = 0.0;
       onUploadComplete?.call();
   }
 
@@ -221,6 +234,33 @@ class BleManager {
     final hi = (slotNumber >> 8) & 0xFF;
 
     await ff01!.write([0xAA, 0x03, lo, hi, 0xFF]);
+  }
+
+  Future<void> getHashForSlot(int slotNumber) async {
+    final lo = slotNumber & 0xFF;
+    final hi = (slotNumber >> 8) & 0xFF;
+
+    await ff01!.write([0xAA, 0x04, lo, hi, 0x02, 0xFF]);
+  }
+
+  Future<PaletteFramebuffer> downloadFramebuffer(int slot) async {
+    final completer = Completer<PaletteFramebuffer>();
+
+    late StreamSubscription sub;
+
+    sub = imageStream.stream.listen((fb) {
+      if (!completer.isCompleted) {
+        completer.complete(fb);
+      }
+    });
+
+    await getImageInSlot(slot);
+
+    final framebuffer = await completer.future;
+
+    await sub.cancel();
+
+    return framebuffer;
   }
 
   DeviceInfo? _parseDeviceInfo(List<int> data) {
@@ -280,11 +320,9 @@ class BleManager {
 
       final framebufferBytes = builder.toBytes();
 
-      debugPrint(framebufferBytes.length.toString());
-
       final framebuffer = FramebufferDecoder.decode(framebufferBytes);
       
-      onImageDownloaded?.call(framebuffer);
+      imageStream.add(framebuffer);
 
       onDownloadComplete?.call();
 
@@ -302,7 +340,42 @@ class BleManager {
       }
     }
 
+    debugPrint("Slots: $slots");
+
     onSlotList?.call(slots);
+  }
+
+  void _handleDeleteAck(List<int> data) {
+    if (data.length < 5) return;
+
+    final lo = data[2];
+    final hi = data[3];
+
+    final slot = (hi << 8) | lo;
+
+    onDeleteAck?.call(slot);
+  }
+
+  void _parseSlotHash(List<int> data) {
+    if (data.length < 22) return;
+
+    final digestBytes = data.sublist(5, 21);
+
+    final md5 = digestBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+    _slotHashCompleter?.complete(md5);
+    _slotHashCompleter = null;
+  }
+
+  Future<String> requestSlotHash(int slot) async {
+    _slotHashCompleter = Completer<String>();
+
+    final lo = slot & 0xFF;
+    final hi = (slot >> 8) & 0xFF;
+
+    await ff01!.write([0xAA, 0x04, lo, hi, 0x02, 0xFF]);
+
+    return _slotHashCompleter!.future;
   }
 }
 

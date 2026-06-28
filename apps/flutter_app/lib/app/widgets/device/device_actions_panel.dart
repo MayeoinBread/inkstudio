@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_app/app/widgets/controls/slot_input_field.dart';
+import 'package:picpak_open/app/widgets/controls/slot_input_field.dart';
 
 class DeviceActionsPanel extends StatelessWidget {
   final VoidCallback? onConnect;
@@ -29,7 +29,7 @@ class DeviceActionsPanel extends StatelessWidget {
         ElevatedButton(
           onPressed: onConnect,
           child: const Text('Connect'),
-        ),
+        ),  
 
         const SizedBox(height: 8),
 
@@ -47,9 +47,6 @@ class DeviceActionsPanel extends StatelessWidget {
         ElevatedButton(
           onPressed: onDownload,
           child: Text('Download')
-          // child: Text(activeSlot == null
-          //   ? 'Download'
-          //   : 'Download Slot $activeSlot'),
         ),
 
         const SizedBox(height: 8),

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:picpak_image/picpak_image.dart';
 
-class DitheringControls extends StatefulWidget {
+class DitheringControls extends StatelessWidget {
   final DitherMode selectedAlgorithm;
 
   final ValueChanged<DitherMode> onAlgorithmChanged;
@@ -13,36 +13,34 @@ class DitheringControls extends StatefulWidget {
   });
 
   @override
-  State<DitheringControls> createState() => _DitheringControlsState();
-}
-
-class _DitheringControlsState extends State<DitheringControls> {
-  @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Dithering', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: DitherMode.values.map((dither) {
-                final selected = dither == widget.selectedAlgorithm;
-                return ChoiceChip(
-                  label: Text(dither.name),
-                  selected: selected,
-                  showCheckmark: false,
-                  onSelected: (_) {
-                    widget.onAlgorithmChanged(dither);
-                  },
-                );
-              }).toList(),
-            ),
-          ],
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Dithering', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: DitherMode.values.map((dither) {
+                  final selected = dither == selectedAlgorithm;
+                  return ChoiceChip(
+                    label: Text(dither.name),
+                    selected: selected,
+                    showCheckmark: false,
+                    onSelected: (_) {
+                      onAlgorithmChanged(dither);
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
+          )
         )
       )
     );

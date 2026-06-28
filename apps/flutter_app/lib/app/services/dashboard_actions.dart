@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
-import 'package:flutter_app/app/state/device_session_state.dart';
-import 'package:flutter_app/transport/ble_manager.dart';
+import 'package:picpak_open/app/state/device_session_state.dart';
+import 'package:picpak_open/transport/ble_manager.dart';
 
 class DashboardActions {
   static Future<void> connect({
@@ -59,7 +59,6 @@ class DashboardActions {
   }) async {
     // TODO some sort of warning/error handling here
     if (slot == null) {
-      debugPrint("activeSlot is null");
       return;
     }
 

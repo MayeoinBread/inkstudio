@@ -1,25 +1,23 @@
-import 'dart:typed_data';
+import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' hide ConnectionState;
-import 'package:flutter_app/app/services/dashboard_actions.dart';
-import 'package:flutter_app/app/services/image_pipeline_controller.dart';
-import 'package:flutter_app/app/state/device_session_state.dart';
-import 'package:flutter_app/app/widgets/common/image_preview_panel.dart';
-import 'package:flutter_app/app/widgets/common/status_bar.dart';
-import 'package:flutter_app/app/widgets/controls/dithering_controls.dart';
-import 'package:flutter_app/app/widgets/controls/image_adjustment_controls.dart';
-import 'package:flutter_app/app/widgets/controls/processing_options_panel.dart';
-import 'package:flutter_app/app/widgets/device/device_actions_panel.dart';
-import 'package:flutter_app/app/widgets/device/device_info_card.dart';
-import 'package:flutter_app/transport/ble_manager.dart';
+import 'package:picpak_open/app/services/ble_service.dart';
+import 'package:picpak_open/app/services/dashboard_actions.dart';
+import 'package:picpak_open/app/services/device_session_service.dart';
+import 'package:picpak_open/app/services/image_pipeline_controller.dart';
+import 'package:picpak_open/app/state/device_session_state.dart';
+import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
+import 'package:picpak_open/app/widgets/controls/dithering_controls.dart';
+import 'package:picpak_open/app/widgets/controls/image_adjustment_controls.dart';
+import 'package:picpak_open/app/widgets/controls/filter_controls.dart';
+import 'package:picpak_open/app/widgets/device/device_actions_panel.dart';
+import 'package:picpak_open/app/widgets/device/device_info_card.dart';
 import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
-import 'package:picpak_image/src/encoding/framebuffer_packer.dart';
 import 'package:picpak_protocol/picpak_protocol.dart';
-import 'package:picpak_image/src/pipeline/fit_strategy.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -31,9 +29,10 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
 
   DitherMode algorithm = DitherMode.atkinson;
-  ImageAdjustments adjustments = ImageAdjustments(brightness: 0.0, contrast: 1.0);
+  ImageAdjustments adjustments = ImageAdjustments();
+  PaletteBias paletteBias = PaletteBias();
 
-  DeviceSessionState session = DeviceSessionState(connection: ConnectionState.disconnected, transfer: TransferState.idle, progress: 0.0, deviceName: 'Not Connected', batteryPercent: 0, firmware: '-', availableSlots: const []);
+  final session = DeviceSessionService.instance;
 
   FitStrategy _fitStrategy = FitStrategy.crop;
   ImageFilter _filter = ImageFilter.normal;
@@ -42,40 +41,38 @@ class _DashboardPageState extends State<DashboardPage> {
   final ImagePipelineController pipeline = ImagePipelineController();
   Uint8List? _originalImageBytes;
 
-  bool _processing = false;
+  final ble = BleService.instance.manager;
 
-  DateTime _lastProgressUpdate = DateTime.fromMillisecondsSinceEpoch(0);
-
-  final BleManager ble = BleManager();
+  late StreamSubscription sub;
 
   void updateSession(DeviceSessionState Function(DeviceSessionState current) updater) {
-    setState(() { session = updater(session);});
+    setState(() { session.state = updater(session.state);});
   }
 
   @override
   void initState() {
     super.initState();
 
-    ble.onImageDownloaded = (framebuffer) {
-      pipeline.framebuffer = framebuffer;
+    sub = ble.imageStream.stream.listen((fb) {
+      if (!mounted) return;
 
+      pipeline.framebuffer = fb;
       pipeline.previewBytes = Uint8List.fromList(
-        img.encodePng(PanelRerender.renderFramebuffer(framebuffer))
+        img.encodePng(PanelRerender.renderFramebuffer(fb))
       );
 
-
       setState(() {
-        session = session.copyWith(
+        session.state = session.state.copyWith(
           transfer: TransferState.idle,
-          progress: 0,
+          progress: 0.0,
           activeSlot: null
         );
       });
-    };
+    });
 
     ble.onDeviceInfo = (info) {
       setState(() {
-        session = session.copyWith(
+        session.state = session.state.copyWith(
           batteryPercent: info.battery,
           firmware: info.firmware
         );
@@ -83,12 +80,11 @@ class _DashboardPageState extends State<DashboardPage> {
     };
 
     ble.onSlotList = (slots) {
-      final safeActive = session.activeSlot;
+      final safeActive = session.state.activeSlot;
 
       setState(() {
-        session = session.copyWith(
+        session.state = session.state.copyWith(
           availableSlots: slots,
-          // activeSlot: slots.isNotEmpty ? slots.first : null
           activeSlot: slots.contains(safeActive) ? safeActive : (slots.isNotEmpty ? slots.first : null)
         );
       });
@@ -96,7 +92,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     ble.onUploadComplete = () {
       setState(() {
-        session = session.copyWith(
+        session.state = session.state.copyWith(
           transfer: TransferState.idle,
           progress: 0
         );
@@ -104,30 +100,31 @@ class _DashboardPageState extends State<DashboardPage> {
     };
   }
 
+  @override
+  void dispose() {
+    sub.cancel();
+    super.dispose();
+  }
+
   Future<void> _prepareWorkingImage() async {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    await pipeline.prepare(bytes, _fitStrategy);
+    await pipeline.prepare(bytes, _fitStrategy, null);
   }
 
   Future<void> _reprocess() async {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    setState(() => _processing = true);
-
     await pipeline.process(
       dither: algorithm,
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
       fit: _fitStrategy,
-      adjustments: adjustments
+      adjustments: adjustments,
+      paletteBias: paletteBias
     );
-
-    setState(() {
-      _processing = false;
-    });
   }
 
   Future<void> _loadImageBytes(Uint8List bytes) async {
@@ -161,7 +158,7 @@ class _DashboardPageState extends State<DashboardPage> {
     if (fb == null) return;
 
     setState(() {
-      session = session.copyWith(
+      session.state = session.state.copyWith(
         transfer: TransferState.uploading,
         progress: 0
       );
@@ -170,14 +167,146 @@ class _DashboardPageState extends State<DashboardPage> {
     final flipped = flipVertical(fb);
     final packed = FramebufferPacker.pack(flipped);
 
-    final packets = UploadSession.build(imageNumber: session.activeSlot!, packedImageData: packed);
+    final packets = UploadSession.build(imageNumber: session.state.activeSlot!, packedImageData: packed);
 
     await ble.sendImage(packets);
-    await ble.sendMd5Trigger(imageNumber: session.activeSlot!, imageData: packed);
+    await ble.sendMd5Trigger(imageNumber: session.state.activeSlot!, imageData: packed);
+  }
+
+  List<Widget> _buildDesktopLayout(BuildContext context) {
+    return [
+      _leftPanel(context),
+      _centerPanel(context),
+      _rightPanel(context)
+    ];
+  }
+
+  List<Widget> _buildMobileLayout(BuildContext context) {
+    return [
+      Expanded(child: _centerPanel(context)),
+      SizedBox(height:300, child: _leftPanel(context)),
+      SizedBox(height: 400, child: _rightPanel(context))
+    ];
+  }
+
+  Widget _leftPanel(BuildContext context) {
+    return SizedBox(
+      width: 300,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            DeviceInfoCard(state: session.state),
+            const SizedBox(height: 16),
+            DeviceActionsPanel(
+              activeSlot: session.state.activeSlot,
+              onConnect: session.state.canConnect
+                ? () => DashboardActions.connect(ble: ble, updateSession: updateSession)
+                : null,
+              onDisconnect: session.state.canDisconnect
+                ? () => DashboardActions.disconnect(ble: ble, updateSession: updateSession)
+                : null,
+              onDownload: session.state.canDownload
+                ? () => DashboardActions.downloadSlot(ble: ble, slot: session.state.activeSlot!, updateSession: updateSession)
+                : null,
+              onUpload: session.state.canTransfer
+                ? _uploadImage
+                : null,
+              onSlotChanged: (slot) {
+                updateSession((s) => s.copyWith(activeSlot: slot));
+              },
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _centerPanel(BuildContext context) {
+    return Expanded(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            ImagePreviewPanel(
+              title: 'Original',
+              height: DeviceConstants.imageHeight,
+              imageBytes: _originalImageBytes
+            ),
+            const SizedBox(height: 16),
+            ImagePreviewPanel(
+              title: 'Preview',
+              height: DeviceConstants.imageHeight,
+              imageBytes: pipeline.previewBytes
+            )
+          ]
+        )
+      )
+    );
+  }
+
+  Widget _rightPanel(BuildContext context) {
+    return SizedBox(
+      width: 340,
+      child: Container(
+        color: Theme.of(context).colorScheme.surfaceContainerLowest,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  children: [
+                    ElevatedButton(
+                      onPressed: _pickImage,
+                      child: const Text('Import Image')
+                    ),
+                    const SizedBox(height: 8),
+                    DitheringControls(
+                      selectedAlgorithm: algorithm,
+                      onAlgorithmChanged: (newAlg) async {
+                        setState(() {
+                          algorithm = newAlg;
+                        });
+                        _reprocess();
+                      }
+                    ),
+                    const SizedBox(height: 8),
+                    ImageAdjustmentControls(
+                      adjustments: adjustments,
+                      onChanged: (newAdjustments) async {
+                        setState(() {
+                          adjustments = newAdjustments;
+                        });
+
+                        _reprocess();
+                      }
+                    ),
+                    const SizedBox(height: 8),
+                    FilterControls(
+                      selectedFilter: _filter,
+                      onFilterChanged: (filter) async {
+                        setState(() {
+                          _filter = filter;
+                        });
+                        _reprocess();
+                      }
+                    )
+                  ]
+                )
+              )
+            ),
+          ],
+        )
+      )
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
       appBar: AppBar(
         title: const Text('PicPak Open')
@@ -186,146 +315,10 @@ class _DashboardPageState extends State<DashboardPage> {
       body: Column(
         children: [
           Expanded(
-            child: Row(
-              children: [
-                // LEFT PANEL
-                SizedBox(
-                  width: 300,
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        DeviceInfoCard(state: session),
-                        const SizedBox(height: 16),
-                        DeviceActionsPanel(
-                          activeSlot: session.activeSlot,
-                          onConnect: session.canConnect
-                            ? () => DashboardActions.connect(ble: ble, updateSession: updateSession)
-                            : null,
-                          onDisconnect: session.canDisconnect
-                            ? () => DashboardActions.disconnect(ble: ble, updateSession: updateSession)
-                            : null,
-                          onDownload: session.canDownload
-                            ? () => DashboardActions.downloadSlot(ble: ble, slot: session.activeSlot!, updateSession: updateSession)
-                            : null,
-                          onUpload: session.canTransfer
-                            ? _uploadImage
-                            : null,
-                          onSlotChanged: (slot) {
-                            updateSession((s) => s.copyWith(activeSlot: slot));
-                          },
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-
-                // CENTER
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        ImagePreviewPanel(
-                          title: 'Original',
-                          height: DeviceConstants.imageHeight,
-                          imageBytes: _originalImageBytes
-                        ),
-                        const SizedBox(height: 16),
-                        ImagePreviewPanel(
-                          title: 'Preview',
-                          height: DeviceConstants.imageHeight,
-                          imageBytes: pipeline.previewBytes
-                        )
-                      ]
-                    )
-                  )
-                ),
-
-                // RIGHT PANEL
-                SizedBox(
-                  width: 340,
-                  child: Container(
-                    color: Theme.of(context).colorScheme.surfaceContainerLowest,
-                    child: Column(
-                      children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              children: [
-                                ElevatedButton(
-                                  onPressed: _pickImage,
-                                  child: const Text('Import Image')
-                                ),
-                                const SizedBox(height: 8),
-                                DitheringControls(
-                                  selectedAlgorithm: algorithm,
-                                  onAlgorithmChanged: (newAlg) async {
-                                    setState(() {
-                                      algorithm = newAlg;
-                                    });
-                                    _reprocess();
-                                  }
-                                ),
-                                const SizedBox(height: 8),
-                                ImageAdjustmentControls(
-                                  adjustments: adjustments,
-                                  onChanged: (newAdjustments) async {
-                                    setState(() {
-                                      adjustments = newAdjustments;
-                                    });
-
-                                    _reprocess();
-                                  }
-                                ),
-                                const SizedBox(height: 8),
-                                ProcessingOptionsPanel(
-                                  selectedFilter: _filter,
-                                  fitStrategy: _fitStrategy,
-                                  simulateDevice: _simulateDeviceScreen,
-                                  onFilterChanged: (filter) async {
-                                    setState(() {
-                                      _filter = filter;
-                                    });
-                                    _reprocess();
-                                  },
-                                  onFitChanged: (fit) async {
-                                    setState(() {
-                                      _fitStrategy = fit;
-                                    });
-                                    _reprocess();
-                                  },
-                                  onSimulateChanged: (simulate) async {
-                                    setState(() {
-                                      _simulateDeviceScreen = simulate;
-                                    });
-                                    _reprocess();
-                                  }
-                                )
-                              ]
-                            )
-                          )
-                        ),
-                      ],
-                    )
-                  )
-                )
-              ]
-            )
+            child: isMobile
+              ? Column(children: _buildMobileLayout(context))
+              : Row(children: _buildDesktopLayout(context))
           ),
-          // STATUS BAR
-          ValueListenableBuilder<double>(
-            valueListenable: ble.uploadProgress,
-            builder: (context, value, _) {
-              return StatusBar(
-                state: session,
-                progressListenable: ble.uploadProgress,
-              );
-            }
-          )
         ],
       )
     );

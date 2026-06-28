@@ -2,5 +2,10 @@ enum ImageFilter {
   normal,
   vibrant,
   grayscale,
-  highContrast
+  highContrast,
+  posterise,
+  comic,
+  halftone,
+  crossHatch,
+  pencilSketch
 }

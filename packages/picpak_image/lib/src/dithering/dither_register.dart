@@ -1,3 +1,9 @@
+import 'package:picpak_image/src/dithering/adaptive_atkinson_dither.dart';
+import 'package:picpak_image/src/dithering/burkes_dither.dart';
+import 'package:picpak_image/src/dithering/jjn_dither.dart';
+import 'package:picpak_image/src/dithering/sierra_lite_dither.dart';
+import 'package:picpak_image/src/dithering/stucki_dither.dart';
+
 import 'atkinson_dither.dart';
 import 'dither_engine.dart';
 import 'dither_mode.dart';
@@ -21,8 +27,23 @@ class DitherRegistry {
       DitherMode.atkinson =>
         AtkinsonDither(),
 
+      DitherMode.adaptiveAtkinson =>
+        AdaptiveAtkinsonDither(),
+
       DitherMode.sierra =>
         SierraDither(),
+
+      DitherMode.sierraLite =>
+        SierraLiteDither(),
+      
+      DitherMode.burkes =>
+        BurkesDither(),
+
+      DitherMode.jjn =>
+        JjnDither(),
+      
+      DitherMode.stucki =>
+        StuckiDither()
     };
   }
 }
