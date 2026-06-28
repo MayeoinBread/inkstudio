@@ -104,14 +104,6 @@ class ImageAdjustments {
       sharpen = 0.75;
     }
 
-    debugPrint(
-      '''
-      Dynamic Range: ${metrics.dynamicRange}
-      Average Luma: ${metrics.avgLuma}
-      Average Saturation: ${metrics.avgSaturation}
-      '''
-    );
-
     return ImageAdjustments(
       brightness: brightness,
       contrast: contrast,

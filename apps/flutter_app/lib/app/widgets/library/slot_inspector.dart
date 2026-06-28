@@ -13,7 +13,6 @@ class SlotInspector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('Inspector build item=${item?.slot}');
 
     return Padding(
       padding: const EdgeInsets.all(16),

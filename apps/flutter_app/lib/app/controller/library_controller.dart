@@ -76,7 +76,6 @@ class LibraryController extends ChangeNotifier {
       activeSlot: null
     );
 
-    debugPrint("Syncing from device");
     final total = availableSlots.length;
 
     for (int i=0; i<total; i++) {
@@ -88,9 +87,7 @@ class LibraryController extends ChangeNotifier {
         progress: i / total
       );
 
-      final deviceFramebuffer = await ble.downloadFramebuffer(slot);
-      final packed = FramebufferPacker.pack(deviceFramebuffer);
-      final deviceHash = sha256.convert(packed).toString();
+      final deviceHash = await ble.requestSlotHash(slot);
 
       final imageId = items[slot]!.metadata.imageId;
       String? localHash;
@@ -115,14 +112,12 @@ class LibraryController extends ChangeNotifier {
     required BleManager ble,
     required DeviceSessionService session
   }) async {
-    debugPrint("pushToDevice");
     final dirtySlots = await getPendingItems();
 
     for (final dirtySlot in dirtySlots) {
       final slot = dirtySlot.slot;
 
       if (dirtySlot.metadata.pendingAction == SlotPendingAction.delete) {
-        debugPrint("Deleting image");
         await ble.deleteImage(slot);
         await SlotRepository().saveSlot(slot: slot, imageId: null, metadata: SlotMetadataDefaults.empty(slot));
         items[slot] = items[slot]!.copyWith(exists: false, thumbnailBytes: null, metadata: SlotMetadataDefaults.empty(slot));
@@ -140,9 +135,8 @@ class LibraryController extends ChangeNotifier {
             if (imageId == null) continue;
             packed = await ImageRepository().loadProcessedBytes(imageId);
             if (packed == null) continue;
-            final framebuffer = FramebufferDecoder.decode(packed);
-
-            packed = FramebufferPacker.pack(framebuffer);
+            
+            // TODO might need to do generated separate as it might need to be flipped still?
             break;
           
           case SlotContentType.qr:
@@ -214,13 +208,21 @@ class LibraryController extends ChangeNotifier {
         await ble.sendImage(packets);
         await ble.sendMd5Trigger(imageNumber: slot, imageData: packed);
 
-        final updated = dirtySlot.metadata.copyWith(syncState: SlotSyncState.clean, pendingAction: SlotPendingAction.none);
-        await SlotRepository().saveSlot(slot: slot, imageId: imageId, metadata: updated);
-        final current = items[slot]!;
-        items[slot] = current.copyWith(metadata: updated);
+        final deviceHash = await ble.requestSlotHash(slot);
+
+        final appHash = md5.convert(packed).toString();
+
+        if (deviceHash == appHash) {
+          final updatedMetadata = dirtySlot.metadata.copyWith(syncState: SlotSyncState.clean, pendingAction: SlotPendingAction.none);
+          await SlotRepository().saveSlot(slot: slot, imageId: imageId, metadata: updatedMetadata);
+          final current = items[slot]!;
+          items[slot] = current.copyWith(metadata: updatedMetadata);
+        } else {
+          debugPrint("Uploaded hash does not match expected");
+        }
         notifyListeners();
 
-        await Future.delayed(const Duration(seconds: 2));
+        await Future.delayed(const Duration(milliseconds: 100));
       }
     }
   }

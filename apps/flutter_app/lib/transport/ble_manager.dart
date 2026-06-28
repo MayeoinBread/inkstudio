@@ -20,6 +20,8 @@ class BleManager {
 
   ImageReadSession? _readSession;
 
+  Completer<String>? _slotHashCompleter;
+
   final session = DeviceSessionService.instance;
 
   final StreamController<PaletteFramebuffer> imageStream = StreamController.broadcast();
@@ -161,8 +163,7 @@ class BleManager {
         _handleDeleteAck(data);
         break;
       case 0x04:
-        debugPrint("Data: $data");
-        debugPrint("0x04, data length: ${data.length}");
+        _parseSlotHash(data);
     }
   }
 
@@ -174,7 +175,6 @@ class BleManager {
     }
 
     for (int i=0; i<packets.length; i++){
-      // debugPrint("Sending packet $i");
       try {
         await char.write(packets[i].bytes, withoutResponse: false);
       } catch (e, st) {
@@ -320,11 +320,8 @@ class BleManager {
 
       final framebufferBytes = builder.toBytes();
 
-      debugPrint(framebufferBytes.length.toString());
-
       final framebuffer = FramebufferDecoder.decode(framebufferBytes);
       
-      debugPrint('Framebuffer completed');
       imageStream.add(framebuffer);
 
       onDownloadComplete?.call();
@@ -356,9 +353,29 @@ class BleManager {
 
     final slot = (hi << 8) | lo;
 
-    debugPrint("Delete ACK for slot: $slot");
-
     onDeleteAck?.call(slot);
+  }
+
+  void _parseSlotHash(List<int> data) {
+    if (data.length < 22) return;
+
+    final digestBytes = data.sublist(5, 21);
+
+    final md5 = digestBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+
+    _slotHashCompleter?.complete(md5);
+    _slotHashCompleter = null;
+  }
+
+  Future<String> requestSlotHash(int slot) async {
+    _slotHashCompleter = Completer<String>();
+
+    final lo = slot & 0xFF;
+    final hi = (slot >> 8) & 0xFF;
+
+    await ff01!.write([0xAA, 0x04, lo, hi, 0x02, 0xFF]);
+
+    return _slotHashCompleter!.future;
   }
 }
 

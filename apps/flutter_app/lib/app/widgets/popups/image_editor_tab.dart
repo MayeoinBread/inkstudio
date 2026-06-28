@@ -56,8 +56,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   void initState() {
     super.initState();
 
-    debugPrint("--HYDRATING--");
-
     _hydrateFromItem();
   }
 
@@ -68,7 +66,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     final metadata = item.metadata;
 
     final imageId = metadata.imageId;
-    debugPrint("ImageID: $imageId");
     if (imageId == null) return;
 
     setState(() {
@@ -171,7 +168,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       cropRect: cropRect
     );
 
-    final packedBytes = FramebufferPacker.pack(pipeline.framebuffer!);
+    // packedBytes should match what is being sent to the device, which is the flipped image
+    final packedBytes = FramebufferPacker.pack(flipVertical(pipeline.framebuffer!));
 
     final res = EditorResult(
       metadata: retMetadata,

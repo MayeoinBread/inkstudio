@@ -4,7 +4,6 @@ import 'package:picpak_image/picpak_image.dart';
 
 class FramebufferDecoder {
   static PaletteFramebuffer decode(Uint8List bytes) {
-    debugPrint("decoding/unpacking");
     final totalPixels = DeviceConstants.imageWidth * DeviceConstants.imageHeight;
     final pixels = Uint8List(totalPixels);
 

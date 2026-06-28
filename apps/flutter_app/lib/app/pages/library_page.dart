@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
@@ -12,7 +11,6 @@ import 'package:picpak_open/app/services/image_pipeline_controller.dart';
 import 'package:picpak_open/app/services/thumbnail_service.dart';
 import 'package:picpak_open/app/state/device_session_state.dart';
 import 'package:picpak_open/app/widgets/library/library_grid.dart';
-import 'package:picpak_open/app/widgets/library/library_item.dart';
 import 'package:picpak_open/app/widgets/library/slot_inspector.dart';
 import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
 import 'package:picpak_open/app/widgets/popups/content_editor_dialog.dart';
@@ -48,7 +46,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   void initState() {
-    debugPrint('Library initState');
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -58,7 +55,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   void dispose() {
-    debugPrint('Library dispose');
     sub?.cancel();
     super.dispose();
   }
@@ -69,23 +65,31 @@ class _LibraryPageState extends State<LibraryPage> {
       session: session,
       availableSlots: session.state.availableSlots,
       onSlotReady: (slot, isDirty) async {
-        final newMetadata = controller.items[slot]!.metadata.copyWith(
-          pendingAction: isDirty
-            ? SlotPendingAction.upload
-            : SlotPendingAction.none
+        final item = controller.items[slot]!;
+
+        final newMetadata = item.metadata.copyWith(
+          pendingAction: isDirty ? SlotPendingAction.upload : SlotPendingAction.none
         );
+
         controller.updateSlot(
           slot: slot,
           exists: true,
           metadata: newMetadata
         );
-        await SlotRepository().saveSlot(
-            slot: slot,
-            imageId: newMetadata.imageId,
-            metadata: newMetadata
-          );
       }
     );
+
+    final repo = SlotRepository();
+    for (final entry in controller.items.entries) {
+      final slot = entry.key;
+      final item = entry.value;
+
+      await repo.saveSlot(
+        slot: slot,
+        imageId: item.metadata.imageId,
+        metadata: item.metadata
+      );
+    }
   }
 
   Future<void> _onEdit(int slot) async {
@@ -96,22 +100,16 @@ class _LibraryPageState extends State<LibraryPage> {
       builder: (_) => ContentEditorDialog(
         item: item!,
         onSaved: (editorResult) async {
-          debugPrint('SAVE slot=$slot');
           final mslot = slot;
 
-          final previewHash = sha256.convert(editorResult.packedBytes).toString();
+          final previewMd5 = md5.convert(editorResult.packedBytes).toString();
 
           if (item.exists) {
             final existingImage = await ImageRepository().getImage(item.metadata.imageId!);
-            if (previewHash == existingImage?.deviceHash){
-              debugPrint("Hashes are equal, no changes to image");
+            if (previewMd5 == existingImage?.deviceHash){
               return;
             }
           }
-
-          setState(() {
-            selectedSlot = null;
-          });
 
           final thumbnail = ThumbnailService.createFromBytes(editorResult.previewBytes);
     
@@ -170,8 +168,6 @@ class _LibraryPageState extends State<LibraryPage> {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        final slots = controller.items.keys.toList()..sort();
-        final items = slots.map((s) => controller.items[s]!).toList();
         return Row(
           children: [
             SizedBox(

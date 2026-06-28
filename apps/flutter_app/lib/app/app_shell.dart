@@ -38,8 +38,6 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint("AppShell build");
-    
     return Scaffold(
       body: Column(
         children: [
@@ -82,39 +80,9 @@ class _AppShellState extends State<AppShell> {
                     child: IndexedStack(
                       index: selectedIndex,
                       children: [
-                        Builder(
-                          builder: (context) {
-                            debugPrint("DASHBOARD BUILDER ENTERED");
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              debugPrint("DASHBOARD FIRST FRAME");
-                            });
-                            
-                            return const DashboardPage();
-                          }
-                        ),
-                        Builder(
-                          builder: (context) {
-                            debugPrint("DEV BUILDER ENTERED");
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              debugPrint("DEV FIRST FRAME");
-                            });
-                            
-                            return const DevWorkbenchPage();
-                          }
-                        ),
-                        Builder(
-                          builder: (context) {
-                            debugPrint("LIB BUILDER ENTERED");
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              debugPrint("LIB FIRST FRAME");
-                            });
-                            
-                            return const LibraryPage();
-                          }
-                        )
-                        // const DashboardPage(),
-                        // const DevWorkbenchPage(),
-                        // const LibraryPage()
+                        const DashboardPage(),
+                        const DevWorkbenchPage(),
+                        const LibraryPage()
                       ],
                     ),
                   )

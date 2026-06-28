@@ -5,19 +5,7 @@ import 'package:flutter/material.dart';
 import 'app/app_shell.dart';
 
 void main() {
-  // debugPrintMarkNeedsLayoutStacks = true;
   runApp(const PicPakApp());
-
-  FlutterError.onError = (details) {
-    debugPrint("ERROR: ${details.exception}");
-    debugPrintStack(stackTrace: details.stack);
-  };
-
-  PlatformDispatcher.instance.onError = (error, stack) {
-  debugPrint("PLATFORM ERROR: $error");
-  debugPrint(stack.toString());
-  return true;
-};
 }
 
 class PicPakApp extends StatefulWidget {

@@ -115,22 +115,9 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
       _originalImage = bytes;
     });
 
-    // await _prepareWorkingImage();
     await _reprocess();
 
     if (_framebuffer == null) return;
-
-    final packed = FramebufferPacker.pack(_framebuffer!);
-
-    debugPrint("Packed bytes: ${packed.length}");
-
-    final packets = UploadSession.build(
-      packedImageData: packed,
-      imageNumber: 1
-    );
-
-    debugPrint("Packets: ${packets.length}");
-    debugPrint("First packet size: ${packets.first.bytes.length}");
   }
 
   Future<void> _loadSwatch() async {
@@ -174,109 +161,105 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
           children: [
             SizedBox(
               width: 340,
-              child: Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      ImageAdjustmentControls(
-                        adjustments: _adjustments,
-                        onChanged: (newAdjustments) async {
-                          setState(() {
-                            _adjustments = newAdjustments;
-                          });
-                          _reprocess();
-                        }
-                      ),
-                      PaletteBiasControls(
-                        paletteBias: _bias,
-                        onChanged: (newBias) async {
-                          setState(() {
-                            _bias = newBias;
-                          });
-                          _reprocess();
-                        }
-                      ),
-                      DitheringControls(
-                        selectedAlgorithm: _ditherMode,
-                        onAlgorithmChanged: (newAlg) async {
-                          setState(() {
-                            _ditherMode = newAlg;
-                          });
-                          _reprocess();
-                        }
-                      ),
-                      FilterControls(
-                        selectedFilter: _filter,
-                        onFilterChanged: (filter) async {
-                          setState(() {
-                            _filter = filter;
-                          });
-                          _reprocess();
-                        }
-                      ),
-                      FilterOptionsControls(
-                        adjustments: _adjustments,
-                        filter: _filter,
-                        onChanged: (newAdjustments) async {
-                          setState(() {
-                            _adjustments = newAdjustments;
-                          });
-                          _reprocess();
-                        }
-                      ),
-                    ],
-                  )
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    ImageAdjustmentControls(
+                      adjustments: _adjustments,
+                      onChanged: (newAdjustments) async {
+                        setState(() {
+                          _adjustments = newAdjustments;
+                        });
+                        _reprocess();
+                      }
+                    ),
+                    PaletteBiasControls(
+                      paletteBias: _bias,
+                      onChanged: (newBias) async {
+                        setState(() {
+                          _bias = newBias;
+                        });
+                        _reprocess();
+                      }
+                    ),
+                    DitheringControls(
+                      selectedAlgorithm: _ditherMode,
+                      onAlgorithmChanged: (newAlg) async {
+                        setState(() {
+                          _ditherMode = newAlg;
+                        });
+                        _reprocess();
+                      }
+                    ),
+                    FilterControls(
+                      selectedFilter: _filter,
+                      onFilterChanged: (filter) async {
+                        setState(() {
+                          _filter = filter;
+                        });
+                        _reprocess();
+                      }
+                    ),
+                    FilterOptionsControls(
+                      adjustments: _adjustments,
+                      filter: _filter,
+                      onChanged: (newAdjustments) async {
+                        setState(() {
+                          _adjustments = newAdjustments;
+                        });
+                        _reprocess();
+                      }
+                    ),
+                  ],
                 )
               ),
             ),
 
             SizedBox(
               width: 340,
-              child: Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      DropdownButton<SwatchType>(
-                        value: _swatchType,
-                        onChanged: (value) async {
-                          if (value == null) return;
-                          setState(() {
-                            _swatchType = value;
-                          });
-                          await _loadSwatch();
-                        },
-                        items: SwatchType.values.map((t) {
-                          return DropdownMenuItem(
-                            value: t,
-                            child: Text(t.name)
-                          );
-                        }).toList()
-                      ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    DropdownButton<SwatchType>(
+                      value: _swatchType,
+                      onChanged: (value) async {
+                        if (value == null) return;
+                        setState(() {
+                          _swatchType = value;
+                        });
+                        await _loadSwatch();
+                      },
+                      items: SwatchType.values.map((t) {
+                        return DropdownMenuItem(
+                          value: t,
+                          child: Text(t.name)
+                        );
+                      }).toList()
+                    ),
 
-                      SwitchListTile(title: const Text("Simulate Device Colours"), value: _simulateDevice,
-                        onChanged: (v) {
-                          setState(() => _simulateDevice = v);
-                          _reprocess();
-                        }
-                      ),
+                    SwitchListTile(title: const Text("Simulate Device Colours"), value: _simulateDevice,
+                      onChanged: (v) {
+                        setState(() => _simulateDevice = v);
+                        _reprocess();
+                      }
+                    ),
 
-                      ElevatedButton(
-                        onPressed: _generateNote,
-                        child: const Text("Generate Note")
-                      ),
+                    ElevatedButton(
+                      onPressed: _generateNote,
+                      child: const Text("Generate Note")
+                    ),
 
-                      TextField(
-                        controller: _noteController,
-                        maxLines: 5,
-                        decoration: const InputDecoration(
-                          labelText: "Note Text",
-                          border: OutlineInputBorder()
-                        ),
-                      )
-                    ],
-                  )
+                    TextField(
+                      controller: _noteController,
+                      maxLines: 5,
+                      decoration: const InputDecoration(
+                        labelText: "Note Text",
+                        border: OutlineInputBorder()
+                      ),
+                    )
+                  ],
                 )
               ),
             ),

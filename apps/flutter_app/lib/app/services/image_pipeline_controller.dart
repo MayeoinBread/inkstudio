@@ -26,8 +26,6 @@ class ImagePipelineController {
     }) async {
     if (sourceImage == null) return;
 
-    debugPrint('Simulate Device: $simulateDevice');
-
     final result = await compute(
       runPipelineIsolate,
       PipelineRequest(
@@ -56,8 +54,6 @@ class ImagePipelineController {
     required PaletteBias paletteBias
   }) async {
     if (sourceImage == null) return;
-
-    debugPrint('Simulate Device: $simulateDevice');
 
     final result = await compute(
       runPipelineIsolate,

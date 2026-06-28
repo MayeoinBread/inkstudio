@@ -32,7 +32,6 @@ class _DashboardPageState extends State<DashboardPage> {
   ImageAdjustments adjustments = ImageAdjustments();
   PaletteBias paletteBias = PaletteBias();
 
-  // DeviceSessionState session = DeviceSessionState(connection: ConnectionState.disconnected, transfer: TransferState.idle, progress: 0.0, deviceName: 'Not Connected', batteryPercent: 0, firmware: '-', availableSlots: const []);
   final session = DeviceSessionService.instance;
 
   FitStrategy _fitStrategy = FitStrategy.crop;
@@ -47,17 +46,14 @@ class _DashboardPageState extends State<DashboardPage> {
   late StreamSubscription sub;
 
   void updateSession(DeviceSessionState Function(DeviceSessionState current) updater) {
-    debugPrint('Dashboard updateSession');
     setState(() { session.state = updater(session.state);});
   }
 
   @override
   void initState() {
-    debugPrint('Dashboard initState');
     super.initState();
 
     sub = ble.imageStream.stream.listen((fb) {
-      debugPrint('Dashboard imageStream Listen');
       if (!mounted) return;
 
       pipeline.framebuffer = fb;
@@ -74,24 +70,7 @@ class _DashboardPageState extends State<DashboardPage> {
       });
     });
 
-    // ble.onImageDownloaded = (framebuffer) {
-    //   pipeline.framebuffer = framebuffer;
-
-    //   pipeline.previewBytes = Uint8List.fromList(
-    //     img.encodePng(PanelRerender.renderFramebuffer(framebuffer))
-    //   );
-
-    //   setState(() {
-    //     session.state = session.state.copyWith(
-    //       transfer: TransferState.idle,
-    //       progress: 0,
-    //       activeSlot: null
-    //     );
-    //   });
-    // };
-
     ble.onDeviceInfo = (info) {
-      debugPrint('Dashboard onDeviceInfo');
       setState(() {
         session.state = session.state.copyWith(
           batteryPercent: info.battery,
@@ -101,20 +80,17 @@ class _DashboardPageState extends State<DashboardPage> {
     };
 
     ble.onSlotList = (slots) {
-      debugPrint('Dashboard onSlotList');
       final safeActive = session.state.activeSlot;
 
       setState(() {
         session.state = session.state.copyWith(
           availableSlots: slots,
-          // activeSlot: slots.isNotEmpty ? slots.first : null
           activeSlot: slots.contains(safeActive) ? safeActive : (slots.isNotEmpty ? slots.first : null)
         );
       });
     };
 
     ble.onUploadComplete = () {
-      debugPrint('Dashboard onUploadComplete');
       setState(() {
         session.state = session.state.copyWith(
           transfer: TransferState.idle,
@@ -126,13 +102,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   void dispose() {
-    debugPrint('Dashboard dispose');
     sub.cancel();
     super.dispose();
   }
 
   Future<void> _prepareWorkingImage() async {
-    debugPrint('Dashboard _prepareWorkingImage');
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
@@ -140,7 +114,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _reprocess() async {
-    debugPrint('Dashboard _reprocess');
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
@@ -155,7 +128,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _loadImageBytes(Uint8List bytes) async {
-    debugPrint('Dashboard _loadImageBytes');
     setState(() {
       if (!listEquals(_originalImageBytes, bytes)) {
         _originalImageBytes = bytes;
@@ -167,7 +139,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _pickImage() async {
-    debugPrint('Dashboard _pickImage');
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true,
@@ -183,7 +154,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> _uploadImage() async {
-    debugPrint('Dashboard _uploadImage');
     final fb = pipeline.framebuffer;
     if (fb == null) return;
 
@@ -336,7 +306,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    debugPrint('Dashboard build');
     final isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
       appBar: AppBar(
@@ -349,135 +318,6 @@ class _DashboardPageState extends State<DashboardPage> {
             child: isMobile
               ? Column(children: _buildMobileLayout(context))
               : Row(children: _buildDesktopLayout(context))
-            // child: Row(
-            //   children: [
-            //     // LEFT PANEL
-            //     SizedBox(
-            //       width: 300,
-            //       child: Container(
-            //         padding: const EdgeInsets.all(16),
-            //         color: Theme.of(context).colorScheme.surfaceContainerLowest,
-            //         child: Column(
-            //           crossAxisAlignment: CrossAxisAlignment.stretch,
-            //           children: [
-            //             DeviceInfoCard(state: session.state),
-            //             const SizedBox(height: 16),
-            //             DeviceActionsPanel(
-            //               activeSlot: session.state.activeSlot,
-            //               onConnect: session.state.canConnect
-            //                 ? () => DashboardActions.connect(ble: ble, updateSession: updateSession)
-            //                 : null,
-            //               onDisconnect: session.state.canDisconnect
-            //                 ? () => DashboardActions.disconnect(ble: ble, updateSession: updateSession)
-            //                 : null,
-            //               onDownload: session.state.canDownload
-            //                 ? () => DashboardActions.downloadSlot(ble: ble, slot: session.state.activeSlot!, updateSession: updateSession)
-            //                 : null,
-            //               onUpload: session.state.canTransfer
-            //                 ? _uploadImage
-            //                 : null,
-            //               onSlotChanged: (slot) {
-            //                 updateSession((s) => s.copyWith(activeSlot: slot));
-            //               },
-            //             )
-            //           ],
-            //         ),
-            //       ),
-            //     ),
-
-            //     // CENTER
-            //     Expanded(
-            //       child: SingleChildScrollView(
-            //         padding: const EdgeInsets.all(16),
-            //         child: Column(
-            //           children: [
-            //             ImagePreviewPanel(
-            //               title: 'Original',
-            //               height: DeviceConstants.imageHeight,
-            //               imageBytes: _originalImageBytes
-            //             ),
-            //             const SizedBox(height: 16),
-            //             ImagePreviewPanel(
-            //               title: 'Preview',
-            //               height: DeviceConstants.imageHeight,
-            //               imageBytes: pipeline.previewBytes
-            //             )
-            //           ]
-            //         )
-            //       )
-            //     ),
-
-            //     // RIGHT PANEL
-            //     SizedBox(
-            //       width: 340,
-            //       child: Container(
-            //         color: Theme.of(context).colorScheme.surfaceContainerLowest,
-            //         child: Column(
-            //           children: [
-            //             Expanded(
-            //               child: SingleChildScrollView(
-            //                 padding: const EdgeInsets.all(8),
-            //                 child: Column(
-            //                   children: [
-            //                     ElevatedButton(
-            //                       onPressed: _pickImage,
-            //                       child: const Text('Import Image')
-            //                     ),
-            //                     const SizedBox(height: 8),
-            //                     DitheringControls(
-            //                       selectedAlgorithm: algorithm,
-            //                       onAlgorithmChanged: (newAlg) async {
-            //                         setState(() {
-            //                           algorithm = newAlg;
-            //                         });
-            //                         _reprocess();
-            //                       }
-            //                     ),
-            //                     const SizedBox(height: 8),
-            //                     ImageAdjustmentControls(
-            //                       adjustments: adjustments,
-            //                       onChanged: (newAdjustments) async {
-            //                         setState(() {
-            //                           adjustments = newAdjustments;
-            //                         });
-
-            //                         _reprocess();
-            //                       }
-            //                     ),
-            //                     const SizedBox(height: 8),
-            //                     ProcessingOptionsPanel(
-            //                       selectedFilter: _filter,
-            //                       fitStrategy: _fitStrategy,
-            //                       simulateDevice: _simulateDeviceScreen,
-            //                       onFilterChanged: (filter) async {
-            //                         setState(() {
-            //                           _filter = filter;
-            //                         });
-            //                         _reprocess();
-            //                       },
-            //                       onFitChanged: (fit) async {
-            //                         setState(() {
-            //                           _fitStrategy = fit;
-            //                         });
-            //                         _reprocess();
-            //                       },
-            //                       onSimulateChanged: (simulate) async {
-            //                         setState(() {
-            //                           _simulateDeviceScreen = simulate;
-            //                         });
-            //                         _reprocess();
-            //                       }
-            //                     )
-            //                   ]
-            //                 )
-            //               )
-            //             ),
-            //           ],
-            //         )
-            //       )
-            //     )
-            //   ]
-            // )
           ),
         ],
       )

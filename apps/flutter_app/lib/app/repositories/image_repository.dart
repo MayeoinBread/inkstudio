@@ -33,12 +33,12 @@ class ImageRepository {
     if (originalBytes != null) {
       originalPath = join(imageDir.path, 'original.png');
       await File(originalPath).writeAsBytes(originalBytes);
-      sourceHash = sha256.convert(originalBytes).toString();
+      sourceHash = md5.convert(originalBytes).toString();
     }
     await File(thumbnailPath).writeAsBytes(thumbnailBytes);
 
     await File(processedPath).writeAsBytes(packedBytes);
-    final deviceHash = sha256.convert(packedBytes).toString();
+    final deviceHash = md5.convert(packedBytes).toString();
 
     final image = StoredImage(
       id: id,
@@ -48,9 +48,6 @@ class ImageRepository {
       sourceHash: sourceHash,
       deviceHash: deviceHash
     );
-
-    debugPrint('Original path: $originalPath');
-    debugPrint('Thumbnail path: $thumbnailPath');
 
     final database = await db.database;
 

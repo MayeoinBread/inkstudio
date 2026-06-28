@@ -56,7 +56,6 @@ class SlotTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // debugPrint('Tile build selected=$selected exists=$exists thumb=${thumbnail?.length}');
     final indicator = getStatusIndicator(metadata);
     return GestureDetector(
       onTap: onTap,

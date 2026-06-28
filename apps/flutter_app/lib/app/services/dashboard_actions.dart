@@ -59,7 +59,6 @@ class DashboardActions {
   }) async {
     // TODO some sort of warning/error handling here
     if (slot == null) {
-      debugPrint("activeSlot is null");
       return;
     }
 

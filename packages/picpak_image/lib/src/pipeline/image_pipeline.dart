@@ -54,8 +54,6 @@ class ImagePipeline {
 
   img.Image prepareBaseImage(img.Image src, FitStrategy fit, Rect? cropRect) {
 
-    debugPrint("src: $src");
-
     if (cropRect != null) {
       src = img.copyCrop(src, x: cropRect.left.round(), y: cropRect.top.round(), width: cropRect.width.round(), height: cropRect.height.round());
     }
