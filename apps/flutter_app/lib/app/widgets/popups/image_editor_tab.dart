@@ -8,6 +8,7 @@ import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
 import 'package:picpak_open/app/widgets/controls/dithering_controls.dart';
 import 'package:picpak_open/app/widgets/controls/filter_options_controls.dart';
 import 'package:picpak_open/app/widgets/controls/image_adjustment_controls.dart';
+import 'package:picpak_open/app/widgets/controls/image_editor_mobile_controls.dart';
 import 'package:picpak_open/app/widgets/controls/palette_bias_controls.dart';
 import 'package:picpak_open/app/widgets/controls/filter_controls.dart';
 import 'package:picpak_open/app/widgets/library/library_item.dart';
@@ -23,10 +24,13 @@ class ImageEditorTab extends StatefulWidget {
     EditorResult editorResult
   ) onSaved;
 
+  final ValueChanged<Uint8List>? onPreviewChanged;
+
   const ImageEditorTab({
     super.key,
     required this.item,
-    required this.onSaved
+    required this.onSaved,
+    this.onPreviewChanged
   });
 
   @override
@@ -37,7 +41,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   Uint8List? _originalImageBytes;
   Uint8List? previewBytes;
 
-  int _processVersion = 0;
+  // int _processVersion = 0;
 
   final ImagePipelineController pipeline = ImagePipelineController();
 
@@ -85,7 +89,9 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
 
     if (!mounted) return;
 
-    setState(() {});
+    setState((){
+      widget.onPreviewChanged?.call(pipeline.previewBytes!);
+    });
   }
 
   Future<void> _pickImage() async {
@@ -130,7 +136,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    final int version = ++_processVersion;
+    // final int version = ++_processVersion;
 
     await pipeline.process(
       dither: algorithm,
@@ -141,9 +147,11 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       paletteBias: paletteBias
     );
 
-    if (version != _processVersion) return;
+    // if (version != _processVersion) return;
 
-    setState((){});
+    setState((){
+      widget.onPreviewChanged?.call(pipeline.previewBytes!);
+    });
   }
 
   void _save() async {
@@ -194,8 +202,86 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     await _reprocess();
   }
 
+  Future<void> _handleCropButton() async {
+    if (_originalImageBytes == null) return;
+    final rect = await showDialog<Rect>(
+      context: context,
+      builder: (_) => CropDialog(
+        imageBytes: _originalImageBytes!,
+        initialRect: cropRect,
+      )
+    );
+
+    if (rect != null) {
+      setState(() {
+        cropRect = rect;
+      });
+    }
+
+    await _prepareWorkingImage();
+    await _reprocess();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    if (isMobile) {
+      return ImageEditorMobileControls(
+        alg: algorithm,
+        adjustments: adjustments,
+        bias: paletteBias,
+        fit: _fitStrategy,
+        filter: _filter,
+        simulateDevice: _simulateDeviceScreen,
+        onAlgChanged: (newAlg) async {
+          setState(() {
+            algorithm = newAlg;
+          });
+          _reprocess();
+        },
+        onAdjustmentsChanged: (newAdjustments) async {
+          setState(() {
+            adjustments = newAdjustments;
+          });
+          _reprocess();
+        },
+        onPaletteBiasChanged: (newBias) async {
+          setState(() {
+            paletteBias = newBias;
+          });
+          _reprocess();
+        },
+        onFitChanged: (newFit) async {
+          setState(() {
+            _fitStrategy = newFit;
+          });
+          _reprocess();
+        },
+        onFilterChanged: (newFilter) async {
+          setState(() {
+            _filter = newFilter;
+          });
+          _reprocess();
+        },
+        onSimulateDeviceChanged: (newSim) async {
+          setState(() {
+            _simulateDeviceScreen = newSim;
+          });
+          _reprocess();
+        },
+        onAutoEnhanceSelected: () async {
+          await _autoEnhance();
+        },
+        onCropSelected: () => _handleCropButton(),
+        onLoadImageSelected: _pickImage,
+        onSave: () {
+          _save();
+          Navigator.pop(context);
+        }
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -219,23 +305,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                             icon: const Icon(Icons.crop),
                             tooltip: 'Crop',
                             onPressed: () async {
-                              if (_originalImageBytes == null) return;
-                              final rect = await showDialog<Rect>(
-                                context: context,
-                                builder: (_) => CropDialog(
-                                  imageBytes: _originalImageBytes!,
-                                  initialRect: cropRect,
-                                )
-                              );
-
-                              if (rect != null) {
-                                setState(() {
-                                  cropRect = rect;
-                                });
-                              }
-
-                              await _prepareWorkingImage();
-                              await _reprocess();
+                              await _handleCropButton();
                             },
                           )
                         ),

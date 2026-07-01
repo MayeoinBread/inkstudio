@@ -12,7 +12,11 @@ import 'package:picpak_open/app/widgets/controls/image_adjustment_controls.dart'
 import 'package:picpak_open/app/widgets/controls/palette_bias_controls.dart';
 
 class DevWorkbenchPage extends StatefulWidget {
-  const DevWorkbenchPage({super.key});
+  final VoidCallback onToggleTheme;
+  const DevWorkbenchPage({
+    super.key,
+    required this.onToggleTheme
+  });
 
   @override
   State<DevWorkbenchPage> createState() => _DevWorkbenchPageState();
@@ -41,7 +45,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
   int _processToken = 0;
 
-  late StreamSubscription sub;
+  // late StreamSubscription sub;
 
   @override
   void initState() {
@@ -50,7 +54,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
   @override
   void dispose() {
-    sub.cancel();
+    // sub.cancel();
     super.dispose();
   }
 
@@ -145,6 +149,15 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('PicPak Open'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.dark_mode),
+            onPressed: widget.onToggleTheme,
+          )
+        ]
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Row (

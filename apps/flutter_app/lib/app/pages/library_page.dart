@@ -16,11 +16,16 @@ import 'package:picpak_open/app/widgets/library/library_item.dart';
 import 'package:picpak_open/app/widgets/library/slot_inspector.dart';
 import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
 import 'package:picpak_open/app/widgets/popups/content_editor_dialog.dart';
-import 'package:picpak_open/app/widgets/popups/content_editor_screen.dart';
+import 'package:picpak_open/app/widgets/popups/mobile_editor_layout.dart';
 
 class LibraryPage extends StatefulWidget {
 
-  const LibraryPage({super.key});
+  final VoidCallback onToggleTheme;
+
+  const LibraryPage({
+    super.key,
+    required this.onToggleTheme
+  });
 
   @override
   State<LibraryPage> createState() =>
@@ -41,17 +46,19 @@ class _LibraryPageState extends State<LibraryPage> {
 
   final ImagePipelineController pipeline = ImagePipelineController();
 
-  late StreamSubscription? sub;
+  // late StreamSubscription? sub;
 
   int? selectedSlot;
 
   double progress = 0.0;
 
+  bool _initStarted = false;
+
   @override
   void initState() {
     super.initState();
 
-    controller.init();
+    // controller.init();
 
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   controller.loadFromDatabase();
@@ -59,8 +66,18 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initStarted) return;
+    _initStarted = true;
+
+    controller.init();
+  }
+
+  @override
   void dispose() {
-    sub?.cancel();
+    // sub?.cancel();
     super.dispose();
   }
 
@@ -101,21 +118,35 @@ class _LibraryPageState extends State<LibraryPage> {
     BuildContext context, int slot, LibraryItem item
   ) {
     final isMobile = MediaQuery.sizeOf(context).width < 700;
+    
+    final completer = Completer<EditorResult?>();
 
     if (isMobile) {
-      return Navigator.push<EditorResult>(
+      Navigator.push<EditorResult>(
         context,
         MaterialPageRoute(
           fullscreenDialog: true,
-          builder: (_) => ContentEditorScreen(
+          builder: (_) => MobileEditorLayout(
             item: item,
-            onSaved: (result) => Navigator.pop(context, result)
+            onSaved: (result) {
+              if (!completer.isCompleted) {
+                completer.complete(result);
+              }
+            }
           )
         )
+      // ).then((routeResult) {
+      //   // Optional safety: if route is popped via back button etcs
+      //   if (!completer.isCompleted) {
+      //     completer.complete(routeResult);
+      //   }
+      // }
       );
+
+      return completer.future;
     }
 
-    return showDialog<EditorResult>(
+    showDialog<EditorResult>(
       context: context,
       builder: (_) => Dialog(
         child: SizedBox(
@@ -123,11 +154,18 @@ class _LibraryPageState extends State<LibraryPage> {
           height: 700,
           child: ContentEditorDialog(
             item: item,
-            onSaved: (result) => Navigator.pop(context, result),
+            // onSaved: (result) => Navigator.pop(context, result),
+            onSaved: (result) {
+              if (!completer.isCompleted) {
+                completer.complete(result);
+              }
+            }
           )
         )
       )
     );
+
+    return completer.future;
   }
 
   Future<void> _handleEditorResult(int slot, LibraryItem item, EditorResult editorResult) async {
@@ -174,6 +212,8 @@ class _LibraryPageState extends State<LibraryPage> {
     final item = controller.items[slot];
     final metadata = item!.metadata;
 
+    if (!item.exists) return;
+
     final newAction = metadata.pendingAction == SlotPendingAction.delete
         ? SlotPendingAction.none
         : SlotPendingAction.delete;
@@ -185,6 +225,36 @@ class _LibraryPageState extends State<LibraryPage> {
     controller.updateMetadata(slot, updatedMetadata);
 
     controller.commitSlot(slot);
+  }
+
+  void _showAlbumPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) {
+            return AlbumSelector(
+              albums: controller.albums,
+              currentAlbum: controller.currentAlbum!,
+              onAlbumSelected: (album) {
+                controller.onAlbumSelected(album);
+                // Navigator.pop(sheetContext);
+              },
+              onCreateAlbum: (name) async {
+                await controller.onCreateAlbum(name);
+              },
+              onRenameAlbum: (id, name) async {
+                await controller.onRenameAlbum(id, name);
+              },
+              onDeleteAlbum: (id) async {
+                await controller.onDeleteAlbum(id);
+              }
+            );
+          }
+        );
+      }
+    );
   }
 
   Widget _buildGrid(BuildContext context) {
@@ -240,38 +310,30 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Widget _buildMobileLayout(BuildContext context ) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(8),
-        child: LibraryGrid(
-          items: controller.items,
-          selectedSlot: selectedSlot,
-          onSelected: (slot) {
-            setState(() => selectedSlot = slot);
-            if (controller.items[slot] != null) {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                useSafeArea: true,
-                builder: (_) {
-                  return FractionallySizedBox(
-                    heightFactor: 0.4,
-                    child: SlotInspector(item: controller.items[slot], onSync: _sync)
-                  );
-                }
-              );
-            }
-          },
-          onEdit: _onEdit, onDelete: _onDelete
-        )
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          await controller.pushToDevice(ble: ble, session: session);
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: LibraryGrid(
+        items: controller.items,
+        selectedSlot: selectedSlot,
+        onSelected: (slot) {
+          setState(() => selectedSlot = slot);
+          if (controller.items[slot] != null) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              useSafeArea: true,
+              builder: (_) {
+                return FractionallySizedBox(
+                  heightFactor: 0.4,
+                  child: SlotInspector(item: controller.items[slot], onSync: _sync)
+                );
+              }
+            );
+          }
         },
-        icon: const Icon(Icons.upload),
-        label: const Text('Push')
-      ),
+        onEdit: _onEdit,
+        onDelete: _onDelete
+      )
     );
   }
 
@@ -279,20 +341,46 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.sizeOf(context).width < 700;
 
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) {
-        if (!controller.initialised) {
-          return const Center(
-            child: CircularProgressIndicator()
-          );
-        }
-        return isMobile
-          ? _buildMobileLayout(context)
-          : Scaffold(
-              body: _buildDesktopLayout(context)
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('PicPak Open'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.folder_open),
+            onPressed: () {
+              _showAlbumPicker(context);
+            }
+          ),
+          IconButton(
+            icon: const Icon(Icons.dark_mode),
+            onPressed: widget.onToggleTheme
+          )
+        ]
+      ),
+      body: ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) {
+          if (!controller.initialised) {
+            return const Center(
+              child: CircularProgressIndicator()
             );
-      },
+          }
+          return isMobile
+            ? _buildMobileLayout(context)
+            : Scaffold(
+                body: _buildDesktopLayout(context)
+              );
+        },
+      ),
+      floatingActionButton: isMobile
+        ? FloatingActionButton.extended(
+            onPressed: () async {
+              await controller.pushToDevice(ble: ble, session: session);
+            },
+            icon: const Icon(Icons.upload),
+            label: const Text('Push')
+          )
+        : null
     );
   }
 } 

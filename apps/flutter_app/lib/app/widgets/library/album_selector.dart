@@ -73,7 +73,6 @@ class AlbumSelector extends StatelessWidget{
                   );
                 }).toList(),
                 onChanged: (id) {
-                  print(id);
                   if (id == null) return;
                   onAlbumSelected(id);
                 },

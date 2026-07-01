@@ -27,14 +27,14 @@ class SlotTile extends StatelessWidget {
     required this.metadata
   });
 
-  void _showMenu(BuildContext context, TapDownDetails details) async {
+  void _showMenu(BuildContext context, Offset position) async {
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+
     final result = await showMenu<String>(
       context: context,
-      position: RelativeRect.fromLTRB(
-        details.globalPosition.dx,
-        details.globalPosition.dy,
-        details.globalPosition.dx,
-        details.globalPosition.dy,
+      position: RelativeRect.fromRect(
+        Rect.fromLTWH(position.dx, position.dy, 0, 0),
+        Offset.zero & overlay.size
       ),
       items: const [
         PopupMenuItem(
@@ -48,9 +48,9 @@ class SlotTile extends StatelessWidget {
       ]
     );
     if (result == 'edit') {
-      onEdit();
+      Future.microtask(() => onEdit());
     } else if (result == 'delete') {
-      onDelete();
+      Future.microtask(() => onDelete());
     }
   }
 
@@ -59,9 +59,9 @@ class SlotTile extends StatelessWidget {
     final indicator = getStatusIndicator(metadata);
     return GestureDetector(
       onTap: onTap,
-      onLongPress: onEdit,
+      onLongPressStart: (details) {_showMenu(context, details.globalPosition);},
       onSecondaryTapDown: (details) {
-        Future.microtask(() => _showMenu(context, details));
+        _showMenu(context, details.globalPosition);
       },
       child: Container(
         decoration: BoxDecoration(

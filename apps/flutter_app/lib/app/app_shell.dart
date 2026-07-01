@@ -56,10 +56,10 @@ class _AppShellState extends State<AppShell> {
     return RepaintBoundary(
       child: IndexedStack(
         index: selectedIndex,
-        children: const [
-          DashboardPage(),
-          LibraryPage(),
-          DevWorkbenchPage()
+        children: [
+          DashboardPage(onToggleTheme: widget.onToggleTheme),
+          LibraryPage(onToggleTheme: widget.onToggleTheme),
+          DevWorkbenchPage(onToggleTheme: widget.onToggleTheme)
         ]
       )
     );
@@ -74,16 +74,6 @@ class _AppShellState extends State<AppShell> {
 
   Widget _buildMobileScaffold(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("PicPak Open"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.dark_mode),
-            onPressed: widget.onToggleTheme,
-          )
-        ]
-      ),
-
       body: Column(
         children: [
           Expanded(child: _pageStack()),
@@ -102,16 +92,6 @@ class _AppShellState extends State<AppShell> {
 
   Widget _buildDesktopScaffold(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("PicPak Open"),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.dark_mode),
-            onPressed: widget.onToggleTheme,
-          )
-        ]
-      ),
-      
       body: Column(
         children: [
           Expanded(
@@ -121,10 +101,10 @@ class _AppShellState extends State<AppShell> {
                   selectedIndex: selectedIndex,
                   onDestinationSelected: _onDestinationSelected,
                   labelType: NavigationRailLabelType.all,
-                  trailing: IconButton(
-                    icon: const Icon(Icons.dark_mode),
-                    onPressed: widget.onToggleTheme,
-                  ),
+                  // trailing: IconButton(
+                  //   icon: const Icon(Icons.dark_mode),
+                  //   onPressed: widget.onToggleTheme,
+                  // ),
                   destinations: _railDestinations,
                 ),
 

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:picpak_open/app/data/models/editor_result.dart';
 import 'package:picpak_open/app/services/image_pipeline_controller.dart';
 import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
+import 'package:picpak_open/app/widgets/controls/note_editor_mobile_controls.dart';
 import 'package:picpak_open/app/widgets/library/library_item.dart';
 import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
 import 'package:image/image.dart' as img;
@@ -17,10 +18,13 @@ class NoteEditorTab extends StatefulWidget {
     EditorResult editorResult
   ) onSaved;
 
+  final ValueChanged<Uint8List>? onPreviewChanged;
+
   const NoteEditorTab({
     super.key,
     required this.item,
-    required this.onSaved
+    required this.onSaved,
+    this.onPreviewChanged
   });
 
   @override
@@ -52,6 +56,7 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
     setState(() {
       previewBytes = Uint8List.fromList(img.encodePng(image));
     });
+    widget.onPreviewChanged?.call(previewBytes!);
   }
 
   void _save() async {
@@ -86,6 +91,23 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    if (isMobile) {
+      return NoteEditorMobileControls(
+        textController: textController,
+        onPreview: _generatePreview,
+        onSave: () {
+          _save();
+          Navigator.pop(context);
+        }
+      );
+    }
+
+    return _buildDesktop();
+  }
+
+  Widget _buildDesktop() {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(

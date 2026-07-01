@@ -20,7 +20,12 @@ import 'package:picpak_image/picpak_image.dart';
 import 'package:picpak_protocol/picpak_protocol.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({super.key});
+  final VoidCallback onToggleTheme;
+
+  const DashboardPage({
+    super.key,
+    required this.onToggleTheme
+  });
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -312,6 +317,15 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 700;
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('PicPak Open'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.dark_mode),
+            onPressed: widget.onToggleTheme,
+          )
+        ]
+      ),
       body:  isMobile
               ? _buildMobileLayout(context)
               : Row(children: _buildDesktopLayout(context))
