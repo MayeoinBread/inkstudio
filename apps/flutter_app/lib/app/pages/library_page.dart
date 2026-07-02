@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:picpak_open/app/controller/library_controller.dart';
+import 'package:picpak_open/app/data/models/editor_result.dart';
 import 'package:picpak_open/app/repositories/image_repository.dart';
 import 'package:picpak_open/app/services/ble_service.dart';
 import 'package:picpak_open/app/services/device_session_service.dart';
@@ -11,13 +12,20 @@ import 'package:picpak_open/app/services/thumbnail_service.dart';
 import 'package:picpak_open/app/state/device_session_state.dart';
 import 'package:picpak_open/app/widgets/library/album_selector.dart';
 import 'package:picpak_open/app/widgets/library/library_grid.dart';
+import 'package:picpak_open/app/widgets/library/library_item.dart';
 import 'package:picpak_open/app/widgets/library/slot_inspector.dart';
 import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
 import 'package:picpak_open/app/widgets/popups/content_editor_dialog.dart';
+import 'package:picpak_open/app/widgets/popups/mobile_editor_layout.dart';
 
 class LibraryPage extends StatefulWidget {
 
-  const LibraryPage({super.key});
+  final VoidCallback onToggleTheme;
+
+  const LibraryPage({
+    super.key,
+    required this.onToggleTheme
+  });
 
   @override
   State<LibraryPage> createState() =>
@@ -38,17 +46,19 @@ class _LibraryPageState extends State<LibraryPage> {
 
   final ImagePipelineController pipeline = ImagePipelineController();
 
-  late StreamSubscription? sub;
+  // late StreamSubscription? sub;
 
   int? selectedSlot;
 
   double progress = 0.0;
 
+  bool _initStarted = false;
+
   @override
   void initState() {
     super.initState();
 
-    controller.init();
+    // controller.init();
 
     // WidgetsBinding.instance.addPostFrameCallback((_) {
     //   controller.loadFromDatabase();
@@ -56,8 +66,18 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (_initStarted) return;
+    _initStarted = true;
+
+    controller.init();
+  }
+
+  @override
   void dispose() {
-    sub?.cancel();
+    // sub?.cancel();
     super.dispose();
   }
 
@@ -86,53 +106,113 @@ class _LibraryPageState extends State<LibraryPage> {
 
   Future<void> _onEdit(int slot) async {
     final item = controller.items[slot];
+    if (item == null) return;
 
-    await showDialog(
-      context: context,
-      builder: (_) => ContentEditorDialog(
-        item: item!,
-        onSaved: (editorResult) async {
-          final mslot = slot;
+    final result = await _openEditor(context, slot, item);
+    if (result == null) return;
 
-          final previewMd5 = md5.convert(editorResult.packedBytes).toString();
+    await _handleEditorResult(slot, item, result);
+  }
 
-          if (item.exists) {
-            final existingImage = await ImageRepository().getImage(item.metadata.imageId!);
-            if (previewMd5 == existingImage?.deviceHash){
-              return;
-            }
-          }
-
-          final thumbnail = ThumbnailService.createFromBytes(editorResult.previewBytes);
+  Future<EditorResult?> _openEditor(
+    BuildContext context, int slot, LibraryItem item
+  ) {
+    final isMobile = MediaQuery.sizeOf(context).width < 700;
     
-          final image = await ImageRepository().storeImage(
-            originalBytes: editorResult.originalBytes,
-            thumbnailBytes: thumbnail,
-            packedBytes: editorResult.packedBytes
-          );
+    final completer = Completer<EditorResult?>();
 
-          final newMetadata = editorResult.metadata.copyWith(
-            imageId: image.id,
-            syncState: SlotSyncState.uploading,
-            pendingAction: SlotPendingAction.upload
-          );
+    if (isMobile) {
+      Navigator.push<EditorResult>(
+        context,
+        MaterialPageRoute(
+          fullscreenDialog: true,
+          builder: (_) => MobileEditorLayout(
+            item: item,
+            onSaved: (result) {
+              if (!completer.isCompleted) {
+                completer.complete(result);
+              }
+            }
+          )
+        )
+      // ).then((routeResult) {
+      //   // Optional safety: if route is popped via back button etcs
+      //   if (!completer.isCompleted) {
+      //     completer.complete(routeResult);
+      //   }
+      // }
+      );
 
-          controller.updateSlot(
-            slot: mslot,
-            exists: true,
-            thumbnailBytes: thumbnail,
-            metadata: newMetadata
-          );
+      return completer.future;
+    }
 
-          controller.commitSlot(mslot);
-        }
+    showDialog<EditorResult>(
+      context: context,
+      builder: (_) => Dialog(
+        child: SizedBox(
+          width: 900,
+          height: 700,
+          child: ContentEditorDialog(
+            item: item,
+            // onSaved: (result) => Navigator.pop(context, result),
+            onSaved: (result) {
+              if (!completer.isCompleted) {
+                completer.complete(result);
+              }
+            }
+          )
+        )
       )
     );
+
+    return completer.future;
+  }
+
+  Future<void> _handleEditorResult(int slot, LibraryItem item, EditorResult editorResult) async {
+    final previewMd5 = md5.convert(editorResult.packedBytes).toString();
+
+    if (item.exists) {
+      final existingImage = await ImageRepository().getImage(item.metadata.imageId!);
+      if (previewMd5 == existingImage?.deviceHash){
+        return;
+      }
+    }
+    if (item.exists) {
+      final existingImage = await ImageRepository().getImage(item.metadata.imageId!);
+      if (previewMd5 == existingImage?.deviceHash){
+        return;
+      }
+    }
+
+    final thumbnail = ThumbnailService.createFromBytes(editorResult.previewBytes);
+
+    final image = await ImageRepository().storeImage(
+      originalBytes: editorResult.originalBytes,
+      thumbnailBytes: thumbnail,
+      packedBytes: editorResult.packedBytes
+    );
+
+    final newMetadata = editorResult.metadata.copyWith(
+      imageId: image.id,
+      syncState: SlotSyncState.uploading,
+      pendingAction: SlotPendingAction.upload
+    );
+
+    controller.updateSlot(
+      slot: slot,
+      exists: true,
+      thumbnailBytes: thumbnail,
+      metadata: newMetadata
+    );
+
+    controller.commitSlot(slot);
   }
 
   Future<void> _onDelete(int slot) async {
     final item = controller.items[slot];
     final metadata = item!.metadata;
+
+    if (!item.exists) return;
 
     final newAction = metadata.pendingAction == SlotPendingAction.delete
         ? SlotPendingAction.none
@@ -147,86 +227,160 @@ class _LibraryPageState extends State<LibraryPage> {
     controller.commitSlot(slot);
   }
 
-  Widget _buildLibrary(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 300,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              AlbumSelector(
-                albums: controller.albums,
-                currentAlbum: controller.currentAlbum!,
-                onAlbumSelected: controller.onAlbumSelected,
-                onCreateAlbum: controller.onCreateAlbum,
-                onRenameAlbum: controller.onRenameAlbum,
-                onDeleteAlbum: controller.onDeleteAlbum
-              ),
-              SlotInspector(
-                onSync: _sync,
-                item: selectedSlot == null
-                  ? null
-                  : controller.items[selectedSlot!]
-              ),
-              ElevatedButton(
-                onPressed: (() async {
-                  final updateMessage = await controller.pushToDevice(ble: ble, session: session);
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(updateMessage))
-                    );
-                  }
-                }),
-                child: const Text("Push Updates")
-              ),
-              ElevatedButton(
-                onPressed: (() async {
-                  final deleted = await ImageRepository().cleanupUnusedImages();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Deleted $deleted unused images'))
-                    );
-                  }
-                }),
-                child: const Text("Cleanup Storage")
-              ),
-            ],
-          ),
-        ),
-
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: LibraryGrid(
-              items: controller.items,
-              selectedSlot: selectedSlot,
-              onSelected: (slot) {
-                setState(() {
-                  selectedSlot = slot;
-                });
+  void _showAlbumPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return ListenableBuilder(
+          listenable: controller,
+          builder: (context, _) {
+            return AlbumSelector(
+              albums: controller.albums,
+              currentAlbum: controller.currentAlbum!,
+              onAlbumSelected: (album) {
+                controller.onAlbumSelected(album);
+                // Navigator.pop(sheetContext);
               },
-              onEdit: _onEdit,
-              onDelete: _onDelete,
-            ),
+              onCreateAlbum: (name) async {
+                await controller.onCreateAlbum(name);
+              },
+              onRenameAlbum: (id, name) async {
+                await controller.onRenameAlbum(id, name);
+              },
+              onDeleteAlbum: (id) async {
+                await controller.onDeleteAlbum(id);
+              }
+            );
+          }
+        );
+      }
+    );
+  }
+
+  Widget _buildGrid(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: LibraryGrid(
+        items: controller.items,
+        selectedSlot: selectedSlot,
+        onSelected: (slot) { setState(() => selectedSlot = slot);},
+        onEdit: _onEdit, onDelete: _onDelete)
+    );
+  }
+
+  Widget _buildDesktopSidebar(BuildContext context) {
+    return SizedBox(
+      width: 200,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          AlbumSelector(
+            albums: controller.albums,
+            currentAlbum: controller.currentAlbum!,
+            onAlbumSelected: controller.onAlbumSelected,
+            onCreateAlbum: controller.onCreateAlbum,
+            onRenameAlbum: controller.onRenameAlbum,
+            onDeleteAlbum: controller.onDeleteAlbum
           ),
-        ),
-      ],
+          SlotInspector(item: selectedSlot == null ? null : controller.items[selectedSlot], onSync: _sync),
+          FilledButton(onPressed: () async {await controller.pushToDevice(ble: ble, session: session);}, child: const Text('Push Updates')),
+          FilledButton(
+            onPressed: () async {
+              final deleted = await ImageRepository().cleanupUnusedImages();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Deleted $deleted unused images'))
+                );
+              }
+            },
+            child: const Text('Cleanup Storage')
+          )
+        ]
+      )
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    return Row (
+      children: [
+        _buildDesktopSidebar(context),
+        Expanded(child: _buildGrid(context))
+      ]
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context ) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: LibraryGrid(
+        items: controller.items,
+        selectedSlot: selectedSlot,
+        onSelected: (slot) {
+          setState(() => selectedSlot = slot);
+          if (controller.items[slot] != null) {
+            showModalBottomSheet(
+              context: context,
+              isScrollControlled: true,
+              useSafeArea: true,
+              builder: (_) {
+                return FractionallySizedBox(
+                  heightFactor: 0.4,
+                  child: SlotInspector(item: controller.items[slot], onSync: _sync)
+                );
+              }
+            );
+          }
+        },
+        onEdit: _onEdit,
+        onDelete: _onDelete
+      )
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: controller,
-      builder: (context, _) {
-        if (!controller.initialised) {
-          return const Center(
-            child: CircularProgressIndicator()
-          );
-        }
-        return _buildLibrary(context);
-      },
+    final isMobile = MediaQuery.sizeOf(context).width < 700;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('PicPak Open'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.folder_open),
+            onPressed: () {
+              _showAlbumPicker(context);
+            }
+          ),
+          IconButton(
+            icon: const Icon(Icons.dark_mode),
+            onPressed: widget.onToggleTheme
+          )
+        ]
+      ),
+      body: ListenableBuilder(
+        listenable: controller,
+        builder: (context, _) {
+          if (!controller.initialised) {
+            return const Center(
+              child: CircularProgressIndicator()
+            );
+          }
+          return isMobile
+            ? _buildMobileLayout(context)
+            : Scaffold(
+                body: _buildDesktopLayout(context)
+              );
+        },
+      ),
+      floatingActionButton: isMobile
+        ? FloatingActionButton.extended(
+            onPressed: () async {
+              await controller.pushToDevice(ble: ble, session: session);
+            },
+            icon: const Icon(Icons.upload),
+            label: const Text('Push')
+          )
+        : null
     );
   }
 } 

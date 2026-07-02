@@ -116,7 +116,7 @@ class _CropDialogState extends State<CropDialog> {
 
                 const SizedBox(width: 8),
 
-                ElevatedButton(
+                FilledButton(
                   onPressed: () {
                     Navigator.pop(context, cropRect);
                   },

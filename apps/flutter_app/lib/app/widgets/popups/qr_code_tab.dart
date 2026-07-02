@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:picpak_open/app/data/models/editor_result.dart';
 import 'package:picpak_open/app/services/image_pipeline_controller.dart';
 import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
+import 'package:picpak_open/app/widgets/controls/qr_editor_mobile_controls.dart';
 import 'package:picpak_open/app/widgets/library/library_item.dart';
 import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
 import 'package:image/image.dart' as img;
@@ -16,10 +17,13 @@ class QrCodeTab extends StatefulWidget {
     EditorResult editorResult
   ) onSaved;
 
+  final ValueChanged<Uint8List>? onPreviewChanged;
+
   const QrCodeTab({
     super.key,
     required this.item,
-    required this.onSaved
+    required this.onSaved,
+    this.onPreviewChanged
   });
 
   @override
@@ -86,6 +90,7 @@ class _QrCodeTabState extends State<QrCodeTab> {
     setState(() {
       previewBytes = Uint8List.fromList(img.encodePng(image));
     });
+    widget.onPreviewChanged?.call(previewBytes!);
   }
 
   void _save() async {
@@ -121,6 +126,25 @@ class _QrCodeTabState extends State<QrCodeTab> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
+    if (isMobile) {
+      return QrEditorMobileControls(
+        textController: textController,
+        ssidController: ssidController,
+        passwordController: passwordController,
+        qrType: qrType,
+        securityType: securityType,
+        onQrTypeChanged: onQrTypeChanged,
+        onSecurityTypeChanged: onSecurityTypeChanged,
+        onPreview: _generatePreview,
+        onSave: () {
+          _save();
+          Navigator.pop(context);
+        }
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -192,9 +216,9 @@ class _QrCodeTabState extends State<QrCodeTab> {
                   Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      ElevatedButton(onPressed: _generatePreview, child: const Text('Preview')),
+                      FilledButton(onPressed: _generatePreview, child: const Text('Preview')),
                       const SizedBox(width:8),
-                      ElevatedButton(
+                      FilledButton(
                         onPressed: () async {
                           _save();
                           Navigator.pop(context);
@@ -217,5 +241,17 @@ class _QrCodeTabState extends State<QrCodeTab> {
         ]
       )
     );
+  }
+  
+  void onQrTypeChanged(QrType value) {
+    setState(() {
+      qrType = value;
+    });
+  }
+  
+  void onSecurityTypeChanged(String value) {
+    setState(() {
+      securityType = value;
+    });
   }
 }

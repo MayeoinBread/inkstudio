@@ -32,20 +32,24 @@ class LibraryController extends ChangeNotifier {
   bool get initialised => _initialised;
 
   Future<void> init() async {
-    albums.clear();
+    try {
+      albums.clear();
 
-    albums = await albumRepository.getAlbums();
-    currentAlbum = albums.isNotEmpty
-      ? albums.first
-      : null;
-    
-    if (currentAlbum == null) return;
+      albums = await albumRepository.getAlbums();
+      currentAlbum = albums.isNotEmpty
+        ? albums.first
+        : null;
+      
+      // if (currentAlbum == null) return;
 
-    await loadFromDatabase();
+      await loadFromDatabase();
 
-    _initialised = true;
-
-    notifyListeners();
+      _initialised = true;
+    } catch (e, st) {
+      debugPrint('init failed: $e\n$st');
+    } finally {
+      notifyListeners();
+    }
   }
 
   void updateSlot({
@@ -99,6 +103,8 @@ class LibraryController extends ChangeNotifier {
   void onAlbumSelected(String id) async {
     final selectedAlbum = await albumRepository.getAlbumById(id);
     await setCurrentAlbum(selectedAlbum, false);
+
+    notifyListeners();
   }
 
   Future<void> onCreateAlbum(String name) async {
@@ -115,6 +121,7 @@ class LibraryController extends ChangeNotifier {
     albums = await albumRepository.getAlbums();
     final renamedAlbum = await albumRepository.getAlbumById(albumId);
     await setCurrentAlbum(renamedAlbum, true);
+    
     notifyListeners();
   }
   

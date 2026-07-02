@@ -1,51 +1,104 @@
 import 'dart:async';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:picpak_core/picpak_core.dart';
 import 'package:picpak_image/picpak_image.dart';
-import 'package:image/image.dart' as img;
+import 'package:picpak_open/app/services/ble_service.dart';
+import 'package:picpak_open/app/services/dashboard_actions.dart';
+import 'package:picpak_open/app/services/device_session_service.dart';
+import 'package:picpak_open/app/services/image_pipeline_controller.dart';
+import 'package:picpak_open/app/state/device_session_state.dart';
 import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
 import 'package:picpak_open/app/widgets/controls/dithering_controls.dart';
 import 'package:picpak_open/app/widgets/controls/filter_controls.dart';
 import 'package:picpak_open/app/widgets/controls/filter_options_controls.dart';
 import 'package:picpak_open/app/widgets/controls/image_adjustment_controls.dart';
 import 'package:picpak_open/app/widgets/controls/palette_bias_controls.dart';
+import 'package:picpak_open/app/widgets/device/device_slot_panel.dart';
+import 'package:picpak_open/app/widgets/popups/crop_dialog.dart';
+import 'package:picpak_protocol/picpak_protocol.dart';
 
 class DevWorkbenchPage extends StatefulWidget {
-  const DevWorkbenchPage({super.key});
+  final VoidCallback onToggleTheme;
+  const DevWorkbenchPage({
+    super.key,
+    required this.onToggleTheme
+  });
 
   @override
   State<DevWorkbenchPage> createState() => _DevWorkbenchPageState();
 }
 
 class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
-  img.Image? _workingImage;
-  Uint8List? _originalImage;
-  Uint8List? _processedImage;
+  final ble = BleService.instance.manager;
+  final session = DeviceSessionService.instance;
+  final ImagePipelineController pipeline = ImagePipelineController();
 
-  final pipeline = ImagePipeline();
-
-  PaletteFramebuffer? _framebuffer;
+  Uint8List? _originalImageBytes;
+  Uint8List? _previewBytes;
 
   DitherMode _ditherMode = DitherMode.floydSteinberg;
   final FitStrategy _fitStrategy = FitStrategy.crop;
-  SwatchType _swatchType = SwatchType.noise;
+  // SwatchType _swatchType = SwatchType.noise;
 
   ImageAdjustments _adjustments = ImageAdjustments();
   PaletteBias _bias = PaletteBias();
 
-  final _noteController = TextEditingController();
-
   ImageFilter _filter = ImageFilter.normal;
   bool _simulateDevice = false;
 
-  int _processToken = 0;
+  Rect? cropRect;
+
+  int _processVersion = 0;
 
   late StreamSubscription sub;
+
+  void updateSession(DeviceSessionState Function(DeviceSessionState current) updater) {
+    setState(() { session.state = updater(session.state); });
+  }
 
   @override
   void initState() {
     super.initState();
+
+    sub = ble.imageStream.stream.listen((fb) {
+      if (!mounted) return;
+
+      pipeline.framebuffer = fb;
+      pipeline.previewBytes = Uint8List.fromList(
+        img.encodePng(PanelRerender.renderFramebuffer(fb))
+      );
+
+      setState(() {
+        session.state = session.state.copyWith(
+          transfer: TransferState.idle,
+          progress: 0.0,
+          activeSlot: null
+        );
+      });
+    });
+
+    ble.onDeviceSettings = (settings) {
+      if (mounted) {
+        debugPrint("DEV PAGE: onDeviceSettings, mounted");
+        setState(() {
+          session.state = session.state.copyWith(
+            settings: settings
+          );
+        });
+      }
+    };
+
+    ble.onUploadComplete = () {
+      setState(() {
+        session.state = session.state.copyWith(
+          transfer: TransferState.idle,
+          progress: 0
+        );
+      });
+    };
   }
 
   @override
@@ -55,220 +108,319 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
   }
 
   Future<void> _prepareWorkingImage() async {
-    final bytes = _originalImage;
+    final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    final decoded = img.decodeImage(bytes);
-
-    if (decoded == null) return;
-
-    final pipeline = ImagePipeline();
-
-    final prepared = pipeline.prepareBaseImage(decoded, _fitStrategy, null);
-
-    setState(() {
-      _workingImage = prepared;
-    });
+    await pipeline.prepare(bytes, _fitStrategy, cropRect);
   }
 
   Future<void> _reprocess() async {
+    final bytes = _originalImageBytes;
+    if (bytes == null) return;
 
-    _prepareWorkingImage();
-
-    final image = _originalImage;
-    if (image == null) return;
-
-    final token = ++_processToken;
-
-    await Future.delayed(Duration.zero);
-
-    final result = await compute(
-      runPipelineIsolate,
-      PipelineRequest(
-        workingImage: _workingImage!,
-        filter: _filter,
-        simulateDevice: _simulateDevice,
-        width: DeviceConstants.imageWidth,
-        height: DeviceConstants.imageHeight,
-        fit: _fitStrategy,
-        dither: _ditherMode,
-        adjustments: _adjustments,
-        paletteBias: _bias
-      ),
+    final int version = ++_processVersion;
+    
+    await pipeline.process(
+      dither: _ditherMode,
+      filter: _filter,
+      simulateDevice: _simulateDevice,
+      fit: _fitStrategy,
+      adjustments: _adjustments,
+      paletteBias: _bias
     );
 
-    if (token != _processToken) return;
+    if (version != _processVersion) return;
 
     setState(() {
-      _framebuffer = result.framebuffer;
-      _processedImage = result.previewBytes;
+      _previewBytes = pipeline.previewBytes!;
     });
   }
 
   Future<void> _loadImageBytes(Uint8List bytes) async {
     setState(() {
-      _originalImage = bytes;
+      if (!listEquals(_originalImageBytes, bytes)) {
+        _originalImageBytes = bytes;
+      }
     });
 
+    await _prepareWorkingImage();
     await _reprocess();
-
-    if (_framebuffer == null) return;
   }
 
-  Future<void> _loadSwatch() async {
-    final swatch = await SwatchGenerator.generate(
-      _swatchType,
-      width: DeviceConstants.imageWidth,
-      height: DeviceConstants.imageHeight
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withData: true
     );
-    final bytes = Uint8List.fromList(
-      img.encodePng(swatch)
-    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final bytes = result.files.first.bytes;
+
+    if (bytes == null) return;
 
     await _loadImageBytes(bytes);
   }
 
-  Future<void> _generateNote() async {
-    final note = NoteRenderer.render(
-      text: _noteController.text,
-      w: DeviceConstants.imageWidth,
-      h: DeviceConstants.imageHeight
+  Future<void> _uploadImage() async {
+    final fb = pipeline.framebuffer;
+    if (fb == null) return;
+
+    setState(() {
+      session.state = session.state.copyWith(
+        transfer: TransferState.uploading,
+        progress: 0
+      );
+    });
+
+    final flipped = flipVertical(fb);
+    final packed = FramebufferPacker.pack(flipped);
+
+    final packets = UploadSession.build(imageNumber: session.state.activeSlot!, packedImageData: packed);
+
+    await ble.sendImage(packets);
+    await ble.sendMd5Trigger(imageNumber: session.state.activeSlot!, imageData: packed);
+  }
+
+  Future<void> _handleCropButton() async {
+    if (_originalImageBytes == null) return;
+    final rect = await showDialog<Rect>(
+      context: context,
+      builder: (_) => CropDialog(
+        imageBytes: _originalImageBytes!,
+        initialRect: cropRect,
+      )
     );
 
-    final bytes = Uint8List.fromList(
-      img.encodePng(note)
-    );
+    if (rect != null) {
+      setState(() {
+        cropRect = rect;
+      });
+    }
 
-    await _loadImageBytes(bytes);
+    await _prepareWorkingImage();
+    await _reprocess();
+  }
+
+  Future<void> _autoEnhance() async {
+    final image = pipeline.sourceImage;
+    if (image == null) return;
+    final metrics = ImageMetrics.analyseImage(image);
+    final suggested = ImageAdjustments.autoEnhance(metrics);
+    setState(() {
+      _adjustments = suggested;
+    });
+    await _reprocess();
+  }
+
+  // Future<void> _loadSwatch() async {
+  //   final swatch = await SwatchGenerator.generate(
+  //     _swatchType,
+  //     width: DeviceConstants.imageWidth,
+  //     height: DeviceConstants.imageHeight
+  //   );
+  //   final bytes = Uint8List.fromList(
+  //     img.encodePng(swatch)
+  //   );
+
+  //   await _loadImageBytes(bytes);
+  // }
+
+  // Future<void> _generateNote() async {
+  //   final note = NoteRenderer.render(
+  //     text: _noteController.text,
+  //     w: DeviceConstants.imageWidth,
+  //     h: DeviceConstants.imageHeight
+  //   );
+
+  //   final bytes = Uint8List.fromList(
+  //     img.encodePng(note)
+  //   );
+
+  //   await _loadImageBytes(bytes);
+  // }
+
+  Widget _leftPanel(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DeviceSlotPanel(
+            onDownload: session.state.canDownload
+              ? () => DashboardActions.downloadSlot(ble: ble, slot: session.state.activeSlot!, updateSession: updateSession)
+              : null,
+            onUpload: session.state.canTransfer
+              ? _uploadImage
+              : null,
+            activeSlot: session.state.activeSlot,
+            onSlotChanged: (slot) {
+              updateSession((s) => s.copyWith(activeSlot: slot));
+            },
+            settings: session.state.settings
+          )
+        ]
+      ),
+    );
+  }
+
+  Widget _centerPanel(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+          children: [
+            FilledButton(
+              onPressed: () async {
+                await _pickImage();
+              },
+              child: const Text('Import Image')
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: Row(
+                children: [
+                  Expanded(
+                    child: IconButton(
+                      icon: const Icon(Icons.crop),
+                      tooltip: 'Crop',
+                      onPressed: () async {
+                        await _handleCropButton();
+                      }
+                    )
+                  ),
+
+                  Expanded(
+                    child: IconButton(
+                      icon: const Icon(Icons.diamond_sharp),
+                      tooltip: 'Auto-Enhance',
+                      onPressed: () async {
+                        await _autoEnhance();
+                      }
+                    )
+                  )
+                ]
+              )
+            ),
+            const SizedBox(height: 8),
+            DitheringControls(
+              selectedAlgorithm: _ditherMode,
+              onAlgorithmChanged: (newAlg) async {
+                setState(() {
+                  _ditherMode = newAlg;
+                });
+                _reprocess();
+              }
+            ),
+            const SizedBox(height: 8),
+            ImageAdjustmentControls(
+              adjustments: _adjustments,
+              onChanged: (newAdjustments) async {
+                setState(() {
+                  _adjustments = newAdjustments;
+                });
+      
+                _reprocess();
+              }
+            ),
+            const SizedBox(height: 8),
+            PaletteBiasControls(
+              paletteBias: _bias,
+              onChanged: (newBias) async {
+                setState(() {
+                  _bias = newBias;
+                });
+                _reprocess();
+              }
+            ),
+            const SizedBox(height: 8),
+            FilterControls(
+              selectedFilter: _filter,
+              onFilterChanged: (filter) async {
+                setState(() {
+                  _filter = filter;
+                });
+                _reprocess();
+              }
+            ),
+            FilterOptionsControls(
+              adjustments: _adjustments,
+              filter: _filter,
+              onChanged: (filtOptions) async {
+                setState(() {
+                  _adjustments = filtOptions;
+                });
+                _reprocess();
+              }
+            )
+          ]
+        ),
+    )
+    ;
+  }
+
+  Widget _rightPanel(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        children: [
+          SwitchListTile(
+            title: const Text('Simulate Device Colours'),
+            value: _simulateDevice,
+            onChanged: (newSim) async {
+              setState(() {
+                _simulateDevice = newSim;
+              });
+              await _reprocess();
+            }
+          ),
+          ImagePreviewPanel(title: 'Original', height: DeviceConstants.imageHeight, imageBytes: _originalImageBytes),
+          ImagePreviewPanel(title: 'Preview', height: DeviceConstants.imageHeight, imageBytes: _previewBytes)
+        ]
+      ),
+    );
+  }
+
+  List<Widget> _buildDesktopLayout(BuildContext context) {
+    return [
+      SingleChildScrollView(child: SizedBox(width: 300, child: _leftPanel(context))),
+      SingleChildScrollView(child: SizedBox(width: 340, child: _centerPanel(context))),
+      Expanded(child: SingleChildScrollView(child: _rightPanel(context)))
+    ];
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _leftPanel(context),
+          _rightPanel(context),
+          _centerPanel(context)
+        ],
+      )
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 700;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PicPak Image Pipeline'),
+        title: const Text('PicPak Open'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.dark_mode),
+            onPressed: widget.onToggleTheme,
+          )
         ]
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row (
-          children: [
-            SizedBox(
-              width: 340,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    ImageAdjustmentControls(
-                      adjustments: _adjustments,
-                      onChanged: (newAdjustments) async {
-                        setState(() {
-                          _adjustments = newAdjustments;
-                        });
-                        _reprocess();
-                      }
-                    ),
-                    PaletteBiasControls(
-                      paletteBias: _bias,
-                      onChanged: (newBias) async {
-                        setState(() {
-                          _bias = newBias;
-                        });
-                        _reprocess();
-                      }
-                    ),
-                    DitheringControls(
-                      selectedAlgorithm: _ditherMode,
-                      onAlgorithmChanged: (newAlg) async {
-                        setState(() {
-                          _ditherMode = newAlg;
-                        });
-                        _reprocess();
-                      }
-                    ),
-                    FilterControls(
-                      selectedFilter: _filter,
-                      onFilterChanged: (filter) async {
-                        setState(() {
-                          _filter = filter;
-                        });
-                        _reprocess();
-                      }
-                    ),
-                    FilterOptionsControls(
-                      adjustments: _adjustments,
-                      filter: _filter,
-                      onChanged: (newAdjustments) async {
-                        setState(() {
-                          _adjustments = newAdjustments;
-                        });
-                        _reprocess();
-                      }
-                    ),
-                  ],
-                )
-              ),
-            ),
-
-            SizedBox(
-              width: 340,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    DropdownButton<SwatchType>(
-                      value: _swatchType,
-                      onChanged: (value) async {
-                        if (value == null) return;
-                        setState(() {
-                          _swatchType = value;
-                        });
-                        await _loadSwatch();
-                      },
-                      items: SwatchType.values.map((t) {
-                        return DropdownMenuItem(
-                          value: t,
-                          child: Text(t.name)
-                        );
-                      }).toList()
-                    ),
-
-                    SwitchListTile(title: const Text("Simulate Device Colours"), value: _simulateDevice,
-                      onChanged: (v) {
-                        setState(() => _simulateDevice = v);
-                        _reprocess();
-                      }
-                    ),
-
-                    ElevatedButton(
-                      onPressed: _generateNote,
-                      child: const Text("Generate Note")
-                    ),
-
-                    TextField(
-                      controller: _noteController,
-                      maxLines: 5,
-                      decoration: const InputDecoration(
-                        labelText: "Note Text",
-                        border: OutlineInputBorder()
-                      ),
-                    )
-                  ],
-                )
-              ),
-            ),
-
-            Expanded(
-              child: Column(
-                children: [
-                  ImagePreviewPanel(title: "Original", height: 300, imageBytes: _originalImage),
-                  ImagePreviewPanel(title: "Processed", height: 300, imageBytes: _processedImage)
-                ],
-              )
-            )
-          ],
-        )
+        child: isMobile
+          ? _buildMobileLayout(context)
+          : Row(children: _buildDesktopLayout(context))
       ),
     );
   }

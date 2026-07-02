@@ -17,9 +17,9 @@ class SlotInspector extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ElevatedButton(
+          FilledButton(
             onPressed: onSync,
             child: const Text('Sync Device')
           ),
