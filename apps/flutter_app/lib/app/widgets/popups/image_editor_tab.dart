@@ -41,7 +41,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   Uint8List? _originalImageBytes;
   Uint8List? previewBytes;
 
-  // int _processVersion = 0;
+  int _processVersion = 0;
 
   final ImagePipelineController pipeline = ImagePipelineController();
 
@@ -136,7 +136,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    // final int version = ++_processVersion;
+    final int version = ++_processVersion;
 
     await pipeline.process(
       dither: algorithm,
@@ -147,7 +147,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       paletteBias: paletteBias
     );
 
-    // if (version != _processVersion) return;
+    if (version != _processVersion) return;
 
     setState((){
       widget.onPreviewChanged?.call(pipeline.previewBytes!);
@@ -291,7 +291,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: [
-                  ElevatedButton(
+                  FilledButton(
                     onPressed: _pickImage,
                     child: const Text('Import Image')
                   ),
@@ -409,7 +409,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                   height: DeviceConstants.imageHeight,
                   imageBytes: pipeline.previewBytes
                 ),
-                ElevatedButton(onPressed: () async {
+                FilledButton(onPressed: () async {
                   _save();
                   Navigator.pop(context);
                 },

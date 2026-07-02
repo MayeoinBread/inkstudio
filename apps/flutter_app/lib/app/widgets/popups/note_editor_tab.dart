@@ -129,9 +129,9 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
 
                 Row(
                   children: [
-                    ElevatedButton(onPressed: _generatePreview, child: const Text('Preview')),
+                    FilledButton(onPressed: _generatePreview, child: const Text('Preview')),
                     const SizedBox(width: 8),
-                    ElevatedButton(
+                    FilledButton(
                       onPressed: () async {
                         _save();
                         Navigator.pop(context);

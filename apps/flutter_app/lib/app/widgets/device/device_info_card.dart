@@ -1,14 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:picpak_open/app/state/device_session_state.dart';
 
-class DeviceInfoCard extends StatelessWidget {
+class DeviceInfoCard extends StatefulWidget {
+  final VoidCallback? onConnect;
+  final VoidCallback? onDisconnect;
+
   final DeviceSessionState state;
 
   const DeviceInfoCard({
     super.key,
-    required this.state
+    required this.state,
+    required this.onConnect,
+    required this.onDisconnect
   });
 
+  @override
+  State<DeviceInfoCard> createState() => _DeviceInfoCardState();
+}
+
+class _DeviceInfoCardState extends State<DeviceInfoCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -18,25 +28,37 @@ class DeviceInfoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              state.deviceName,
+              widget.state.deviceName,
               style: Theme.of(context).textTheme.titleLarge
             ),
             const SizedBox(height: 12),
             Row(
               children: [
                 Icon(
-                  Icons.circle, size: 12, color: state.isConnected ? Colors.green : Colors.red
+                  Icons.circle, size: 12, color: widget.state.isConnected ? Colors.green : Colors.red
                 ),
                 const SizedBox(width: 8),
-                Text(state.statusText)
+                Text(widget.state.statusText)
               ]
             ),
             const SizedBox(height: 16),
-            Text('Firmware: ${state.firmware}'),
-            Text('Battery: ${state.batteryPercent}%'),
+            Text('Firmware: ${widget.state.firmware}'),
+            Text('Battery: ${widget.state.batteryPercent}%'),
             const SizedBox(height: 16),
-            Text('Image Refresh Period: ${state.settings.seconds}s'),
-            Text('Accelerometer Enabled: ${state.settings.accelerometer}')
+            Text('Image Refresh Period: ${widget.state.settings.seconds}s'),
+            Text('Accelerometer Enabled: ${widget.state.settings.accelerometer}'),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: widget.onConnect,
+              child: const Text('Connect'),
+            ),  
+
+            const SizedBox(height: 8),
+
+            FilledButton(
+              onPressed: widget.onDisconnect,
+              child: const Text('Disconnect'),
+            ),
           ],
         )
       )

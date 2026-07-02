@@ -50,7 +50,7 @@ class ImageEditorMobileControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 5,
+      length: 4,
       child: Column(
         children: [
           Padding(
@@ -58,12 +58,12 @@ class ImageEditorMobileControls extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                ElevatedButton(
+                FilledButton(
                   onPressed: onLoadImageSelected,
                   child: const Text('Load Image')
                 ),
                 
-                ElevatedButton(
+                FilledButton(
                   onPressed: onSave,
                   child: const Text('Save')
                 ),
@@ -75,10 +75,9 @@ class ImageEditorMobileControls extends StatelessWidget {
             tabs: [
               Tab(text: 'General'),
               // Tab(text: 'Crop'),
-              Tab(text: 'Algorithm'),
+              Tab(text: 'Dithering'),
               Tab(text: 'Adjustments'),
-              Tab(text: 'Filters'),
-              Tab(text: 'Filter Options')
+              Tab(text: 'Filters + Options')
             ]
           ),
 
@@ -86,7 +85,7 @@ class ImageEditorMobileControls extends StatelessWidget {
             child: TabBarView(
               children: [
                 SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   child: Column(
                     children: [
                       
@@ -116,11 +115,6 @@ class ImageEditorMobileControls extends StatelessWidget {
                         title: const Text('Simulate Device Colours'),
                         value: simulateDevice,
                         onChanged: onSimulateDeviceChanged
-                      ),
-
-                      PaletteBiasControls(
-                        paletteBias: bias,
-                        onChanged: onPaletteBiasChanged
                       )
                     ],
                   )
@@ -135,7 +129,7 @@ class ImageEditorMobileControls extends StatelessWidget {
                 // ),
 
                 SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(8),
                   child: DitheringControls(
                     selectedAlgorithm: alg,
                     onAlgorithmChanged: onAlgChanged
@@ -143,27 +137,37 @@ class ImageEditorMobileControls extends StatelessWidget {
                 ),
 
                 SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: ImageAdjustmentControls(
-                    adjustments: adjustments,
-                    onChanged: onAdjustmentsChanged
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      ImageAdjustmentControls(
+                        adjustments: adjustments,
+                        onChanged: onAdjustmentsChanged
+                      ),
+                      SizedBox(height: 8),
+                      PaletteBiasControls(
+                        paletteBias: bias,
+                        onChanged: onPaletteBiasChanged
+                      )
+                    ]
                   )
                 ),
 
                 SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: FilterControls(
-                    selectedFilter: filter,
-                    onFilterChanged: onFilterChanged
-                  )
-                ),
-
-                SingleChildScrollView(
-                  padding: const EdgeInsets.all(12),
-                  child: FilterOptionsControls(
-                    adjustments: adjustments,
-                    filter: filter,
-                    onChanged: onAdjustmentsChanged
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    children: [
+                      FilterControls(
+                        selectedFilter: filter,
+                        onFilterChanged: onFilterChanged
+                      ),
+                      SizedBox(height: 8),
+                      FilterOptionsControls(
+                        adjustments: adjustments,
+                        filter: filter,
+                        onChanged: onAdjustmentsChanged
+                      )
+                    ]
                   )
                 )
               ]

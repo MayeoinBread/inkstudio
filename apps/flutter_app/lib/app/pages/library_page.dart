@@ -283,8 +283,8 @@ class _LibraryPageState extends State<LibraryPage> {
             onDeleteAlbum: controller.onDeleteAlbum
           ),
           SlotInspector(item: selectedSlot == null ? null : controller.items[selectedSlot], onSync: _sync),
-          ElevatedButton(onPressed: () async {await controller.pushToDevice(ble: ble, session: session);}, child: const Text('Push Updates')),
-          ElevatedButton(
+          FilledButton(onPressed: () async {await controller.pushToDevice(ble: ble, session: session);}, child: const Text('Push Updates')),
+          FilledButton(
             onPressed: () async {
               final deleted = await ImageRepository().cleanupUnusedImages();
               if (mounted) {
