@@ -1,56 +1,87 @@
-# PicPak Open
+# InkStudio
 
-PicPak Open is a Flutter-based image processing and transmission tool designed for a low-resolution, 4-colour e-ink display device. It provides a full pipeline for importing, generating, processing, previewing, and transmitting images over BLE.
+InkStudio is a cross-platform Flutter application for creating, managing and synchronising content for compatible 4-colour e-paper display devices.
 
----
+It provides an offline-first workflow for building image libraries, generating notes and QR codes, previewing processed output, and synchronising content over Bluetooth Low Energy (BLE).
 
-# Core Concept
-
-All images follow a single pipeline:
-
-1. Image source (file import or generated swatch/note)
-2. Resize + fit strategy
-3. Optional filters (brightness, contrast, style adjustments)
-4. Dithering (convert RGB → 4-colour palette)
-5. Framebuffer generation
-6. Preview rendering
-7. Packetisation
-8. BLE transmission
-
-The pipeline is intentionally kept source-agnostic. Whether the input is a photo, a swatch, or a generated note, it is processed identically once converted into image bytes.
+InkStudio is fully usable without a connected device. A device connection is only required when transferring content.
 
 ---
 
-# Current Features
+# Features
 
-## Image Sources
-- File import (any image via file picker)
-- Procedural swatches (test patterns)
-  - gradients
-  - spectrum maps
-  - high contrast patterns
-  - colour stress tests
-- Text notes ("post-it" style generated images)
+## Cross-platform
+
+InkStudio runs from a single Flutter codebase on:
+
+- Windows
+- Android
+
+The interface adapts automatically between desktop and mobile layouts.
+
+---
+
+## Offline-first Library
+
+All content is stored locally on the device.
+
+- Organise images into albums
+- Browse and edit existing content
+- Delete and clean up unused images
+- Prepare updates without a device connection
+
+No cloud services or internet connection required.
+
+---
+
+## Content Creation
+
+InkStudio supports multiple content sources:
+
+- Imported images
+- Text notes
+- QR codes
+- Procedural test images
+
+All content is processed through a unified pipeline for consistent device output.
+
+---
 
 ## Image Processing
-- Resize strategies:
-  - crop
-  - scale
-- Image adjustments:
-  - brightness
-  - contrast
-- Filter system (extensible)
+
+Built-in tools include:
+
+- Crop and fit strategies
+- Brightness adjustment
+- Contrast adjustment
+- Extensible filter system
+
+---
 
 ## Dithering
-Pluggable dither engine system:
 
-- None (direct palette mapping, best for text/UI)
+Supported dithering algorithms include:
+
+- None
 - Floyd–Steinberg
 - Atkinson
-- Ordered dithering
+- Ordered
 - Sierra
 
-Each dithering method converts RGB input into a fixed 4-colour palette:
+Plus a few more
+
+## Filters
+
+Multiple filters are available to change the style of the image including:
+
+- Grayscale
+- Posterise
+- Comic
+- Halftone
+- Pencil Sketch
+
+Images are converted into the device’s fixed four-colour palette:
+
 - Black
 - White
 - Yellow
@@ -58,98 +89,68 @@ Each dithering method converts RGB input into a fixed 4-colour palette:
 
 ---
 
-## Preview System
-- Framebuffer-based preview renderer
-- Optional device palette simulation mode (preview only)
-- Real-time reprocessing on change
+## Preview
+
+Real-time preview is generated directly from the framebuffer used for transmission, ensuring accurate representation of final device output.
 
 ---
 
-## Transmission (in theory, untested on device yet)
-- Framebuffer is packed into compact binary format
-- BLE packetisation layer handles chunking
-- MD5 validation packet included for integrity check
-- Supports streaming to e-ink device display protocol
+## Device Synchronisation
+
+When connected to a compatible device, InkStudio can:
+
+- Push pending updates
+- Synchronise album contents
+- Transfer packed framebuffers over BLE
+- Validate transfers using MD5 hashes
+
+InkStudio remains fully functional offline.
 
 ---
 
-# Architecture Overview
+# Project Structure
 
-## Packages
-- `picpak_core`
-  - shared types (palette index, device constants, etc.)
-
-- `picpak_image`
-  - image pipeline
-  - dithering engines
-  - framebuffer generation
-  - preview rendering
-  - encoding + packing
-
-- Flutter app
-  - UI layer
-  - image selection and swatch generation
-  - slider-based adjustment system
-  - BLE transport
+- `apps/flutter_app` — Cross-platform Flutter application (desktop + Android)
+- `packages/picpak_core` — Shared models, constants and device definitions
+- `packages/picpak_image` — Image processing pipeline, preview rendering and framebuffer packing
 
 ---
 
 # Design Principles
 
-- Single pipeline for all image sources
-- No special-case rendering paths
-- Dithering is pluggable and independent
-- Preview is derived from framebuffer, not separate logic
-- Device transmission format is fixed and isolated from UI logic
+- Offline-first by default
+- Cross-platform from a single codebase
+- Unified processing pipeline for all content types
+- Clear separation of UI, processing and transport layers
+- Predictable output for constrained colour displays
 
 ---
 
-# Known Limitations
+# Current Limitations
 
-- Text rendering is basic (no wrapping or layout engine)
-- Image processing is CPU-heavy and can cause latency on web builds
-- No GPU acceleration currently used
-- Preview rendering is simplified compared to final device appearance
-- No persistent project/session saving yet
-
----
-
-# Future Improvements
-
-## Rendering & UI
-- Improved text rendering (wrapping, auto-fit, alignment)
-- True layout system for notes and templates
-- UI overhaul for better visual hierarchy
-
-## Image Generation
-- More procedural templates:
-  - calendars
-  - reminders
-  - QR codes
-  - structured “cards”
-
-## Device Features
-- Multi-image storage on device
-- “Post-it note” sync system
-- Metadata support for frames
-
-## UX Improvements
-- Presets for filters + dithering combinations
-- Palette-aware adjustment tools
-- Better preview simulation of real panel behaviour
-- Performance optimisations for real-time slider interaction
+- BLE synchronisation requires compatible hardware
+- Image processing is CPU-intensive on low-end devices
+- No cloud synchronisation
+- No user accounts
+- No GPU acceleration
 
 ---
 
-# Summary
+# Roadmap
 
-PicPak is evolving into a lightweight image-to-e-ink content pipeline rather than a traditional image editor. The focus is on fast generation, predictable output, and consistent transformation into a constrained 4-colour display format.
+Planned improvements:
+
+- Enhanced note editing tools
+- Expanded QR generation options
+- More procedural templates
+- Improved editing UX on mobile
+- Performance optimisations
+- Expanded device support
+
+---
 
 # AI Assistance Disclosure
-Portions of this project were developed with the assistance of AI tooling
-for tasks such as architecture planning, documentation, boilerplate generation,
-refactoring assistance, and code review.
 
-All generated code is reviewed, tested, and maintained by human contributors.
-Final design and implementation decisions remain the responsibility of the
-project maintainers.
+Portions of this project were developed with the assistance of AI tooling for architecture planning, documentation, boilerplate generation, refactoring assistance and code review.
+
+All generated code is reviewed, tested and maintained by human contributors. Final design and implementation decisions remain the responsibility of the project maintainers.
