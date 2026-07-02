@@ -3,22 +3,22 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
-import 'package:picpak_core/picpak_core.dart';
-import 'package:picpak_image/picpak_image.dart';
-import 'package:picpak_open/app/services/ble_service.dart';
-import 'package:picpak_open/app/services/dashboard_actions.dart';
-import 'package:picpak_open/app/services/device_session_service.dart';
-import 'package:picpak_open/app/services/image_pipeline_controller.dart';
-import 'package:picpak_open/app/state/device_session_state.dart';
-import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
-import 'package:picpak_open/app/widgets/controls/dithering_controls.dart';
-import 'package:picpak_open/app/widgets/controls/filter_controls.dart';
-import 'package:picpak_open/app/widgets/controls/filter_options_controls.dart';
-import 'package:picpak_open/app/widgets/controls/image_adjustment_controls.dart';
-import 'package:picpak_open/app/widgets/controls/palette_bias_controls.dart';
-import 'package:picpak_open/app/widgets/device/device_slot_panel.dart';
-import 'package:picpak_open/app/widgets/popups/crop_dialog.dart';
-import 'package:picpak_protocol/picpak_protocol.dart';
+import 'package:inkstudio_core/inkstudio_core.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio/app/services/ble_service.dart';
+import 'package:inkstudio/app/services/dashboard_actions.dart';
+import 'package:inkstudio/app/services/device_session_service.dart';
+import 'package:inkstudio/app/services/image_pipeline_controller.dart';
+import 'package:inkstudio/app/state/device_session_state.dart';
+import 'package:inkstudio/app/widgets/common/image_preview_panel.dart';
+import 'package:inkstudio/app/widgets/controls/dithering_controls.dart';
+import 'package:inkstudio/app/widgets/controls/filter_controls.dart';
+import 'package:inkstudio/app/widgets/controls/filter_options_controls.dart';
+import 'package:inkstudio/app/widgets/controls/image_adjustment_controls.dart';
+import 'package:inkstudio/app/widgets/controls/palette_bias_controls.dart';
+import 'package:inkstudio/app/widgets/device/device_slot_panel.dart';
+import 'package:inkstudio/app/widgets/popups/crop_dialog.dart';
+import 'package:inkstudio_protocol/inkstudio_protocol.dart';
 
 class DevWorkbenchPage extends StatefulWidget {
   final VoidCallback onToggleTheme;
@@ -408,7 +408,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PicPak Open'),
+        title: const Text('InkStudio'),
         actions: [
           IconButton(
             icon: const Icon(Icons.dark_mode),

@@ -16,7 +16,7 @@ class DatabaseService {
 
     final dir = await getApplicationSupportDirectory();
 
-    final dbPath = join(dir.path, 'picpak.db');
+    final dbPath = join(dir.path, 'inkstudio.db');
 
     _db = await databaseFactoryFfi.openDatabase(
       dbPath,

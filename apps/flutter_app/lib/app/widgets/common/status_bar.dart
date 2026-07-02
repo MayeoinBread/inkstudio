@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/state/device_session_state.dart';
+import 'package:inkstudio/app/state/device_session_state.dart';
 
 class StatusBar extends StatelessWidget {
   final DeviceSessionState state;

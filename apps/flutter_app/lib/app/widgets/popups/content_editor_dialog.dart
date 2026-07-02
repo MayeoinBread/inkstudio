@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/data/models/editor_result.dart';
-import 'package:picpak_open/app/widgets/library/library_item.dart';
-import 'package:picpak_open/app/widgets/popups/image_editor_tab.dart';
-import 'package:picpak_open/app/widgets/popups/note_editor_tab.dart';
-import 'package:picpak_open/app/widgets/popups/qr_code_tab.dart';
+import 'package:inkstudio/app/data/models/editor_result.dart';
+import 'package:inkstudio/app/widgets/library/library_item.dart';
+import 'package:inkstudio/app/widgets/popups/image_editor_tab.dart';
+import 'package:inkstudio/app/widgets/popups/note_editor_tab.dart';
+import 'package:inkstudio/app/widgets/popups/qr_code_tab.dart';
 
 class ContentEditorDialog extends StatelessWidget {
   final LibraryItem item;

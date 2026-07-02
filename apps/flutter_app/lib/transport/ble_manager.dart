@@ -2,15 +2,15 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:picpak_open/app/data/models/device_settings.dart';
-import 'package:picpak_open/app/services/device_session_service.dart';
-import 'package:picpak_open/app/state/device_session_state.dart';
-import 'package:picpak_open/transport/ble_session.dart';
-import 'package:picpak_open/transport/device_info.dart';
+import 'package:inkstudio/app/data/models/device_settings.dart';
+import 'package:inkstudio/app/services/device_session_service.dart';
+import 'package:inkstudio/app/state/device_session_state.dart';
+import 'package:inkstudio/transport/ble_session.dart';
+import 'package:inkstudio/transport/device_info.dart';
 // import 'package:flutter_blue_plus_windows/flutter_blue_plus_windows.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:picpak_protocol/picpak_protocol.dart';
-import 'package:picpak_image/picpak_image.dart';
+import 'package:inkstudio_protocol/inkstudio_protocol.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
 class BleManager {
   final BleSession bleSession = BleSession();

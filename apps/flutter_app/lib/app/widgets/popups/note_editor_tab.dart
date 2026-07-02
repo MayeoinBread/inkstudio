@@ -1,15 +1,15 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/data/models/editor_result.dart';
-import 'package:picpak_open/app/services/image_pipeline_controller.dart';
-import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
-import 'package:picpak_open/app/widgets/controls/note_editor_mobile_controls.dart';
-import 'package:picpak_open/app/widgets/library/library_item.dart';
-import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio/app/data/models/editor_result.dart';
+import 'package:inkstudio/app/services/image_pipeline_controller.dart';
+import 'package:inkstudio/app/widgets/common/image_preview_panel.dart';
+import 'package:inkstudio/app/widgets/controls/note_editor_mobile_controls.dart';
+import 'package:inkstudio/app/widgets/library/library_item.dart';
+import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
 import 'package:image/image.dart' as img;
-import 'package:picpak_core/picpak_core.dart';
-import 'package:picpak_image/picpak_image.dart';
+import 'package:inkstudio_core/inkstudio_core.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
 class NoteEditorTab extends StatefulWidget {
   final LibraryItem item;

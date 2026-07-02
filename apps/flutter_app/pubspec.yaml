@@ -1,4 +1,4 @@
-name: picpak_open
+name: inkstudio
 description: "Opening an epaper screen"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -40,16 +40,16 @@ dependencies:
   crypto: ^3.0.7
   sqflite_common_ffi: ^2.4.1
   path: ^1.9.1
-  picpak_core:
-    path: ../../packages/picpak_core
-  picpak_domain:
-    path: ../../packages/picpak_domain
-  picpak_image:
-    path: ../../packages/picpak_image
-  picpak_protocol:
-    path: ../../packages/picpak_protocol
-  picpak_storage:
-    path: ../../packages/picpak_storage
+  inkstudio_core:
+    path: ../../packages/inkstudio_core
+  inkstudio_domain:
+    path: ../../packages/inkstudio_domain
+  inkstudio_image:
+    path: ../../packages/inkstudio_image
+  inkstudio_protocol:
+    path: ../../packages/inkstudio_protocol
+  inkstudio_storage:
+    path: ../../packages/inkstudio_storage
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -78,7 +78,7 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/test_images/picpak_test_panel.png
+    - assets/test_images/inkstudio_test_panel.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

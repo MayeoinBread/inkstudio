@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:picpak_open/app/data/database/database_service.dart';
-import 'package:picpak_open/app/widgets/library/library_item.dart';
-import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio/app/data/database/database_service.dart';
+import 'package:inkstudio/app/widgets/library/library_item.dart';
+import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
 
 class SlotRepository {
   final db = DatabaseService.instance;

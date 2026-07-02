@@ -25,81 +25,81 @@
             "flutterMode": "release"
         },
         {
-            "name": "picpak_domain",
-            "cwd": "packages\\picpak_domain",
+            "name": "inkstudio_domain",
+            "cwd": "packages\\inkstudio_domain",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "picpak_domain (profile mode)",
-            "cwd": "packages\\picpak_domain",
+            "name": "inkstudio_domain (profile mode)",
+            "cwd": "packages\\inkstudio_domain",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "picpak_domain (release mode)",
-            "cwd": "packages\\picpak_domain",
+            "name": "inkstudio_domain (release mode)",
+            "cwd": "packages\\inkstudio_domain",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
-            "name": "picpak_image",
-            "cwd": "packages\\picpak_image",
+            "name": "inkstudio_image",
+            "cwd": "packages\\inkstudio_image",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "picpak_image (profile mode)",
-            "cwd": "packages\\picpak_image",
+            "name": "inkstudio_image (profile mode)",
+            "cwd": "packages\\inkstudio_image",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "picpak_image (release mode)",
-            "cwd": "packages\\picpak_image",
+            "name": "inkstudio_image (release mode)",
+            "cwd": "packages\\inkstudio_image",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
-            "name": "picpak_protocol",
-            "cwd": "packages\\picpak_protocol",
+            "name": "inkstudio_protocol",
+            "cwd": "packages\\inkstudio_protocol",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "picpak_protocol (profile mode)",
-            "cwd": "packages\\picpak_protocol",
+            "name": "inkstudio_protocol (profile mode)",
+            "cwd": "packages\\inkstudio_protocol",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "picpak_protocol (release mode)",
-            "cwd": "packages\\picpak_protocol",
+            "name": "inkstudio_protocol (release mode)",
+            "cwd": "packages\\inkstudio_protocol",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"
         },
         {
-            "name": "picpak_storage",
-            "cwd": "packages\\picpak_storage",
+            "name": "inkstudio_storage",
+            "cwd": "packages\\inkstudio_storage",
             "request": "launch",
             "type": "dart"
         },
         {
-            "name": "picpak_storage (profile mode)",
-            "cwd": "packages\\picpak_storage",
+            "name": "inkstudio_storage (profile mode)",
+            "cwd": "packages\\inkstudio_storage",
             "request": "launch",
             "type": "dart",
             "flutterMode": "profile"
         },
         {
-            "name": "picpak_storage (release mode)",
-            "cwd": "packages\\picpak_storage",
+            "name": "inkstudio_storage (release mode)",
+            "cwd": "packages\\inkstudio_storage",
             "request": "launch",
             "type": "dart",
             "flutterMode": "release"

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:picpak_open/app/data/models/device_settings.dart';
+import 'package:inkstudio/app/data/models/device_settings.dart';
 
 enum ConnectionState {
   disconnected,

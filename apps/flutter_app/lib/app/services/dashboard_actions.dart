@@ -1,5 +1,5 @@
-import 'package:picpak_open/app/state/device_session_state.dart';
-import 'package:picpak_open/transport/ble_manager.dart';
+import 'package:inkstudio/app/state/device_session_state.dart';
+import 'package:inkstudio/transport/ble_manager.dart';
 
 class DashboardActions {
   static Future<void> connect({

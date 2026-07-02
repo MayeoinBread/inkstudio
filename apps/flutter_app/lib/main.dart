@@ -5,17 +5,17 @@ import 'package:flutter/material.dart';
 import 'app/app_shell.dart';
 
 void main() {
-  runApp(const PicPakApp());
+  runApp(const InkStudioApp());
 }
 
-class PicPakApp extends StatefulWidget {
-  const PicPakApp({super.key});
+class InkStudioApp extends StatefulWidget {
+  const InkStudioApp({super.key});
 
   @override
-  State<PicPakApp> createState() => _PicPakAppState();
+  State<InkStudioApp> createState() => _InkStudioAppState();
 }
 
-class _PicPakAppState extends State<PicPakApp> {
+class _InkStudioAppState extends State<InkStudioApp> {
   ThemeMode themeMode = ThemeMode.dark;
 
   void toggleTheme() {
@@ -27,7 +27,7 @@ class _PicPakAppState extends State<PicPakApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'PicPak Open',
+      title: 'InkStudio',
       debugShowCheckedModeBanner: false,
       
       themeMode: themeMode,
