@@ -2,15 +2,15 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
-import 'package:picpak_open/app/data/models/device_settings.dart';
-import 'package:picpak_open/app/services/device_session_service.dart';
-import 'package:picpak_open/app/state/device_session_state.dart';
-import 'package:picpak_open/transport/ble_session.dart';
-import 'package:picpak_open/transport/device_info.dart';
+import 'package:inkstudio/app/data/models/device_settings.dart';
+import 'package:inkstudio/app/services/device_session_service.dart';
+import 'package:inkstudio/app/state/device_session_state.dart';
+import 'package:inkstudio/transport/ble_session.dart';
+import 'package:inkstudio/transport/device_info.dart';
 // import 'package:flutter_blue_plus_windows/flutter_blue_plus_windows.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:picpak_protocol/picpak_protocol.dart';
-import 'package:picpak_image/picpak_image.dart';
+import 'package:inkstudio_protocol/inkstudio_protocol.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
 class BleManager {
   final BleSession bleSession = BleSession();
@@ -70,37 +70,6 @@ class BleManager {
         return null;
       }
     );
-  }
-
-  Future<BluetoothDevice?> scanAndConnect() async {
-    final device = await scanForDevice();
-
-    if (device == null) return null;
-
-    // // await connect(device);
-    var sub2 = device.connectionState.listen((BluetoothConnectionState state) async {
-      if (state == BluetoothConnectionState.disconnected) {
-        // 1. typically, start a periodic timer that tries to 
-        //    reconnect, or just call connect() again right now
-        // 2. you must always re-discover services after disconnection!
-        debugPrint("${device.disconnectReason?.code} ${device.disconnectReason?.description}");
-      }
-    });
-
-    device.cancelWhenDisconnected(sub2, delayed: true, next: true);
-
-    try {
-      debugPrint("Connecting...");
-
-      await device.connect(license: License.nonprofit);
-
-      debugPrint("Connected");
-    } catch(e) {
-      debugPrint("Connect failed: ");
-      debugPrint("$e");
-    }
-
-    // return device;
   }
 
   Future<BluetoothDevice?> _resolveDevice(BluetoothDevice scanDevice) async {

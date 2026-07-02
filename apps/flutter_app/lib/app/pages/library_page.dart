@@ -2,21 +2,21 @@ import 'dart:async';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/controller/library_controller.dart';
-import 'package:picpak_open/app/data/models/editor_result.dart';
-import 'package:picpak_open/app/repositories/image_repository.dart';
-import 'package:picpak_open/app/services/ble_service.dart';
-import 'package:picpak_open/app/services/device_session_service.dart';
-import 'package:picpak_open/app/services/image_pipeline_controller.dart';
-import 'package:picpak_open/app/services/thumbnail_service.dart';
-import 'package:picpak_open/app/state/device_session_state.dart';
-import 'package:picpak_open/app/widgets/library/album_selector.dart';
-import 'package:picpak_open/app/widgets/library/library_grid.dart';
-import 'package:picpak_open/app/widgets/library/library_item.dart';
-import 'package:picpak_open/app/widgets/library/slot_inspector.dart';
-import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
-import 'package:picpak_open/app/widgets/popups/content_editor_dialog.dart';
-import 'package:picpak_open/app/widgets/popups/mobile_editor_layout.dart';
+import 'package:inkstudio/app/controller/library_controller.dart';
+import 'package:inkstudio/app/data/models/editor_result.dart';
+import 'package:inkstudio/app/repositories/image_repository.dart';
+import 'package:inkstudio/app/services/ble_service.dart';
+import 'package:inkstudio/app/services/device_session_service.dart';
+import 'package:inkstudio/app/services/image_pipeline_controller.dart';
+import 'package:inkstudio/app/services/thumbnail_service.dart';
+import 'package:inkstudio/app/state/device_session_state.dart';
+import 'package:inkstudio/app/widgets/library/album_selector.dart';
+import 'package:inkstudio/app/widgets/library/library_grid.dart';
+import 'package:inkstudio/app/widgets/library/library_item.dart';
+import 'package:inkstudio/app/widgets/library/slot_inspector.dart';
+import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio/app/widgets/popups/content_editor_dialog.dart';
+import 'package:inkstudio/app/widgets/popups/mobile_editor_layout.dart';
 
 class LibraryPage extends StatefulWidget {
 
@@ -343,7 +343,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('PicPak Open'),
+        title: const Text('InkStudio'),
         actions: [
           IconButton(
             icon: const Icon(Icons.folder_open),

@@ -1,21 +1,21 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/data/models/editor_result.dart';
-import 'package:picpak_open/app/repositories/image_repository.dart';
-import 'package:picpak_open/app/services/image_pipeline_controller.dart';
-import 'package:picpak_open/app/widgets/common/image_preview_panel.dart';
-import 'package:picpak_open/app/widgets/controls/dithering_controls.dart';
-import 'package:picpak_open/app/widgets/controls/filter_options_controls.dart';
-import 'package:picpak_open/app/widgets/controls/image_adjustment_controls.dart';
-import 'package:picpak_open/app/widgets/controls/image_editor_mobile_controls.dart';
-import 'package:picpak_open/app/widgets/controls/palette_bias_controls.dart';
-import 'package:picpak_open/app/widgets/controls/filter_controls.dart';
-import 'package:picpak_open/app/widgets/library/library_item.dart';
-import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
-import 'package:picpak_core/picpak_core.dart';
-import 'package:picpak_image/picpak_image.dart';
-import 'package:picpak_open/app/widgets/popups/crop_dialog.dart';
+import 'package:inkstudio/app/data/models/editor_result.dart';
+import 'package:inkstudio/app/repositories/image_repository.dart';
+import 'package:inkstudio/app/services/image_pipeline_controller.dart';
+import 'package:inkstudio/app/widgets/common/image_preview_panel.dart';
+import 'package:inkstudio/app/widgets/controls/dithering_controls.dart';
+import 'package:inkstudio/app/widgets/controls/filter_options_controls.dart';
+import 'package:inkstudio/app/widgets/controls/image_adjustment_controls.dart';
+import 'package:inkstudio/app/widgets/controls/image_editor_mobile_controls.dart';
+import 'package:inkstudio/app/widgets/controls/palette_bias_controls.dart';
+import 'package:inkstudio/app/widgets/controls/filter_controls.dart';
+import 'package:inkstudio/app/widgets/library/library_item.dart';
+import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio_core/inkstudio_core.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio/app/widgets/popups/crop_dialog.dart';
 
 class ImageEditorTab extends StatefulWidget {
   final LibraryItem item;

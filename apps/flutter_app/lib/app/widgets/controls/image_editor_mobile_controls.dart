@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:picpak_image/picpak_image.dart';
-import 'package:picpak_open/app/widgets/controls/dithering_controls.dart';
-import 'package:picpak_open/app/widgets/controls/filter_controls.dart';
-import 'package:picpak_open/app/widgets/controls/filter_options_controls.dart';
-import 'package:picpak_open/app/widgets/controls/image_adjustment_controls.dart';
-import 'package:picpak_open/app/widgets/controls/palette_bias_controls.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio/app/widgets/controls/dithering_controls.dart';
+import 'package:inkstudio/app/widgets/controls/filter_controls.dart';
+import 'package:inkstudio/app/widgets/controls/filter_options_controls.dart';
+import 'package:inkstudio/app/widgets/controls/image_adjustment_controls.dart';
+import 'package:inkstudio/app/widgets/controls/palette_bias_controls.dart';
 
 class ImageEditorMobileControls extends StatelessWidget {
   final DitherMode alg;

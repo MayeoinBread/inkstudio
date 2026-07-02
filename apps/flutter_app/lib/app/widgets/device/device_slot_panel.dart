@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/data/models/device_settings.dart';
-import 'package:picpak_open/app/widgets/controls/slot_input_field.dart';
+import 'package:inkstudio/app/data/models/device_settings.dart';
+import 'package:inkstudio/app/widgets/controls/slot_input_field.dart';
 
 class DeviceSlotPanel extends StatefulWidget {
   final VoidCallback? onDownload;

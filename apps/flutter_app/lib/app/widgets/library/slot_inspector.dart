@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/widgets/library/library_item.dart';
+import 'package:inkstudio/app/widgets/library/library_item.dart';
 
 class SlotInspector extends StatelessWidget {
   final LibraryItem? item;

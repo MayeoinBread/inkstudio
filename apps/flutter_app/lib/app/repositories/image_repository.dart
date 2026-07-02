@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:picpak_open/app/data/database/database_service.dart';
-import 'package:picpak_open/app/data/models/stored_image.dart';
+import 'package:inkstudio/app/data/database/database_service.dart';
+import 'package:inkstudio/app/data/models/stored_image.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';

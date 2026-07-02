@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart' hide ConnectionState;
-import 'package:picpak_open/app/data/models/device_settings.dart';
-import 'package:picpak_open/app/state/device_session_state.dart';
+import 'package:inkstudio/app/data/models/device_settings.dart';
+import 'package:inkstudio/app/state/device_session_state.dart';
 
 class DeviceSessionService extends ValueNotifier<DeviceSessionState> {
 

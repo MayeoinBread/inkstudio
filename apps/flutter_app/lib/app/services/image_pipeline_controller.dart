@@ -2,10 +2,10 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
-import 'package:picpak_image/picpak_image.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
-import 'package:picpak_core/picpak_core.dart';
-import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio_core/inkstudio_core.dart';
+import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
 
 class ImagePipelineController {
   img.Image? sourceImage;

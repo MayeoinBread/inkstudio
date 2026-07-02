@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:picpak_image/picpak_image.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
 class FilterOptionsControls extends StatelessWidget {
   

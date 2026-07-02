@@ -111,8 +111,8 @@ InkStudio remains fully functional offline.
 # Project Structure
 
 - `apps/flutter_app` — Cross-platform Flutter application (desktop + Android)
-- `packages/picpak_core` — Shared models, constants and device definitions
-- `packages/picpak_image` — Image processing pipeline, preview rendering and framebuffer packing
+- `packages/inkstudio_core` — Shared models, constants and device definitions
+- `packages/inkstudio_image` — Image processing pipeline, preview rendering and framebuffer packing
 
 ---
 

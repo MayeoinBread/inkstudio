@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:picpak_open/app/data/models/device_settings.dart';
+import 'package:inkstudio/app/data/models/device_settings.dart';
 
 class DeviceSettingsPanel extends StatefulWidget {
   final ValueChanged<DeviceSettings> onSettingsChanged;

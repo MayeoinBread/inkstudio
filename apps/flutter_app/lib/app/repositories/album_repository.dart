@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:picpak_open/app/data/database/database_service.dart';
+import 'package:inkstudio/app/data/database/database_service.dart';
 import 'package:uuid/uuid.dart';
 
 class AlbumRepository {

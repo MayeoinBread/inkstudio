@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:picpak_open/app/repositories/album_repository.dart';
+import 'package:inkstudio/app/repositories/album_repository.dart';
 
 class AlbumSelector extends StatelessWidget{
   final List<Album> albums;

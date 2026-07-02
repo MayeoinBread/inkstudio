@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:picpak_open/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
 
 class EditorResult {
   final SlotMetadata metadata;
