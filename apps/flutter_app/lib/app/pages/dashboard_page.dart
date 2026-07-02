@@ -5,7 +5,6 @@ import 'package:inkstudio/app/services/device_session_service.dart';
 import 'package:inkstudio/app/state/device_session_state.dart';
 import 'package:inkstudio/app/widgets/device/device_settings_panel.dart';
 import 'package:inkstudio/app/widgets/device/device_info_card.dart';
-import 'package:inkstudio/app/widgets/device/device_slot_panel.dart';
 
 class DashboardPage extends StatefulWidget {
   final VoidCallback onToggleTheme;

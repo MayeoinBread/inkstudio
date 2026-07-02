@@ -59,6 +59,8 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
     setState(() { session.state = updater(session.state); });
   }
 
+  // TODO Add swatches, etc. here
+
   @override
   void initState() {
     super.initState();
@@ -77,6 +79,8 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
           progress: 0.0,
           activeSlot: null
         );
+
+        _previewBytes = pipeline.previewBytes!;
       });
     });
 

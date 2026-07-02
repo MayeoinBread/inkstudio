@@ -72,37 +72,6 @@ class BleManager {
     );
   }
 
-  Future<BluetoothDevice?> scanAndConnect() async {
-    final device = await scanForDevice();
-
-    if (device == null) return null;
-
-    // // await connect(device);
-    var sub2 = device.connectionState.listen((BluetoothConnectionState state) async {
-      if (state == BluetoothConnectionState.disconnected) {
-        // 1. typically, start a periodic timer that tries to 
-        //    reconnect, or just call connect() again right now
-        // 2. you must always re-discover services after disconnection!
-        debugPrint("${device.disconnectReason?.code} ${device.disconnectReason?.description}");
-      }
-    });
-
-    device.cancelWhenDisconnected(sub2, delayed: true, next: true);
-
-    try {
-      debugPrint("Connecting...");
-
-      await device.connect(license: License.nonprofit);
-
-      debugPrint("Connected");
-    } catch(e) {
-      debugPrint("Connect failed: ");
-      debugPrint("$e");
-    }
-
-    // return device;
-  }
-
   Future<BluetoothDevice?> _resolveDevice(BluetoothDevice scanDevice) async {
     // final devices = FlutterBluePlusWindows.connectedDevices;
     final devices = FlutterBluePlus.connectedDevices;
