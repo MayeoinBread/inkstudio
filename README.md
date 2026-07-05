@@ -6,6 +6,8 @@ It provides an offline-first workflow for building image libraries, generating n
 
 InkStudio is fully usable without a connected device. A device connection is only required when transferring content.
 
+InkStudio currently supports the PicPak panel only.
+
 ---
 
 # Features

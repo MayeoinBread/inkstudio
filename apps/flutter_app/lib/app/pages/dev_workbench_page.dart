@@ -61,6 +61,8 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
   // TODO Add swatches, etc. here
 
+  // TODO See if we can use the "albums" to open the original image too here when pulling from device
+
   @override
   void initState() {
     super.initState();
