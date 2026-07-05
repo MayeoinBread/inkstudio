@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:inkstudio/app/controller/library_controller.dart';
 import 'package:inkstudio/app/data/models/editor_result.dart';
@@ -17,6 +20,7 @@ import 'package:inkstudio/app/widgets/library/slot_inspector.dart';
 import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
 import 'package:inkstudio/app/widgets/popups/content_editor_dialog.dart';
 import 'package:inkstudio/app/widgets/popups/mobile_editor_layout.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
 class LibraryPage extends StatefulWidget {
 
@@ -208,7 +212,7 @@ class _LibraryPageState extends State<LibraryPage> {
     controller.commitSlot(slot);
   }
 
-  Future<void> _onDelete(int slot) async {
+  Future<void> _onDeleteFromDevice(int slot) async {
     final item = controller.items[slot];
     final metadata = item!.metadata;
 
@@ -225,6 +229,86 @@ class _LibraryPageState extends State<LibraryPage> {
     controller.updateMetadata(slot, updatedMetadata);
 
     controller.commitSlot(slot);
+  }
+
+  Future<void> _onClearSlot(int slot) async {
+    final item = controller.items[slot];
+    
+    if (item == null) return;
+
+    if (!item.exists) return;
+
+    controller.updateSlot(slot: slot, exists: false, metadata: SlotMetadataDefaults.empty(slot));
+    controller.commitSlot(slot);
+  }
+
+  Future<void> _pickMultipleImages() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      withReadStream: true,
+      allowMultiple: true
+    );
+
+    if (result == null || result.files.isEmpty) return;
+
+    final numToAdd = result.files.length;
+    int addedIndex = 0;
+
+    for (final file in result.files) {
+
+      updateSession((s) => s.copyWith(
+        progress: addedIndex.toDouble() / numToAdd,
+        transfer: TransferState.importing)
+      );
+
+      final slot = controller.getNextEmptySlot();
+      final bytes = await readStream(file.readStream!);
+
+      final metadata = SlotMetadata(
+        type: SlotContentType.image,
+        pendingAction: SlotPendingAction.verifyHash,
+        adjustments: ImageAdjustments(),
+        dither: DitherMode.atkinson,
+        filter: ImageFilter.normal,
+        imageId: null,
+        cropRect: null,
+        rotation: 0
+      );
+
+      await pipeline.prepare(bytes, null, 0);
+
+      await pipeline.processMetadata(
+        metadata: metadata,
+        simulateDevice: false
+      );
+
+      final packedBytes = FramebufferPacker.pack(flipVertical(pipeline.framebuffer!));
+
+      EditorResult mResult = EditorResult(
+        metadata: SlotMetadataDefaults.empty(slot),
+        originalBytes: bytes,
+        previewBytes: pipeline.previewBytes!,
+        packedBytes: packedBytes
+      );
+
+      await _handleEditorResult(slot, controller.items[slot]!, mResult);
+
+      addedIndex += 1;
+    }
+
+    updateSession((s) => s.copyWith(
+      progress: 0,
+      transfer: TransferState.idle)
+    );
+  }
+
+  Future<Uint8List> readStream(Stream<List<int>> stream) async {
+    final builder = BytesBuilder();
+    await for (final chunk in stream) {
+      builder.add(chunk);
+    }
+
+    return builder.takeBytes();
   }
 
   void _showAlbumPicker(BuildContext context) {
@@ -264,7 +348,8 @@ class _LibraryPageState extends State<LibraryPage> {
         items: controller.items,
         selectedSlot: selectedSlot,
         onSelected: (slot) { setState(() => selectedSlot = slot);},
-        onEdit: _onEdit, onDelete: _onDelete)
+        onEdit: _onEdit, onDeleteFromDevice: _onDeleteFromDevice,
+        onClearSlot: _onClearSlot)
     );
   }
 
@@ -332,7 +417,8 @@ class _LibraryPageState extends State<LibraryPage> {
           }
         },
         onEdit: _onEdit,
-        onDelete: _onDelete
+        onDeleteFromDevice: _onDeleteFromDevice,
+        onClearSlot: _onClearSlot
       )
     );
   }
@@ -345,6 +431,12 @@ class _LibraryPageState extends State<LibraryPage> {
       appBar: AppBar(
         title: const Text('InkStudio'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.image_search_outlined),
+            onPressed: () async {
+              await _pickMultipleImages();
+            }
+          ),
           IconButton(
             icon: const Icon(Icons.folder_open),
             onPressed: () {
@@ -373,13 +465,15 @@ class _LibraryPageState extends State<LibraryPage> {
         },
       ),
       floatingActionButton: isMobile
-        ? FloatingActionButton.extended(
-            onPressed: () async {
-              await controller.pushToDevice(ble: ble, session: session);
-            },
-            icon: const Icon(Icons.upload),
-            label: const Text('Push')
-          )
+        ? ble.bleSession.isConnected
+          ? FloatingActionButton.extended(
+              onPressed: () async {
+                await controller.pushToDevice(ble: ble, session: session);
+              },
+              icon: const Icon(Icons.upload),
+              label: const Text('Push')
+            )
+          : null
         : null
     );
   }

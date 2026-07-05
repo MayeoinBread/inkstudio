@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
 import 'package:inkstudio/app/widgets/controls/crop_overlay.dart';
+import 'package:inkstudio_core/inkstudio_core.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
 class CropDialog extends StatefulWidget {
   final Uint8List imageBytes;
@@ -28,34 +30,11 @@ class _CropDialogState extends State<CropDialog> {
     super.initState();
 
     decoded = img.decodeImage(widget.imageBytes)!;
-
     cropRect = widget.initialRect ??
-        _defaultCrop(
-          decoded.width.toDouble(),
-          decoded.height.toDouble(),
-        );
-  }
-
-  Rect _defaultCrop(double width, double height) {
-    const targetAspect = 400.0 / 300.0;
-
-    double cropW;
-    double cropH;
-
-    if (width / height > targetAspect) {
-      cropH = height * 0.8;
-      cropW = cropH * targetAspect;
-    } else {
-      cropW = width * 0.8;
-      cropH = cropW / targetAspect;
-    }
-
-    return Rect.fromLTWH(
-      (width - cropW) / 2,
-      (height - cropH) / 2,
-      cropW,
-      cropH,
-    );
+      defaultCropRect(
+        decoded.width,
+        decoded.height
+      );
   }
 
   @override
@@ -77,29 +56,53 @@ class _CropDialogState extends State<CropDialog> {
             const SizedBox(height: 16),
 
             Expanded(
-              child: InteractiveViewer(
-                minScale: 0.5,
-                maxScale: 5,
-                child: Stack(
-                  children: [
-                    Image.memory(widget.imageBytes),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final imageAspect = decoded.width / decoded.height;
+                  final availableAspect = constraints.maxWidth / constraints.maxHeight;
 
-                    Positioned.fill(
-                      child: CropOverlay(
-                        imageSize: Size(
-                          decoded.width.toDouble(),
-                          decoded.height.toDouble(),
-                        ),
-                        initialRect: cropRect,
-                        aspectRatio: 400 / 300,
-                        onChanged: (rect) {
-                          cropRect = rect;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+                  double displayWidth;
+                  double displayHeight;
+
+                  if (imageAspect > availableAspect) {
+                    displayWidth = constraints.maxWidth;
+                    displayHeight = displayWidth / imageAspect;
+                  } else {
+                    displayHeight = constraints.maxHeight;
+                    displayWidth = displayHeight * imageAspect;
+                  }
+
+                  return Center(
+                    child: InteractiveViewer(
+                      minScale: 0.5,
+                      maxScale: 5,
+                      child: SizedBox(
+                        width: displayWidth,
+                        height: displayHeight,
+                        child: Stack(
+                          children: [
+                            Positioned.fill(
+                              child: Image.memory(
+                                widget.imageBytes,
+                                fit: BoxFit.fill
+                              )
+                            ),
+
+                            CropOverlay(
+                              imageSize: Size(displayWidth, displayHeight),
+                              initialRect: cropRect,
+                              aspectRatio: DeviceConstants.imageWidth / DeviceConstants.imageHeight,
+                              onChanged: (rect) {
+                                cropRect = rect;
+                              }
+                            )
+                          ]
+                        )
+                      )
+                    )
+                  );
+                }
+              )
             ),
 
             const SizedBox(height: 16),

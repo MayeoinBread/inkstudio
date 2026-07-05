@@ -12,12 +12,12 @@ class ImagePipelineController {
   PaletteFramebuffer? framebuffer;
   Uint8List? previewBytes;
 
-  Future<void> prepare(Uint8List bytes, FitStrategy fit, Rect? cropRect) async {
+  Future<void> prepare(Uint8List bytes, Rect? cropRect, int rotation) async {
     final decoded = img.decodeImage(bytes);
     if (decoded == null) return;
 
     final pipeline = ImagePipeline();
-    sourceImage = pipeline.prepareBaseImage(decoded, fit, cropRect);
+    sourceImage = pipeline.prepareBaseImage(decoded, cropRect, rotation);
   }
 
   Future<void> processMetadata({
@@ -34,7 +34,6 @@ class ImagePipelineController {
         simulateDevice: simulateDevice,
         width: DeviceConstants.imageWidth,
         height: DeviceConstants.imageHeight,
-        fit: metadata.fit,
         dither: metadata.dither,
         adjustments: metadata.adjustments,
         paletteBias: metadata.paletteBias
@@ -49,9 +48,9 @@ class ImagePipelineController {
     required DitherMode dither,
     required ImageFilter filter,
     required bool simulateDevice,
-    required FitStrategy fit,
     required ImageAdjustments adjustments,
-    required PaletteBias paletteBias
+    required PaletteBias paletteBias,
+    required int rotation
   }) async {
     if (sourceImage == null) return;
 
@@ -63,7 +62,6 @@ class ImagePipelineController {
         simulateDevice: simulateDevice,
         width: DeviceConstants.imageWidth,
         height: DeviceConstants.imageHeight,
-        fit: fit,
         dither: dither,
         adjustments: adjustments,
         paletteBias: paletteBias

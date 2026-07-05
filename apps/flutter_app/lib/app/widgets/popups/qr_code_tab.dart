@@ -110,7 +110,7 @@ class _QrCodeTabState extends State<QrCodeTab> {
       wifiSecurity: (qrType == QrType.wifi) ? securityType : null,
     );
 
-    await pipeline.prepare(previewBytes!, FitStrategy.crop, null);
+    await pipeline.prepare(previewBytes!, null, 0);
     await pipeline.processMetadata(metadata: metadata);
     final packedBytes = FramebufferPacker.pack(pipeline.framebuffer!);
 

@@ -10,7 +10,6 @@ class ImageEditorMobileControls extends StatelessWidget {
   final DitherMode alg;
   final ImageAdjustments adjustments;
   final PaletteBias bias;
-  final FitStrategy fit;
   final ImageFilter filter;
   final bool simulateDevice;
 
@@ -20,29 +19,28 @@ class ImageEditorMobileControls extends StatelessWidget {
   final ValueChanged<DitherMode> onAlgChanged;
   final ValueChanged<ImageAdjustments> onAdjustmentsChanged;
   final ValueChanged<PaletteBias> onPaletteBiasChanged;
-  final ValueChanged<FitStrategy> onFitChanged;
   final ValueChanged<ImageFilter> onFilterChanged;
   final ValueChanged<bool> onSimulateDeviceChanged;
 
   final VoidCallback onCropSelected;
   final VoidCallback onAutoEnhanceSelected;
+  final VoidCallback onRotateSelected;
 
   const ImageEditorMobileControls({
     super.key,
     required this.alg,
     required this.adjustments,
     required this.bias,
-    required this.fit,
     required this.filter,
     required this.simulateDevice,
     required this.onAlgChanged,
     required this.onAdjustmentsChanged,
     required this.onPaletteBiasChanged,
-    required this.onFitChanged,
     required this.onFilterChanged,
     required this.onSimulateDeviceChanged,
     required this.onCropSelected,
     required this.onAutoEnhanceSelected,
+    required this.onRotateSelected,
     required this.onLoadImageSelected,
     required this.onSave
   });
@@ -97,6 +95,16 @@ class ImageEditorMobileControls extends StatelessWidget {
                                 icon: const Icon(Icons.crop),
                                 tooltip: 'Crop',
                                 onPressed: onCropSelected
+                              )
+                            ),
+
+                            Expanded(
+                              child: IconButton(
+                                icon: const Icon(Icons.rotate_90_degrees_cw),
+                                tooltip: 'Rotate',
+                                onPressed: () async {
+                                  await onRotateSelected;
+                                }
                               )
                             ),
 

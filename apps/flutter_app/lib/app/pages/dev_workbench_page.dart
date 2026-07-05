@@ -40,7 +40,6 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
   Uint8List? _previewBytes;
 
   DitherMode _ditherMode = DitherMode.floydSteinberg;
-  final FitStrategy _fitStrategy = FitStrategy.crop;
   // SwatchType _swatchType = SwatchType.noise;
 
   ImageAdjustments _adjustments = ImageAdjustments();
@@ -50,6 +49,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
   bool _simulateDevice = false;
 
   Rect? cropRect;
+  int rotation = 0;
 
   int _processVersion = 0;
 
@@ -115,7 +115,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    await pipeline.prepare(bytes, _fitStrategy, cropRect);
+    await pipeline.prepare(bytes, cropRect, rotation);
   }
 
   Future<void> _reprocess() async {
@@ -128,9 +128,9 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
       dither: _ditherMode,
       filter: _filter,
       simulateDevice: _simulateDevice,
-      fit: _fitStrategy,
       adjustments: _adjustments,
-      paletteBias: _bias
+      paletteBias: _bias,
+      rotation: rotation
     );
 
     if (version != _processVersion) return;
@@ -217,6 +217,13 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
     await _reprocess();
   }
 
+  Future<void> _handleRotateButton() async {
+    setState(() {
+      rotation = (rotation + 90) % 360;
+    });
+    await _reprocess();
+  }
+
   // Future<void> _loadSwatch() async {
   //   final swatch = await SwatchGenerator.generate(
   //     _swatchType,
@@ -289,6 +296,16 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
                       tooltip: 'Crop',
                       onPressed: () async {
                         await _handleCropButton();
+                      }
+                    )
+                  ),
+
+                  Expanded(
+                    child: IconButton(
+                      icon: const Icon(Icons.rotate_90_degrees_cw),
+                      tooltip: 'Rotate',
+                      onPressed: () async {
+                        await _handleRotateButton();
                       }
                     )
                   ),

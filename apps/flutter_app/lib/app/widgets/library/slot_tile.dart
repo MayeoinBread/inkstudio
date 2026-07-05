@@ -13,6 +13,7 @@ class SlotTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onClear;
 
   final SlotMetadata metadata;
 
@@ -24,6 +25,7 @@ class SlotTile extends StatelessWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    required this.onClear,
     required this.metadata
   });
 
@@ -43,7 +45,11 @@ class SlotTile extends StatelessWidget {
         ),
         PopupMenuItem(
           value: 'delete',
-          child: Text('Delete')
+          child: Text('Delete from device')
+        ),
+        PopupMenuItem(
+          value: 'clear',
+          child: Text('Clear slot')
         )
       ]
     );
@@ -51,6 +57,8 @@ class SlotTile extends StatelessWidget {
       Future.microtask(() => onEdit());
     } else if (result == 'delete') {
       Future.microtask(() => onDelete());
+    } else if (result == 'clear') {
+      Future.microtask(() => onClear());
     }
   }
 

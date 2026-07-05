@@ -9,7 +9,7 @@ enum CropHandle {
 }
 
 class CropOverlay extends StatefulWidget {
-  final Rect? initialRect;
+  final Rect initialRect;  // Normalised, 0..1
   final double aspectRatio;
   final Size imageSize;
   final ValueChanged<Rect> onChanged;
@@ -19,7 +19,7 @@ class CropOverlay extends StatefulWidget {
     required this.aspectRatio,
     required this.imageSize,
     required this.onChanged,
-    this.initialRect
+    required this.initialRect
   });
 
   @override
@@ -27,7 +27,8 @@ class CropOverlay extends StatefulWidget {
 }
 
 class _CropOverlayState extends State<CropOverlay> {
-  late Rect cropRect;
+  Rect cropRect = Rect.zero;
+  Rect displayRect = Rect.zero;
 
   CropHandle _activeHandle = CropHandle.none;
   static const double _handleRadius = 20;
@@ -36,99 +37,131 @@ class _CropOverlayState extends State<CropOverlay> {
   void initState() {
     super.initState();
 
-    cropRect = widget.initialRect ?? _defaultCenterCrop(widget.imageSize, widget.aspectRatio);
+    cropRect = widget.initialRect;
+    displayRect = _toDisplay(cropRect);
   }
 
-  CropHandle _hitTestHandle(Offset pos, Rect paintRect) {
-    if ((pos - paintRect.topLeft).distance <= _handleRadius) {
-      return CropHandle.topLeft;
-    }
+  Rect _toDisplay(Rect r) {
+    return Rect.fromLTWH(
+      r.left * widget.imageSize.width,
+      r.top * widget.imageSize.height,
+      r.width * widget.imageSize.width,
+      r.height * widget.imageSize.height
+    );
+  }
 
-    if ((pos - paintRect.topRight).distance <= _handleRadius) {
-      return CropHandle.topRight;
-    }
+  Rect _fromDisplay(Rect r) {
+    return Rect.fromLTWH(
+      r.left / widget.imageSize.width,
+      r.top / widget.imageSize.height,
+      r.width / widget.imageSize.width,
+      r.height / widget.imageSize.height
+    );
+  }
 
-    if ((pos - paintRect.bottomLeft).distance <= _handleRadius) {
-      return CropHandle.bottomLeft;
-    }
+  // CropHandle _hitTestHandle(Offset pos, Rect paintRect) {
+  //   if ((pos - paintRect.topLeft).distance <= _handleRadius) {
+  //     return CropHandle.topLeft;
+  //   }
 
-    if ((pos - paintRect.bottomRight).distance <= _handleRadius) {
-      return CropHandle.bottomRight;
-    }
+  //   if ((pos - paintRect.topRight).distance <= _handleRadius) {
+  //     return CropHandle.topRight;
+  //   }
+
+  //   if ((pos - paintRect.bottomLeft).distance <= _handleRadius) {
+  //     return CropHandle.bottomLeft;
+  //   }
+
+  //   if ((pos - paintRect.bottomRight).distance <= _handleRadius) {
+  //     return CropHandle.bottomRight;
+  //   }
+
+  //   return CropHandle.none;
+  // }
+  CropHandle _hitTestHandle(Offset pos, Rect rect) {
+    final hit = _handleRadius * 2;
+
+    final topLeft = Rect.fromCenter(center: rect.topLeft, width: hit, height: hit);
+    if (topLeft.contains(pos)) return CropHandle.topLeft;
+
+    final topRight = Rect.fromCenter(center: rect.topRight, width: hit, height: hit);
+    if (topRight.contains(pos)) return CropHandle.topRight;
+
+    final bottomLeft = Rect.fromCenter(center: rect.bottomLeft, width: hit, height: hit);
+    if (bottomLeft.contains(pos)) return CropHandle.bottomLeft;
+
+    final bottomRight = Rect.fromCenter(center: rect.bottomRight, width: hit, height: hit);
+    if (bottomRight.contains(pos)) return CropHandle.bottomRight;
 
     return CropHandle.none;
   }
 
-  void _resize(CropHandle handle, Offset delta, double scaleX) {
-    final dx = delta.dx / scaleX;
+  void _resize(CropHandle handle, Offset delta) {
+    const minSize = 48.0;
 
-    Rect r = cropRect;
+    Rect r = displayRect;
+
+    double dx = delta.dx;
+    double dy = delta.dy;
+
+    final aspect = widget.aspectRatio;
+
+    double newLeft = r.left;
+    double newTop = r.top;
+    double newWidth = r.width;
+    double newHeight = r.height;
 
     switch (handle) {
       case CropHandle.bottomRight:
-        final width = (r.width + dx).clamp(50.0, widget.imageSize.width);
-        final height = width / widget.aspectRatio;
-        r = Rect.fromLTWH(r.left, r.top, width, height);
+        newWidth += dx;
+        newHeight = newWidth / aspect;
         break;
+
       case CropHandle.bottomLeft:
-        final width = (r.width - dx).clamp(50.0, widget.imageSize.width);
-        final height = width / widget.aspectRatio;
-        r = Rect.fromLTWH(r.right - width, r.top, width, height);
+        newWidth -= dx;
+        newHeight = newWidth / aspect;
+        newLeft = r.right - newWidth;
         break;
+
       case CropHandle.topRight:
-        final width = (r.width + dx).clamp(50.0, widget.imageSize.width);
-        final height = width / widget.aspectRatio;
-        r = Rect.fromLTWH(r.left, r.bottom - height, width, height);
+        newWidth += dx;
+        newHeight = newWidth / aspect;
+        newTop = r.bottom - newHeight;
         break;
+
       case CropHandle.topLeft:
-        final width = (r.width - dx).clamp(50.0, widget.imageSize.width);
-        final height = width / widget.aspectRatio;
-        r = Rect.fromLTWH(r.right - width, r.bottom - height, width, height);
+        newWidth -= dx;
+        newHeight = newWidth / aspect;
+        newLeft = r.right - newWidth;
+        newTop = r.bottom - newHeight;
         break;
+
       case CropHandle.none:
         return;
     }
 
+    // enforce minimum size
+    if (newWidth < minSize) {
+      newWidth = minSize;
+      newHeight = newWidth / aspect;
+    }
+
+    r = Rect.fromLTWH(newLeft, newTop, newWidth, newHeight);
+
     setState(() {
-      cropRect = _clampToBounds(r);
+      displayRect = _clampToBounds(r);
+      cropRect = _fromDisplay(displayRect);
     });
 
     widget.onChanged(cropRect);
   }
 
-  Rect _defaultCenterCrop(Size size, double aspect) {
-    final imageAspect = size.width / size.height;
-
-    double w, h;
-
-    if (imageAspect > aspect) {
-      h = size.height;
-      w = h * aspect;
-    } else {
-      w = size.width;
-      h = w / aspect;
-    }
-
-    final left = (size.width - w) / 2;
-    final top = (size.height - h) / 2;
-
-    return Rect.fromLTWH(left, top, w, h);
-  }
-
   Rect _clampToBounds(Rect r) {
-    double left = r.left;
-    double top = r.top;
+    final maxX = widget.imageSize.width - r.width;
+    final maxY = widget.imageSize.height - r.height;
 
-    if (left < 0) left = 0;
-    if (top < 0) top = 0;
-
-    if (left + r.width > widget.imageSize.width) {
-      left = widget.imageSize.width - r.width;
-    }
-
-    if (top + r.height > widget.imageSize.height) {
-      top = widget.imageSize.height - r.height;
-    }
+    final left = r.left.clamp(0.0, maxX);
+    final top = r.top.clamp(0.0, maxY);
 
     return Rect.fromLTWH(left, top, r.width, r.height);
   }
@@ -137,32 +170,25 @@ class _CropOverlayState extends State<CropOverlay> {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final scaleX = constraints.maxWidth / widget.imageSize.width;
-        final scaleY = constraints.maxHeight / widget.imageSize.height;
-
-        final paintRect = Rect.fromLTWH(
-          cropRect.left * scaleX,
-          cropRect.top * scaleY,
-          cropRect.width * scaleX,
-          cropRect.height * scaleY,
-        );
-
         return GestureDetector(
           behavior: HitTestBehavior.opaque,
           onPanStart: (details) {
-            _activeHandle = _hitTestHandle(details.localPosition, paintRect);
+            _activeHandle = _hitTestHandle(details.localPosition, displayRect);
           },
           onPanUpdate: (details) {
             if (_activeHandle != CropHandle.none) {
-              _resize(_activeHandle, details.delta, scaleX);
+              _resize(_activeHandle, details.delta);
               return;
             }
 
-            final dx = details.delta.dx / scaleX;
-            final dy = details.delta.dy / scaleY;
+            final dx = details.delta.dx;
+            final dy = details.delta.dy;
 
             setState(() {
-              cropRect = _clampToBounds(cropRect.shift(Offset(dx, dy)));
+              displayRect = displayRect.shift(Offset(dx, dy));
+              displayRect = _clampToBounds(displayRect);
+
+              cropRect = _fromDisplay(displayRect);
             });
 
             widget.onChanged(cropRect);
@@ -172,7 +198,7 @@ class _CropOverlayState extends State<CropOverlay> {
           },
           child: CustomPaint(
             size: Size(constraints.maxWidth, constraints.maxHeight),
-            painter: _CropPainter(paintRect),
+            painter: _CropPainter(displayRect),
           ),
         );
       },
