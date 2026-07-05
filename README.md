@@ -21,6 +21,8 @@ InkStudio runs from a single Flutter codebase on:
 
 The interface adapts automatically between desktop and mobile layouts.
 
+As the app is built using Flutter, the code may already work on iOS devices. I do not own/use Apple devices and will not be directly building support for them.
+
 ---
 
 ## Offline-first Library
