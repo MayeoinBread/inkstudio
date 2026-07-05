@@ -70,7 +70,10 @@ class StatusBar extends StatelessWidget {
               )
           ),
           if (state.transfer != TransferState.idle)
+          ... [
+            SizedBox(width:4),
             Text('${(state.progress * 100).toStringAsFixed(0)}%')
+          ]
         ]
       )
     );

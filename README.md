@@ -23,12 +23,14 @@ The interface adapts automatically between desktop and mobile layouts.
 
 ## Offline-first Library
 
-All content is stored locally on the device.
+All content is stored locally on the device. The device/app acts as the source of truth. Features include:
 
 - Organise images into albums
 - Browse and edit existing content
 - Delete and clean up unused images
 - Prepare updates without a device connection
+- Import an image per device slot
+- Multi-image import (fills next empty slot)
 
 No cloud services or internet connection required.
 
@@ -51,7 +53,7 @@ All content is processed through a unified pipeline for consistent device output
 
 Built-in tools include:
 
-- Crop and fit strategies
+- Image cropping and rotation
 - Brightness adjustment
 - Contrast adjustment
 - Extensible filter system
@@ -67,8 +69,10 @@ Supported dithering algorithms include:
 - Atkinson
 - Ordered
 - Sierra
+- Stucki
+- Burkes
+- JJN
 
-Plus a few more
 
 ## Filters
 
@@ -100,19 +104,12 @@ Real-time preview is generated directly from the framebuffer used for transmissi
 When connected to a compatible device, InkStudio can:
 
 - Push pending updates
-- Synchronise album contents
+- Synchronise album contents (show what is out of sync on the device)
 - Transfer packed framebuffers over BLE
 - Validate transfers using MD5 hashes
+- Download images from the device (processed only)
 
 InkStudio remains fully functional offline.
-
----
-
-# Project Structure
-
-- `apps/flutter_app` — Cross-platform Flutter application (desktop + Android)
-- `packages/inkstudio_core` — Shared models, constants and device definitions
-- `packages/inkstudio_image` — Image processing pipeline, preview rendering and framebuffer packing
 
 ---
 
@@ -142,10 +139,8 @@ Planned improvements:
 
 - Enhanced note editing tools
 - Expanded QR generation options
-- More procedural templates
 - Improved editing UX on mobile
 - Performance optimisations
-- Expanded device support
 
 ---
 

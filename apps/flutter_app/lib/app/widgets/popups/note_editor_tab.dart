@@ -74,7 +74,7 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
       text: textController.text
     );
 
-    await pipeline.prepare(previewBytes!, FitStrategy.crop, null);
+    await pipeline.prepare(previewBytes!, null, 0);
     await pipeline.processMetadata(metadata: metadata);
 
     final packedBytes = FramebufferPacker.pack(pipeline.framebuffer!);

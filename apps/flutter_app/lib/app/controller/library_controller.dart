@@ -80,12 +80,33 @@ class LibraryController extends ChangeNotifier {
     );
   }
 
+  void deleteSlot(int slot) async {
+    final item = items[slot];
+    if (item == null) return;
+
+    final newItem = LibraryItem(slot: slot, exists: false, thumbnailBytes: null, metadata: SlotMetadataDefaults.empty(slot));
+    items[slot] = newItem;
+
+    await repository.saveSlot(albumId: currentAlbum!.id, slot: slot, imageId: null, metadata: newItem.metadata);
+
+    notifyListeners();
+  }
+
   void commitAllSlots() async {
     for (final entry in items.entries)
     {
       final slot = entry.key;
       commitSlot(slot);
     }
+  }
+
+  void rotateSlot(int slot) {
+    final item = items[slot];
+    if (item == null) return;
+
+    final nextRotation = (item.metadata.rotation + 90) % 360;
+    final updated = item.metadata.copyWith(rotation: nextRotation);
+    updateSlot(slot: slot, exists: item.exists, thumbnailBytes: item.thumbnailBytes, metadata: updated);
   }
 
   Future<void> setCurrentAlbum(Album newAlbum, bool isRename) async {
@@ -239,7 +260,7 @@ class LibraryController extends ChangeNotifier {
             );
 
             final pipeline = ImagePipeline();
-            final prepared = pipeline.prepareBaseImage(image, dirtySlot.metadata.fit, dirtySlot.metadata.cropRect);
+            final prepared = pipeline.prepareBaseImage(image, dirtySlot.metadata.cropRect, dirtySlot.metadata.rotation);
 
             final result = await compute(
               runPipelineIsolate,
@@ -249,10 +270,9 @@ class LibraryController extends ChangeNotifier {
                 simulateDevice: false,
                 width: DeviceConstants.imageWidth,
                 height: DeviceConstants.imageHeight,
-                fit: FitStrategy.contain,
                 dither: DitherMode.none,
                 adjustments: ImageAdjustments(),
-                paletteBias: PaletteBias()
+                paletteBias: PaletteBias(),
               )
             );
 
@@ -267,7 +287,7 @@ class LibraryController extends ChangeNotifier {
             );
 
             final pipeline = ImagePipeline();
-            final prepared = pipeline.prepareBaseImage(note, dirtySlot.metadata.fit, dirtySlot.metadata.cropRect);
+            final prepared = pipeline.prepareBaseImage(note, dirtySlot.metadata.cropRect, dirtySlot.metadata.rotation);
 
             final result = await compute(
               runPipelineIsolate,
@@ -277,7 +297,6 @@ class LibraryController extends ChangeNotifier {
                 simulateDevice: false,
                 width: DeviceConstants.imageWidth,
                 height: DeviceConstants.imageHeight,
-                fit: FitStrategy.contain,
                 dither: DitherMode.none,
                 adjustments: ImageAdjustments(),
                 paletteBias: PaletteBias()
@@ -326,5 +345,11 @@ class LibraryController extends ChangeNotifier {
     final current = items[slot]!;
     items[slot] = current.copyWith(metadata: metadata);
     notifyListeners();
+  }
+
+  int getNextEmptySlot() {
+    return items.entries.firstWhere(
+      (e) => !e.value.exists,
+      orElse: () => throw Exception('Library full')).key;
   }
 }

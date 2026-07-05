@@ -11,7 +11,8 @@ enum ConnectionState {
 enum TransferState {
   idle,
   uploading,
-  downloading
+  downloading,
+  importing
 }
 
 @immutable
@@ -67,6 +68,8 @@ class DeviceSessionState {
             return 'Uploading slot $activeSlot';
           case TransferState.downloading:
             return 'Downloading slot $activeSlot';
+          case TransferState.importing:
+            return 'Importing images...';
         }
     }
   }

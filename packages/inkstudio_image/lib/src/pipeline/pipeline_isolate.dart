@@ -14,8 +14,7 @@ PipelineResult runPipelineIsolate(dynamic data) {
     simulateDevice: req.simulateDevice,
     adjustments: req.adjustments,
     paletteBias: req.paletteBias,
-    fit: req.fit,
-    dither: req.dither,
+    dither: req.dither
   );
 }
 
@@ -25,7 +24,6 @@ class PipelineRequest {
   final bool simulateDevice;
   final int width;
   final int height;
-  final FitStrategy fit;
   final DitherMode dither;
   final ImageAdjustments adjustments;
   final PaletteBias paletteBias;
@@ -36,7 +34,6 @@ class PipelineRequest {
     required this.simulateDevice,
     required this.width,
     required this.height,
-    required this.fit,
     required this.dither,
     required this.adjustments,
     required this.paletteBias

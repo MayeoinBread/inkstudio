@@ -49,10 +49,10 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   DitherMode algorithm = DitherMode.atkinson;
   ImageAdjustments adjustments = ImageAdjustments();
   PaletteBias paletteBias = PaletteBias();
-  FitStrategy _fitStrategy = FitStrategy.crop;
   ImageFilter _filter = ImageFilter.normal;
   bool _simulateDeviceScreen = false;
   Rect? cropRect;
+  int rotation = 0;
 
   @override
   void initState() {
@@ -73,15 +73,15 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     setState(() {
       algorithm = metadata.dither;
       adjustments = metadata.adjustments;
-      _fitStrategy = metadata.fit;
       _filter = metadata.filter;
       cropRect = metadata.cropRect;
+      rotation = metadata.rotation;
     });
 
     _originalImageBytes = await ImageRepository().loadOriginalBytes(imageId);
     if (_originalImageBytes == null) return;
 
-    await pipeline.prepare(_originalImageBytes!, _fitStrategy, cropRect);
+    await pipeline.prepare(_originalImageBytes!, cropRect, rotation);
     await pipeline.processMetadata(
       metadata: metadata,
       simulateDevice: _simulateDeviceScreen
@@ -95,11 +95,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   }
 
   Future<void> _pickImage() async {
-    // final result = await FilePicker.platform.pickFiles(
-    // final result = await filePicker
-    //   type: FileType.image,
-    //   withData: true
-    // );
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       withData: true
@@ -129,7 +124,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
-    await pipeline.prepare(bytes, _fitStrategy, cropRect);
+    await pipeline.prepare(bytes, cropRect, rotation);
   }
 
   Future<void> _reprocess() async {
@@ -142,9 +137,9 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       dither: algorithm,
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
-      fit: _fitStrategy,
       adjustments: adjustments,
-      paletteBias: paletteBias
+      paletteBias: paletteBias,
+      rotation: rotation
     );
 
     if (version != _processVersion) return;
@@ -160,9 +155,9 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       dither: algorithm,
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
-      fit: _fitStrategy,
       adjustments: adjustments,
-      paletteBias: paletteBias
+      paletteBias: paletteBias,
+      rotation: rotation
     );
 
     final item = widget.item;
@@ -173,10 +168,10 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       pendingAction: SlotPendingAction.verifyHash,
       adjustments: adjustments,
       dither: algorithm,
-      fit: _fitStrategy,
       filter: _filter,
       imageId: metadata.imageId,
-      cropRect: cropRect
+      cropRect: cropRect,
+      rotation: rotation
     );
 
     // packedBytes should match what is being sent to the device, which is the flipped image
@@ -199,6 +194,14 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     setState(() {
       adjustments = suggested;
     });
+    await _reprocess();
+  }
+
+  Future<void> _handleRotateButton() async {
+    setState(() {
+      rotation = (rotation + 90) % 360;
+    });
+    await _prepareWorkingImage();
     await _reprocess();
   }
 
@@ -231,7 +234,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
         alg: algorithm,
         adjustments: adjustments,
         bias: paletteBias,
-        fit: _fitStrategy,
         filter: _filter,
         simulateDevice: _simulateDeviceScreen,
         onAlgChanged: (newAlg) async {
@@ -252,12 +254,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
           });
           _reprocess();
         },
-        onFitChanged: (newFit) async {
-          setState(() {
-            _fitStrategy = newFit;
-          });
-          _reprocess();
-        },
         onFilterChanged: (newFilter) async {
           setState(() {
             _filter = newFilter;
@@ -272,6 +268,9 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
         },
         onAutoEnhanceSelected: () async {
           await _autoEnhance();
+        },
+        onRotateSelected: () async {
+          await _handleRotateButton();
         },
         onCropSelected: () => _handleCropButton(),
         onLoadImageSelected: _pickImage,
@@ -309,6 +308,17 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                             },
                           )
                         ),
+
+                        Expanded(
+                          child: IconButton(
+                            icon: const Icon(Icons.rotate_90_degrees_cw),
+                            tooltip: 'Rotate',
+                            onPressed: () async {
+                              await _handleRotateButton();
+                            }
+                          )
+                        ),
+
                         Expanded(
                           child: IconButton(
                             icon: const Icon(Icons.diamond_sharp),
@@ -321,19 +331,9 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                       ],
                     )
                   ),
-                  
-                  // const SizedBox(height: 8),
-                  // CropControls(
-                  //   fitStrategy: _fitStrategy,
-                  //   onFitChanged: (fit) async {
-                  //     setState(() {
-                  //       _fitStrategy = fit;
-                  //     });
-                  //     _reprocess();
-                  //   }
-                  // ),
 
                   const SizedBox(height: 8),
+                  
                   ImageAdjustmentControls(
                     adjustments: adjustments,
                     onChanged: (newAdjustments) async {

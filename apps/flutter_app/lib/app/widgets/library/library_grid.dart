@@ -9,7 +9,8 @@ class LibraryGrid extends StatelessWidget {
   final ValueChanged<int> onSelected;
 
   final void Function(int slot) onEdit;
-  final Future<void> Function(int slot) onDelete;
+  final Future<void> Function(int slot) onDeleteFromDevice;
+  final Future<void> Function(int slot) onClearSlot;
 
   const LibraryGrid({
     super.key,
@@ -17,7 +18,8 @@ class LibraryGrid extends StatelessWidget {
     required this.selectedSlot,
     required this.onSelected,
     required this.onEdit,
-    required this.onDelete
+    required this.onDeleteFromDevice,
+    required this.onClearSlot
   });
 
   @override
@@ -46,7 +48,8 @@ class LibraryGrid extends StatelessWidget {
                   metadata: item.metadata,
                   onTap: () => onSelected(slot),
                   onEdit: () => onEdit(slot),
-                  onDelete: () => onDelete(slot),
+                  onDelete: () => onDeleteFromDevice(slot),
+                  onClear: () => onClearSlot(slot)
                 )
               );
             }).toList()

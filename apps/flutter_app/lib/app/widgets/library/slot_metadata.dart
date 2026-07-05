@@ -17,15 +17,16 @@ enum SlotSyncState {
 
 enum SlotPendingAction {
   none,
+  clear,
   delete,
   upload,
   verifyHash
 }
 
 class SlotStatusIndicator {
-  final IconData icon;
-  final Color colour;
-  final double size;
+  final IconData? icon;
+  final Color? colour;
+  final double? size;
 
   const SlotStatusIndicator({
     required this.icon,
@@ -40,7 +41,10 @@ SlotStatusIndicator? getStatusIndicator(SlotMetadata metadata) {
       return const SlotStatusIndicator(icon: Icons.delete_outline, colour: Colors.red, size: 36);
     case SlotPendingAction.upload:
       return const SlotStatusIndicator(icon: Icons.cloud_upload_outlined, colour: Colors.orange, size: 36);
+    case SlotPendingAction.clear:
+      return const SlotStatusIndicator(icon: Icons.image_not_supported_outlined, colour: Colors.red, size: 36);
     case SlotPendingAction.none:
+      return null;
     case SlotPendingAction.verifyHash:
       break;
   }
@@ -71,7 +75,6 @@ class SlotMetadata {
   final ImageAdjustments adjustments;
 
   final DitherMode dither;
-  final FitStrategy fit;
   final ImageFilter filter;
 
   final String? imageId;
@@ -79,6 +82,8 @@ class SlotMetadata {
   final Rect? cropRect;
 
   final PaletteBias paletteBias;
+
+  final int rotation;
 
   const SlotMetadata({
     required this.type,
@@ -92,14 +97,14 @@ class SlotMetadata {
 
     this.adjustments = const ImageAdjustments(),
     this.dither = DitherMode.none,
-    this.fit = FitStrategy.contain,
     this.filter = ImageFilter.normal,
 
     this.paletteBias = const PaletteBias(),
 
     this.imageId,
 
-    this.cropRect
+    this.cropRect,
+    this.rotation = 0
   });
 
   SlotMetadata copyWith({
@@ -114,10 +119,10 @@ class SlotMetadata {
     ImageAdjustments? adjustments,
     PaletteBias? paletteBias,
     DitherMode? dither,
-    FitStrategy? fit,
     ImageFilter? filter,
     String? imageId,
-    Rect? cropRect
+    Rect? cropRect,
+    int? rotation
   }) {
     return SlotMetadata(
       type: type ?? this.type,
@@ -131,10 +136,10 @@ class SlotMetadata {
       adjustments: adjustments ?? this.adjustments,
       paletteBias: paletteBias ?? this.paletteBias,
       dither: dither ?? this.dither,
-      fit: fit ?? this.fit,
       filter: filter ?? this.filter,
       imageId: imageId ?? this.imageId,
-      cropRect: cropRect ?? this.cropRect
+      cropRect: cropRect ?? this.cropRect,
+      rotation: rotation ?? this.rotation
     );
   }
 
@@ -171,14 +176,14 @@ class SlotMetadata {
       
       'dither': dither.name,
       
-      'fit': fit.name,
-      
       'filter': filter.name,
       
       'cropX': cropRect?.left,
       'cropY': cropRect?.top,
       'cropW': cropRect?.width,
-      'cropH': cropRect?.height
+      'cropH': cropRect?.height,
+
+      'rotation': rotation
     };
   }
 
@@ -229,11 +234,6 @@ class SlotMetadata {
         orElse: () => DitherMode.none,
       ),
 
-      fit: FitStrategy.values.firstWhere(
-        (e) => e.name == json['fit'],
-        orElse: () => FitStrategy.contain,
-      ),
-
       filter: ImageFilter.values.firstWhere(
         (e) => e.name == json['filter'],
         orElse: () => ImageFilter.normal,
@@ -249,7 +249,8 @@ class SlotMetadata {
               (json['cropW'] as num).toDouble(),
               (json['cropH'] as num).toDouble(),
             )
-          : null
+          : null,
+      rotation: (json['rotation'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -262,7 +263,6 @@ class SlotMetadataDefaults {
       pendingAction: SlotPendingAction.none,
       adjustments: ImageAdjustments(),
       dither: DitherMode.atkinson,
-      fit: FitStrategy.crop,
       filter: ImageFilter.normal
     );
   }

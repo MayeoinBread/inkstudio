@@ -6,6 +6,7 @@ import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_register.dart';
 import 'package:inkstudio_image/src/pipeline/framebuffer_preview_renderer.dart';
 import 'package:inkstudio_image/src/processing/image_adjustment_processor.dart';
+import 'package:inkstudio_image/src/processing/image_cropping.dart';
 import 'package:inkstudio_image/src/processing/image_filter_processing.dart';
 
 class ImagePipeline {
@@ -23,7 +24,6 @@ class ImagePipeline {
     required bool simulateDevice,
     required ImageAdjustments adjustments,
     required PaletteBias paletteBias,
-    FitStrategy fit = FitStrategy.crop,
     DitherMode dither = DitherMode.floydSteinberg,
   }) {
     final resized = workingImage;
@@ -52,43 +52,26 @@ class ImagePipeline {
     );
   }
 
-  img.Image prepareBaseImage(img.Image src, FitStrategy fit, Rect? cropRect) {
+  // TODO change this to use metadata
+  // Need to move metadata out of lib/src, to one of the other packages
+  img.Image prepareBaseImage(img.Image src, Rect? cropRect, int rotation) {
 
-    if (cropRect != null) {
-      src = img.copyCrop(src, x: cropRect.left.round(), y: cropRect.top.round(), width: cropRect.width.round(), height: cropRect.height.round());
+    debugPrint("Rotation: $rotation");
+
+    if (rotation != 0) {
+      src = img.copyRotate(src, angle: rotation);
     }
 
-    switch(fit) {
-      case FitStrategy.scale:
-        return img.copyResize(
-          src,
-          width: targetWidth,
-          height: targetHeight
-        );
-      case FitStrategy.crop:
-        if (src.width == 0 || src.height == 0) return src;
+    Rect crop = cropRect ?? defaultCropRect(src.width, src.height);
 
-        final ratioSrc = src.width / src.height;
-        final ratioTarget = targetWidth / targetHeight;
+    final x = (crop.left * src.width).round();
+    final y = (crop.top * src.height).round();
+    final w = (crop.width * src.width).round();
+    final h = (crop.height * src.height).round();
 
-        img.Image cropped;
+    src = img.copyCrop(src, x: x, y: y, width: w, height: h);
 
-        if (ratioSrc > ratioTarget) {
-          final newWidth = (src.height * ratioTarget).round();
-          final xOffset = ((src.width - newWidth) / 2).round();
-
-          cropped = img.copyCrop(src, x: xOffset, y: 0, width: newWidth, height: src.height);
-        } else {
-          final newHeight = (src.width / ratioTarget).round();
-          final yOffset = ((src.height - newHeight) / 2).round();
-
-          cropped = img.copyCrop(src, x: 0, y: yOffset, width: src.width, height: newHeight);
-        }
-
-        return img.copyResize(cropped, width: targetWidth, height: targetHeight);
-      case _:
-        return src;
-    }
+    return img.copyResize(src, width: targetWidth, height: targetHeight);
   }
 
   Rect defaultCrop(Size imageSize) {
