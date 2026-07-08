@@ -6,7 +6,6 @@ import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_register.dart';
 import 'package:inkstudio_image/src/pipeline/framebuffer_preview_renderer.dart';
 import 'package:inkstudio_image/src/processing/image_adjustment_processor.dart';
-import 'package:inkstudio_image/src/processing/image_cropping.dart';
 import 'package:inkstudio_image/src/processing/image_filter_processing.dart';
 
 class ImagePipeline {
@@ -55,11 +54,14 @@ class ImagePipeline {
   // TODO change this to use metadata
   // Need to move metadata out of lib/src, to one of the other packages
   img.Image prepareBaseImage(img.Image src, Rect? cropRect, int rotation) {
-
-    debugPrint("Rotation: $rotation");
-
     if (rotation != 0) {
       src = img.copyRotate(src, angle: rotation);
+    }
+
+    if (cropRect != null) {
+      if (cropRect.right > 1 || cropRect.bottom > 1) {
+        cropRect = Rect.fromLTWH(cropRect.left / src.width, cropRect.top / src.height, cropRect.width / src.width, cropRect.height / src.height);
+      }
     }
 
     Rect crop = cropRect ?? defaultCropRect(src.width, src.height);

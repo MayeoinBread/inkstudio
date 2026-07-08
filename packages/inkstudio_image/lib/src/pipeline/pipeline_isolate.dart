@@ -1,5 +1,17 @@
+import 'dart:typed_data';
+import 'dart:ui';
+
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_image/inkstudio_image.dart';
+
+img.Image runPrepareIsolate(PrepareRequest request) {
+  final decoded = img.decodeImage(request.bytes)!;
+  return ImagePipeline().prepareBaseImage(
+    decoded,
+    request.cropRect,
+    request.rotation
+  );
+}
 
 PipelineResult runPipelineIsolate(dynamic data) {
   final req = data as PipelineRequest;
@@ -16,6 +28,18 @@ PipelineResult runPipelineIsolate(dynamic data) {
     paletteBias: req.paletteBias,
     dither: req.dither
   );
+}
+
+class PrepareRequest {
+  final Uint8List bytes;
+  final Rect? cropRect;
+  final int rotation;
+
+  PrepareRequest({
+    required this.bytes,
+    required this.cropRect,
+    required this.rotation
+  });
 }
 
 class PipelineRequest {

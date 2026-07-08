@@ -9,11 +9,13 @@ import 'package:inkstudio_image/inkstudio_image.dart';
 class CropDialog extends StatefulWidget {
   final Uint8List imageBytes;
   final Rect? initialRect;
+  final int rotation;
 
   const CropDialog({
     super.key,
     required this.imageBytes,
     this.initialRect,
+    this.rotation = 0
   });
 
   @override
@@ -21,7 +23,8 @@ class CropDialog extends StatefulWidget {
 }
 
 class _CropDialogState extends State<CropDialog> {
-  late final img.Image decoded;
+  late img.Image decoded;
+  late final Uint8List rotatedBytes;
 
   late Rect cropRect;
 
@@ -30,6 +33,10 @@ class _CropDialogState extends State<CropDialog> {
     super.initState();
 
     decoded = img.decodeImage(widget.imageBytes)!;
+    decoded = img.copyRotate(decoded, angle: widget.rotation);
+
+    rotatedBytes = Uint8List.fromList(img.encodePng(decoded));
+
     cropRect = widget.initialRect ??
       defaultCropRect(
         decoded.width,
@@ -83,7 +90,7 @@ class _CropDialogState extends State<CropDialog> {
                           children: [
                             Positioned.fill(
                               child: Image.memory(
-                                widget.imageBytes,
+                                rotatedBytes,
                                 fit: BoxFit.fill
                               )
                             ),

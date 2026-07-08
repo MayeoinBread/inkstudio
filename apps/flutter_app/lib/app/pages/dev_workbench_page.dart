@@ -88,7 +88,6 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
     ble.onDeviceSettings = (settings) {
       if (mounted) {
-        debugPrint("DEV PAGE: onDeviceSettings, mounted");
         setState(() {
           session.state = session.state.copyWith(
             settings: settings
@@ -131,8 +130,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
       filter: _filter,
       simulateDevice: _simulateDevice,
       adjustments: _adjustments,
-      paletteBias: _bias,
-      rotation: rotation
+      paletteBias: _bias
     );
 
     if (version != _processVersion) return;

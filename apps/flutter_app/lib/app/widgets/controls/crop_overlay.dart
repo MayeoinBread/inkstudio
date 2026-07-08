@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 enum CropHandle {
@@ -59,106 +61,132 @@ class _CropOverlayState extends State<CropOverlay> {
     );
   }
 
-  // CropHandle _hitTestHandle(Offset pos, Rect paintRect) {
-  //   if ((pos - paintRect.topLeft).distance <= _handleRadius) {
-  //     return CropHandle.topLeft;
-  //   }
-
-  //   if ((pos - paintRect.topRight).distance <= _handleRadius) {
-  //     return CropHandle.topRight;
-  //   }
-
-  //   if ((pos - paintRect.bottomLeft).distance <= _handleRadius) {
-  //     return CropHandle.bottomLeft;
-  //   }
-
-  //   if ((pos - paintRect.bottomRight).distance <= _handleRadius) {
-  //     return CropHandle.bottomRight;
-  //   }
-
-  //   return CropHandle.none;
-  // }
   CropHandle _hitTestHandle(Offset pos, Rect rect) {
-    final hit = _handleRadius * 2;
+  const hitSize = 48.0; // bigger for touch devices
 
-    final topLeft = Rect.fromCenter(center: rect.topLeft, width: hit, height: hit);
-    if (topLeft.contains(pos)) return CropHandle.topLeft;
+  Rect makeHandle(Offset c) =>
+      Rect.fromCenter(center: c, width: hitSize, height: hitSize);
 
-    final topRight = Rect.fromCenter(center: rect.topRight, width: hit, height: hit);
-    if (topRight.contains(pos)) return CropHandle.topRight;
+  if (makeHandle(rect.topLeft).contains(pos)) return CropHandle.topLeft;
+  if (makeHandle(rect.topRight).contains(pos)) return CropHandle.topRight;
+  if (makeHandle(rect.bottomLeft).contains(pos)) return CropHandle.bottomLeft;
+  if (makeHandle(rect.bottomRight).contains(pos)) return CropHandle.bottomRight;
 
-    final bottomLeft = Rect.fromCenter(center: rect.bottomLeft, width: hit, height: hit);
-    if (bottomLeft.contains(pos)) return CropHandle.bottomLeft;
-
-    final bottomRight = Rect.fromCenter(center: rect.bottomRight, width: hit, height: hit);
-    if (bottomRight.contains(pos)) return CropHandle.bottomRight;
-
-    return CropHandle.none;
-  }
+  return CropHandle.none;
+}
 
   void _resize(CropHandle handle, Offset delta) {
     const minSize = 48.0;
 
-    Rect r = displayRect;
-
-    double dx = delta.dx;
-    double dy = delta.dy;
-
+    final imageW = widget.imageSize.width;
+    final imageH = widget.imageSize.height;
     final aspect = widget.aspectRatio;
 
-    double newLeft = r.left;
-    double newTop = r.top;
-    double newWidth = r.width;
-    double newHeight = r.height;
+    Rect r = displayRect;
+
+    double left = r.left;
+    double top = r.top;
+    double right = r.right;
+    double bottom = r.bottom;
 
     switch (handle) {
       case CropHandle.bottomRight:
-        newWidth += dx;
-        newHeight = newWidth / aspect;
+        right += delta.dx;
+        bottom += delta.dy;
         break;
 
       case CropHandle.bottomLeft:
-        newWidth -= dx;
-        newHeight = newWidth / aspect;
-        newLeft = r.right - newWidth;
+        left += delta.dx;
+        bottom += delta.dy;
         break;
 
       case CropHandle.topRight:
-        newWidth += dx;
-        newHeight = newWidth / aspect;
-        newTop = r.bottom - newHeight;
+        right += delta.dx;
+        top += delta.dy;
         break;
 
       case CropHandle.topLeft:
-        newWidth -= dx;
-        newHeight = newWidth / aspect;
-        newLeft = r.right - newWidth;
-        newTop = r.bottom - newHeight;
+        left += delta.dx;
+        top += delta.dy;
         break;
 
       case CropHandle.none:
         return;
     }
 
-    // enforce minimum size
-    if (newWidth < minSize) {
-      newWidth = minSize;
-      newHeight = newWidth / aspect;
+    double width = right - left;
+    double height = bottom - top;
+
+    // enforce aspect ratio FIRST (no vector projection nonsense)
+    final currentAspect = width / height;
+
+    if (currentAspect > aspect) {
+      // too wide → adjust width
+      width = height * aspect;
+    } else {
+      // too tall → adjust height
+      height = width / aspect;
     }
 
-    r = Rect.fromLTWH(newLeft, newTop, newWidth, newHeight);
+    // enforce minimum size
+    if (width < minSize) {
+      width = minSize;
+      height = width / aspect;
+    }
+
+    if (height < minSize) {
+      height = minSize;
+      width = height * aspect;
+    }
+
+    // re-anchor based on handle
+    switch (handle) {
+      case CropHandle.bottomRight:
+        right = left + width;
+        bottom = top + height;
+        break;
+
+      case CropHandle.bottomLeft:
+        left = right - width;
+        bottom = top + height;
+        break;
+
+      case CropHandle.topRight:
+        right = left + width;
+        top = bottom - height;
+        break;
+
+      case CropHandle.topLeft:
+        left = right - width;
+        top = bottom - height;
+        break;
+
+      case CropHandle.none:
+        return;
+    }
+
+    Rect updated = Rect.fromLTRB(left, top, right, bottom);
+
+    // SAFE clamp (no negative max)
+    final maxX = math.max(0.0, imageW - updated.width);
+    final maxY = math.max(0.0, imageH - updated.height);
+
+    final clampedLeft = updated.left.clamp(0.0, maxX);
+    final clampedTop = updated.top.clamp(0.0, maxY);
+
+    updated = Rect.fromLTWH(clampedLeft, clampedTop, updated.width, updated.height);
 
     setState(() {
-      displayRect = _clampToBounds(r);
-      cropRect = _fromDisplay(displayRect);
+      displayRect = updated;
+      cropRect = _fromDisplay(updated);
     });
 
     widget.onChanged(cropRect);
   }
 
   Rect _clampToBounds(Rect r) {
-    final maxX = widget.imageSize.width - r.width;
-    final maxY = widget.imageSize.height - r.height;
+    final maxX = math.max(0.0, widget.imageSize.width - r.width);
+    final maxY = math.max(0.0, widget.imageSize.height - r.height);
 
     final left = r.left.clamp(0.0, maxX);
     final top = r.top.clamp(0.0, maxY);

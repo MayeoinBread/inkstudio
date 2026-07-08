@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:image/image.dart' as img;
 import 'package:inkstudio/app/data/models/editor_result.dart';
 import 'package:inkstudio/app/repositories/image_repository.dart';
 import 'package:inkstudio/app/services/image_pipeline_controller.dart';
@@ -43,6 +44,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
 
   int _processVersion = 0;
 
+  bool pipelinePrepared = false;
+
   final ImagePipelineController pipeline = ImagePipelineController();
 
   // Image Adjustments/Dithering, etc.
@@ -57,6 +60,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   @override
   void initState() {
     super.initState();
+    // TODO can we just load the processed bytes directly into the frame, rather than setting up the processing pipeline immediately?
 
     _hydrateFromItem();
   }
@@ -78,19 +82,14 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       rotation = metadata.rotation;
     });
 
+    // Reload the existing, processed image instead of reprocessing from scratch (ever so slightly faster on mobile)
     _originalImageBytes = await ImageRepository().loadOriginalBytes(imageId);
     if (_originalImageBytes == null) return;
-
-    await pipeline.prepare(_originalImageBytes!, cropRect, rotation);
-    await pipeline.processMetadata(
-      metadata: metadata,
-      simulateDevice: _simulateDeviceScreen
-    );
-
-    if (!mounted) return;
-
-    setState((){
-      widget.onPreviewChanged?.call(pipeline.previewBytes!);
+    final processedBytes = await ImageRepository().loadProcessedBytes(imageId);
+    final decodedBuffer = FramebufferDecoder.decode(processedBytes!);
+    final decodedBytes = PanelRerender.renderFramebuffer(decodedBuffer);
+    setState(() {
+      widget.onPreviewChanged?.call(Uint8List.fromList(img.encodePng(decodedBytes)));
     });
   }
 
@@ -128,6 +127,11 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   }
 
   Future<void> _reprocess() async {
+    // Need to make sure the pipeline is set up before we try processing any adjustments
+    if (!pipelinePrepared) {
+      await _prepareWorkingImage();
+      pipelinePrepared = true;
+    }
     final bytes = _originalImageBytes;
     if (bytes == null) return;
 
@@ -138,8 +142,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
       adjustments: adjustments,
-      paletteBias: paletteBias,
-      rotation: rotation
+      paletteBias: paletteBias
     );
 
     if (version != _processVersion) return;
@@ -156,8 +159,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
       adjustments: adjustments,
-      paletteBias: paletteBias,
-      rotation: rotation
+      paletteBias: paletteBias
     );
 
     final item = widget.item;
@@ -201,6 +203,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     setState(() {
       rotation = (rotation + 90) % 360;
     });
+    debugPrint("Rotation: $rotation");
     await _prepareWorkingImage();
     await _reprocess();
   }
@@ -212,6 +215,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       builder: (_) => CropDialog(
         imageBytes: _originalImageBytes!,
         initialRect: cropRect,
+        rotation: rotation
       )
     );
 
