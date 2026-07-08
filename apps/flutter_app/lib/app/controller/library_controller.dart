@@ -204,7 +204,6 @@ class LibraryController extends ChangeNotifier {
       }
 
       final isDirty = localHash != deviceHash;
-      debugPrint('isDirty: $isDirty - app hash: $localHash - device hash: $deviceHash');
       
       onSlotReady(slot, isDirty);
     }
@@ -225,6 +224,10 @@ class LibraryController extends ChangeNotifier {
 
     for (final dirtySlot in dirtySlots) {
       final slot = dirtySlot.slot;
+
+      session.state = session.state.copyWith(
+        transferSlot: slot
+      );
 
       if (dirtySlot.metadata.pendingAction == SlotPendingAction.delete) {
         // TODO see what we get back for a Hash if an image doesn't exist/is deleted so we can check properly
@@ -337,6 +340,10 @@ class LibraryController extends ChangeNotifier {
       }
 
     }
+
+    session.state = session.state.copyWith(
+        transferSlot: null
+      );
 
     return "Updated: ${updates[1]} - Failed: ${updates[2]} - Deleted: ${updates[0]}";
   }

@@ -23,6 +23,7 @@ class DeviceSessionState {
   final double progress;  //0-1
 
   final int? activeSlot;
+  final int? transferSlot;
   final List<int> availableSlots;
 
   final String deviceName;
@@ -40,7 +41,8 @@ class DeviceSessionState {
     required this.firmware,
     required this.availableSlots,
     required this.settings,
-    this.activeSlot
+    this.activeSlot,
+    this.transferSlot
   });
 
   bool get isConnected => connection == ConnectionState.connected;
@@ -53,6 +55,8 @@ class DeviceSessionState {
   bool get canDownload => hasSelectedSlot && canTransfer && hasImageInSlot(activeSlot!);
 
   String get statusText {
+    // Shouldn't really get to a point where we are transferring with a null slot...
+    int? slot = transferSlot ?? activeSlot;
     switch (connection) {
       case ConnectionState.disconnected:
         return 'Disconnected';
@@ -65,9 +69,13 @@ class DeviceSessionState {
           case TransferState.idle:
             return 'Connected';
           case TransferState.uploading:
-            return 'Uploading slot $activeSlot';
+            return (slot == null)
+              ? 'Uploading slot...'
+              : 'Uploading slot $slot';
           case TransferState.downloading:
-            return 'Downloading slot $activeSlot';
+            return (slot == null)
+              ? 'Downloading slot...'
+              : 'Downloading slot $slot';
           case TransferState.importing:
             return 'Importing images...';
         }
@@ -83,6 +91,7 @@ class DeviceSessionState {
     TransferState? transfer,
     double? progress,
     int? activeSlot,
+    int? transferSlot,
     List<int>? availableSlots,
     String? deviceName,
     int? batteryPercent,
@@ -94,6 +103,7 @@ class DeviceSessionState {
       transfer: transfer ?? this.transfer,
       progress: progress ?? this.progress,
       activeSlot: activeSlot ?? this.activeSlot,
+      transferSlot: transferSlot ?? this.transferSlot,
       availableSlots: availableSlots ?? this.availableSlots,
       deviceName: deviceName ?? this.deviceName,
       batteryPercent: batteryPercent ?? this.batteryPercent,

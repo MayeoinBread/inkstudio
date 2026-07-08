@@ -13,11 +13,15 @@ class ImagePipelineController {
   Uint8List? previewBytes;
 
   Future<void> prepare(Uint8List bytes, Rect? cropRect, int rotation) async {
-    final decoded = img.decodeImage(bytes);
-    if (decoded == null) return;
-
-    final pipeline = ImagePipeline();
-    sourceImage = pipeline.prepareBaseImage(decoded, cropRect, rotation);
+    sourceImage = await compute(
+      runPrepareIsolate,
+      PrepareRequest(
+        bytes: bytes,
+        cropRect: cropRect,
+        rotation: rotation
+      )
+    );
+    // sourceImage = pipeline.prepareBaseImage(decoded, cropRect, rotation);
   }
 
   Future<void> processMetadata({
@@ -49,8 +53,7 @@ class ImagePipelineController {
     required ImageFilter filter,
     required bool simulateDevice,
     required ImageAdjustments adjustments,
-    required PaletteBias paletteBias,
-    required int rotation
+    required PaletteBias paletteBias
   }) async {
     if (sourceImage == null) return;
 

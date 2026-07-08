@@ -102,9 +102,7 @@ class ImageEditorMobileControls extends StatelessWidget {
                               child: IconButton(
                                 icon: const Icon(Icons.rotate_90_degrees_cw),
                                 tooltip: 'Rotate',
-                                onPressed: () async {
-                                  await onRotateSelected;
-                                }
+                                onPressed: onRotateSelected
                               )
                             ),
 

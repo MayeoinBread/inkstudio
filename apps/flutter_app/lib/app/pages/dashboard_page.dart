@@ -34,7 +34,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
     ble.onDeviceInfo = (info) {
       if (mounted) {
-        debugPrint("DASH PAGE: onDeviceInfo, mounted");
         setState(() {
         session.state = session.state.copyWith(
           batteryPercent: info.battery,
@@ -46,7 +45,6 @@ class _DashboardPageState extends State<DashboardPage> {
 
     ble.onDeviceSettings = (settings) {
       if (mounted) {
-        debugPrint("DASH PAGE: onDeviceSettings, mounted");
         setState(() {
           session.state = session.state.copyWith(
             settings: settings

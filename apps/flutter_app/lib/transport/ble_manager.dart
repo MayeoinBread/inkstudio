@@ -156,7 +156,6 @@ class BleManager {
         _handleReadPacket(data);
         break;
       case 0x07:
-        // debugPrint("Device Settings: ${data.map((b) => b.toRadixString(16).padLeft(2, '0')).join(' ')}");
         _parseDeviceSettings(data);
         break;
       case 0x08:
