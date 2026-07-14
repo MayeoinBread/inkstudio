@@ -26,7 +26,7 @@ class ImageFilterProcessor {
       case ImageFilter.pencilSketch:
         return _pencilSketch(input, adjustments.sketchStrength);
       
-      case ImageFilter.threshold:
+      case ImageFilter.adaptiveBW:
         return _adaptiveThreshold(input, adjustments.thresholdRadius);
       
       default:
@@ -402,6 +402,8 @@ class ImageFilterProcessor {
       }
     }
 
+    // TODO pull into ImageAdjustments, not 100% needed but can be called "balance" to adjust the black/white balance
+    //    0-30, default 8
     const offset = 8;
 
     for (int y = 0; y < height; y++) {

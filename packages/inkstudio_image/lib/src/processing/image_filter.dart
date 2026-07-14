@@ -4,7 +4,7 @@ enum ImageFilter {
   grayscale,
   sepia,
   inverted,
-  threshold,
+  adaptiveBW,
   posterise,
   comic,
   halftone,

@@ -29,6 +29,27 @@ class FilterOptionsControls extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 100,
+                  child: Text('BW Details', style: Theme.of(context).textTheme.bodyMedium)
+                ),
+                Expanded(
+                  child: Slider(
+                    min: 1.0, max: 30.0, divisions: 30,
+                    value: adjustments.thresholdRadius.toDouble(),
+                    label: adjustments.thresholdRadius.toString(),
+                    onChanged: (filter == ImageFilter.adaptiveBW)
+                      ? (value) {
+                        onChanged(adjustments.copyWith(thresholdRadius: value.toInt()));
+                      }
+                      : null,
+                  )
+                )
+              ]
+            ),
+
+            Row(
+              children: [
+                SizedBox(
+                  width: 100,
                   child: Text('Tone Levels', style: Theme.of(context).textTheme.bodyMedium)
                 ),
                 Expanded(
