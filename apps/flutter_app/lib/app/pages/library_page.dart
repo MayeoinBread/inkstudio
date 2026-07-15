@@ -70,7 +70,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   @override
-  void didChangeDependencies() {
+  void didChangeDependencies() async {
     super.didChangeDependencies();
 
     if (_initStarted) return;
@@ -78,7 +78,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     controller.init();
 
-    controller.refreshSyncState(session.state.deviceInfo.serial);
+    await controller.refreshSyncState(session.state.deviceInfo.serial);
   }
 
   @override
@@ -90,7 +90,7 @@ class _LibraryPageState extends State<LibraryPage> {
   Future<void> _sync() async {
     await controller.pullFromDevice(
       ble: ble,
-      session: session,
+      // session: session,
       availableSlots: session.state.availableSlots,
       onSlotReady: (slot) async {
         controller.updateSlot(

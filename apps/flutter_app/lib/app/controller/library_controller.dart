@@ -19,6 +19,8 @@ class LibraryController extends ChangeNotifier {
   final AlbumRepository albumRepository = AlbumRepository();
   final DeviceSlotRepository deviceSlotRepository = DeviceSlotRepository();
 
+  final session = DeviceSessionService.instance;
+
   Map<int, LibraryItem> items = {};
 
   List<Album> albums = [];
@@ -46,12 +48,20 @@ class LibraryController extends ChangeNotifier {
 
       await loadFromDatabase();
 
+      session.addListener(_deviceChanged);
+
       _initialised = true;
     } catch (e, st) {
       debugPrint('init failed: $e\n$st');
     } finally {
       notifyListeners();
     }
+  }
+
+  void _deviceChanged() {
+    final serial = session.state.deviceInfo.serial;
+
+    refreshSyncState(serial);
   }
 
   void updateSlot({
@@ -149,6 +159,7 @@ class LibraryController extends ChangeNotifier {
     }
 
     commitAllSlots();
+
     notifyListeners();
   }
 
@@ -205,7 +216,7 @@ class LibraryController extends ChangeNotifier {
 
   Future<void> pullFromDevice({
     required BleManager ble,
-    required DeviceSessionService session,
+    // required DeviceSessionService session,
     required List<int> availableSlots,
     required void Function(int slot) onSlotReady
   }) async {
