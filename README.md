@@ -23,8 +23,6 @@ The interface adapts automatically between desktop and mobile layouts.
 
 As the app is built using Flutter, the code may already work on iOS devices. I do not own/use Apple devices and will not be directly building support for them.
 
----
-
 ## Offline-first Library
 
 All content is stored locally on the device. The device/app acts as the source of truth. Features include:
@@ -38,7 +36,15 @@ All content is stored locally on the device. The device/app acts as the source o
 
 No cloud services or internet connection required.
 
----
+## Albums
+
+Albums allow users to organise and manage multiple collections of images for their panel.
+
+Each album represents a complete panel layout, containing all available slots. Users can create, rename, delete, and switch between albums from the library. Switching albums changes the active image collection shown in the library without affecting the images stored in other albums.
+
+The app tracks the relationship between albums and connected devices, allowing each panel to maintain its own deployed state. When an album is selected, the app compares the album contents against the last known state of the connected device and identifies which slots require updating.
+
+This allows users to maintain multiple panel layouts and switch between different image collections while only transferring the required changes during synchronisation.
 
 ## Content Creation
 
@@ -51,8 +57,6 @@ InkStudio supports multiple content sources:
 
 All content is processed through a unified pipeline for consistent device output.
 
----
-
 ## Image Processing
 
 Built-in tools include:
@@ -61,8 +65,6 @@ Built-in tools include:
 - Brightness adjustment
 - Contrast adjustment
 - Extensible filter system
-
----
 
 ## Dithering
 
@@ -77,7 +79,6 @@ Supported dithering algorithms include:
 - Burkes
 - JJN
 
-
 ## Filters
 
 Multiple filters are available to change the style of the image including:
@@ -87,6 +88,9 @@ Multiple filters are available to change the style of the image including:
 - Comic
 - Halftone
 - Pencil Sketch
+- Inverted
+- Sepia
+- Adaptive B&W Threshold
 
 Images are converted into the device’s fixed four-colour palette:
 
@@ -95,13 +99,9 @@ Images are converted into the device’s fixed four-colour palette:
 - Yellow
 - Red
 
----
-
 ## Preview
 
 Real-time preview is generated directly from the framebuffer used for transmission, ensuring accurate representation of final device output.
-
----
 
 ## Device Synchronisation
 
