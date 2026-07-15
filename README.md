@@ -10,6 +10,14 @@ InkStudio currently supports the PicPak panel only.
 
 ---
 
+# Latest Release
+
+v0.2.0 introduces support for Albums (see below).
+
+If upgrading the app, ensure on first run to connect to the panel and press the "Sync" button so the App knows what images are currently on the panel.
+
+---
+
 # Features
 
 ## Cross-platform
