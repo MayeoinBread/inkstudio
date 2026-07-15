@@ -165,6 +165,7 @@ class SlotMetadata {
       'halftoneScale': adjustments.halftoneScale,
       'hatchDensity': adjustments.hatchDensity,
       'sketchStrength': adjustments.sketchStrength,
+      'thresholdRadius': adjustments.thresholdRadius,
 
       'blackBias': paletteBias.black,
       'whiteBias': paletteBias.white,
@@ -210,7 +211,8 @@ class SlotMetadata {
         toneLevels: (json['toneLevels'] as num?)?.toDouble() ?? 2.0,
         halftoneScale: (json['halftoneScale'] as num?)?.toDouble() ?? 6.0,
         hatchDensity: (json['hatchDensity'] as num?)?.toDouble() ?? 8.0,
-        sketchStrength: (json['sketchStrength'] as num?)?.toDouble() ?? 1.0
+        sketchStrength: (json['sketchStrength'] as num?)?.toDouble() ?? 1.0,
+        thresholdRadius: (json['thresholdRadius'] as num?)?.toInt() ?? 1
       ),
 
       paletteBias: PaletteBias(
