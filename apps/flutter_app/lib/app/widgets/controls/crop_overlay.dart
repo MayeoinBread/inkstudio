@@ -33,8 +33,7 @@ class _CropOverlayState extends State<CropOverlay> {
   Rect displayRect = Rect.zero;
 
   CropHandle _activeHandle = CropHandle.none;
-  static const double _handleRadius = 20;
-
+  
   @override
   void initState() {
     super.initState();

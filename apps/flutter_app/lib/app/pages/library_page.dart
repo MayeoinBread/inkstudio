@@ -70,13 +70,15 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   @override
-  void didChangeDependencies() {
+  void didChangeDependencies() async {
     super.didChangeDependencies();
 
     if (_initStarted) return;
     _initStarted = true;
 
     controller.init();
+
+    await controller.refreshSyncState(session.state.deviceInfo.serial);
   }
 
   @override
@@ -88,24 +90,20 @@ class _LibraryPageState extends State<LibraryPage> {
   Future<void> _sync() async {
     await controller.pullFromDevice(
       ble: ble,
-      session: session,
+      // session: session,
       availableSlots: session.state.availableSlots,
-      onSlotReady: (slot, isDirty) async {
-        final item = controller.items[slot]!;
-
-        final newMetadata = item.metadata.copyWith(
-          pendingAction: isDirty ? SlotPendingAction.upload : SlotPendingAction.none
-        );
-
+      onSlotReady: (slot) async {
         controller.updateSlot(
           slot: slot,
           exists: true,
-          metadata: newMetadata
+          metadata: controller.items[slot]!.metadata
         );
       }
     );
 
     controller.commitAllSlots();
+
+    await controller.refreshSyncState(session.state.deviceInfo.serial);
   }
 
   Future<void> _onEdit(int slot) async {
@@ -322,7 +320,7 @@ class _LibraryPageState extends State<LibraryPage> {
               albums: controller.albums,
               currentAlbum: controller.currentAlbum!,
               onAlbumSelected: (album) {
-                controller.onAlbumSelected(album);
+                controller.onAlbumSelected(album, session.state.deviceInfo.serial);
                 // Navigator.pop(sheetContext);
               },
               onCreateAlbum: (name) async {
@@ -362,7 +360,9 @@ class _LibraryPageState extends State<LibraryPage> {
           AlbumSelector(
             albums: controller.albums,
             currentAlbum: controller.currentAlbum!,
-            onAlbumSelected: controller.onAlbumSelected,
+            onAlbumSelected: (album) {
+              controller.onAlbumSelected(album, session.state.deviceInfo.serial);
+            }, 
             onCreateAlbum: controller.onCreateAlbum,
             onRenameAlbum: controller.onRenameAlbum,
             onDeleteAlbum: controller.onDeleteAlbum
@@ -446,6 +446,12 @@ class _LibraryPageState extends State<LibraryPage> {
           IconButton(
             icon: const Icon(Icons.dark_mode),
             onPressed: widget.onToggleTheme
+          ),
+          IconButton(
+            icon: const Icon(Icons.sync_rounded),
+            onPressed: session.state.isConnected
+              ? _sync
+              : null,
           )
         ]
       ),

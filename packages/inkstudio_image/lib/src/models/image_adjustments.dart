@@ -28,6 +28,9 @@ class ImageAdjustments {
   final double hatchDensity;
   final double sketchStrength;
 
+  // 1-25, pixels
+  final int thresholdRadius;
+
   const ImageAdjustments({
     this.brightness = 0.0,
     this.contrast = 1.0,
@@ -38,7 +41,8 @@ class ImageAdjustments {
     this.toneLevels = 2.0,
     this.halftoneScale = 6,
     this.hatchDensity = 8.0,
-    this.sketchStrength = 1.0
+    this.sketchStrength = 1.0,
+    this.thresholdRadius = 1
   });
 
   ImageAdjustments copyWith({
@@ -51,7 +55,8 @@ class ImageAdjustments {
     double? toneLevels,
     double? halftoneScale,
     double? hatchDensity,
-    double? sketchStrength
+    double? sketchStrength,
+    int? thresholdRadius
   }) {
     return ImageAdjustments(
       brightness: brightness ?? this.brightness,
@@ -63,7 +68,8 @@ class ImageAdjustments {
       toneLevels: toneLevels ?? this.toneLevels,
       halftoneScale: halftoneScale ?? this.halftoneScale,
       hatchDensity: hatchDensity ?? this.hatchDensity,
-      sketchStrength: sketchStrength ?? this.sketchStrength
+      sketchStrength: sketchStrength ?? this.sketchStrength,
+      thresholdRadius: thresholdRadius ?? this.thresholdRadius
     );
   }
 

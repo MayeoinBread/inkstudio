@@ -26,6 +26,9 @@ class ImageFilterProcessor {
       case ImageFilter.pencilSketch:
         return _pencilSketch(input, adjustments.sketchStrength);
       
+      case ImageFilter.adaptiveBW:
+        return _adaptiveThreshold(input, adjustments.thresholdRadius);
+      
       default:
         return _perPixelFilter(input, filter);
     }
@@ -228,10 +231,22 @@ class ImageFilterProcessor {
             r = g = b = l;
             break;
 
-          case ImageFilter.highContrast:
-            final l = ((r + g + b) / 3).round();
-            final v = l > 128 ? 255 : 0;
-            r = g = b = v;
+          // case ImageFilter.threshold:
+          //   final l = ((r + g + b) / 3).round();
+          //   final v = l > 128 ? 255 : 0;
+          //   r = g = b = v;
+          //   break;
+          
+          case ImageFilter.sepia:
+            r = (0.393 * r + 0.769 * g + 0.189 * b).clamp(0, 255).round();
+            g = (0.349 * r + 0.686 * g + 0.168 * b).clamp(0, 255).round();
+            g = (0.272 * r + 0.534 * g + 0.131 * b).clamp(0, 255).round();
+            break;
+          
+          case ImageFilter.inverted:
+            r = 255 - r;
+            g = 255 - g;
+            b = 255 - b;
             break;
           
           default:
@@ -349,6 +364,77 @@ class ImageFilterProcessor {
         int b = ((p.b / step).round() * step).clamp(0, 255).toInt();
 
         out.setPixelRgb(x, y, r, g, b);
+      }
+    }
+
+    return out;
+  }
+
+  static img.Image _adaptiveThreshold(img.Image input, int thresholdRadius) {
+    final out = img.Image.from(input);
+
+    final radius = thresholdRadius.clamp(1, 50);
+
+    final width = out.width;
+    final height = out.height;
+
+    // Build integral image of luminance.
+    final integral = List.generate(
+      height + 1,
+      (_) => List<int>.filled(width + 1, 0),
+    );
+
+    for (int y = 0; y < height; y++) {
+      int rowSum = 0;
+
+      for (int x = 0; x < width; x++) {
+        final p = out.getPixel(x, y);
+
+        final luma = (0.299 * p.r +
+                0.587 * p.g +
+                0.114 * p.b)
+            .round();
+
+        rowSum += luma;
+
+        integral[y + 1][x + 1] =
+            integral[y][x + 1] + rowSum;
+      }
+    }
+
+    // TODO pull into ImageAdjustments, not 100% needed but can be called "balance" to adjust the black/white balance
+    //    0-30, default 8
+    const offset = 8;
+
+    for (int y = 0; y < height; y++) {
+      final y0 = (y - radius).clamp(0, height - 1).toInt();
+      final y1 = (y + radius).clamp(0, height - 1).toInt();
+
+      for (int x = 0; x < width; x++) {
+        final x0 = (x - radius).clamp(0, width - 1).toInt();
+        final x1 = (x + radius).clamp(0, width - 1).toInt();
+
+        final area = (x1 - x0 + 1) * (y1 - y0 + 1);
+
+        final sum =
+            integral[y1 + 1][x1 + 1] -
+            integral[y0][x1 + 1] -
+            integral[y1 + 1][x0] +
+            integral[y0][x0];
+
+        final threshold = (sum / area) - offset;
+
+        final p = out.getPixel(x, y);
+
+        final luma = 0.299 * p.r +
+            0.587 * p.g +
+            0.114 * p.b;
+
+        if (luma > threshold) {
+          out.setPixelRgb(x, y, 255, 255, 255);
+        } else {
+          out.setPixelRgb(x, y, 0, 0, 0);
+        }
       }
     }
 

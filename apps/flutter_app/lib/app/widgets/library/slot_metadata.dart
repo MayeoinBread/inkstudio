@@ -147,9 +147,6 @@ class SlotMetadata {
     return {
       'type': type.name,
       
-      'syncState': syncState.name,
-      'pendingAction': pendingAction.name,
-      
       'text': text,
       
       'wifiSsid': wifiSsid,
@@ -168,6 +165,7 @@ class SlotMetadata {
       'halftoneScale': adjustments.halftoneScale,
       'hatchDensity': adjustments.hatchDensity,
       'sketchStrength': adjustments.sketchStrength,
+      'thresholdRadius': adjustments.thresholdRadius,
 
       'blackBias': paletteBias.black,
       'whiteBias': paletteBias.white,
@@ -195,14 +193,8 @@ class SlotMetadata {
         (e) => e.name == json['type'],
         orElse: () => SlotContentType.empty,
       ),
-      syncState: SlotSyncState.values.firstWhere(
-        (e) => e.name == json['syncState'],
-        orElse: () => SlotSyncState.clean,
-      ),
-      pendingAction: SlotPendingAction.values.firstWhere(
-        (e) => e.name == json['pendingAction'],
-        orElse: () => SlotPendingAction.none,
-      ),
+      syncState: SlotSyncState.clean,
+      pendingAction: SlotPendingAction.none,
       text: json['text'],
       wifiSsid: json['wifiSsid'],
       wifiPassword: json['wifiPassword'],
@@ -219,7 +211,8 @@ class SlotMetadata {
         toneLevels: (json['toneLevels'] as num?)?.toDouble() ?? 2.0,
         halftoneScale: (json['halftoneScale'] as num?)?.toDouble() ?? 6.0,
         hatchDensity: (json['hatchDensity'] as num?)?.toDouble() ?? 8.0,
-        sketchStrength: (json['sketchStrength'] as num?)?.toDouble() ?? 1.0
+        sketchStrength: (json['sketchStrength'] as num?)?.toDouble() ?? 1.0,
+        thresholdRadius: (json['thresholdRadius'] as num?)?.toInt() ?? 1
       ),
 
       paletteBias: PaletteBias(
