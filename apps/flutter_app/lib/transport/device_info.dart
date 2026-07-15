@@ -3,7 +3,7 @@ class DeviceInfo {
   final String hardware;
   final String firmware;
   final String serial;
-  final int flag;  // Wonder if this is device colour?
+  final int flag;
 
   DeviceInfo({
     required this.battery,

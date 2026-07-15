@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:inkstudio/app/data/models/device_settings.dart';
+import 'package:inkstudio/transport/device_info.dart';
 
 enum ConnectionState {
   disconnected,
@@ -27,8 +28,8 @@ class DeviceSessionState {
   final List<int> availableSlots;
 
   final String deviceName;
-  final int batteryPercent;
-  final String firmware;
+  
+  final DeviceInfo deviceInfo;
 
   final DeviceSettings settings;
 
@@ -37,8 +38,7 @@ class DeviceSessionState {
     required this.transfer,
     required this.progress,
     required this.deviceName,
-    required this.batteryPercent,
-    required this.firmware,
+    required this.deviceInfo,
     required this.availableSlots,
     required this.settings,
     this.activeSlot,
@@ -94,6 +94,7 @@ class DeviceSessionState {
     int? transferSlot,
     List<int>? availableSlots,
     String? deviceName,
+    DeviceInfo? deviceInfo,
     int? batteryPercent,
     String? firmware,
     DeviceSettings? settings
@@ -106,8 +107,7 @@ class DeviceSessionState {
       transferSlot: transferSlot ?? this.transferSlot,
       availableSlots: availableSlots ?? this.availableSlots,
       deviceName: deviceName ?? this.deviceName,
-      batteryPercent: batteryPercent ?? this.batteryPercent,
-      firmware: firmware ?? this.firmware,
+      deviceInfo: deviceInfo ?? this.deviceInfo,
       settings: settings ?? this.settings
     );
   }

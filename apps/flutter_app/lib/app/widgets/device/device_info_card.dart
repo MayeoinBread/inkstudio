@@ -42,8 +42,9 @@ class _DeviceInfoCardState extends State<DeviceInfoCard> {
               ]
             ),
             const SizedBox(height: 16),
-            Text('Firmware: ${widget.state.firmware}'),
-            Text('Battery: ${widget.state.batteryPercent}%'),
+            Text('Firmware: ${widget.state.deviceInfo.firmware}'),
+            Text('Battery: ${widget.state.deviceInfo.battery}%'),
+            Text('Serial: ${widget.state.deviceInfo.serial}'),
             const SizedBox(height: 16),
             Text('Image Refresh Period: ${widget.state.settings.seconds}s'),
             Text('Accelerometer Enabled: ${widget.state.settings.accelerometer}'),

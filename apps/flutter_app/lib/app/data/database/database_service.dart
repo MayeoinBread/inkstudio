@@ -21,8 +21,29 @@ class DatabaseService {
     _db = await databaseFactoryFfi.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: 1,
+        version: 2,
         onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE devices(
+              serial TEXT PRIMARY KEY,
+              last_connected INTEGER NOT NULL
+            )
+          ''');
+
+          await db.execute('''
+            CREATE TABLE device_slots(
+              device_serial TEXT NOT NULL,
+              slot INTEGER NOT NULL,
+              device_hash TEXT,
+
+              PRIMARY KEY(device_serial, slot),
+
+              FOREIGN KEY(device_serial)
+                REFERENCES devices(serial)
+                ON DELETE CASCADE
+            )
+          ''');
+          
           await db.execute(
             '''
             CREATE TABLE images(
@@ -60,7 +81,7 @@ class DatabaseService {
             '''
           );
 
-          for (int i=1; i<=500; i++) {
+          for (int i=1; i<=700; i++) {
             await db.insert(
               'slots',
               {
@@ -79,6 +100,43 @@ class DatabaseService {
               'name': 'Default'
             }
           );
+        },
+        onUpgrade: (db, oldVersion, newVersion) async {
+          if (oldVersion < 2) {
+            // Expand existing albums to 700 slots
+            for (int i=501; i<=700; i++) {
+              await db.insert(
+                'slots',
+                {
+                  'album_id': 'default',
+                  'slot': i,
+                  'image_id': null,
+                  'metadata_json': '{}'
+                }
+              );
+            }
+
+            await db.execute('''
+              CREATE TABLE devices(
+                serial TEXT PRIMARY KEY,
+                last_connected INTEGER NOT NULL
+              )
+            ''');
+
+            await db.execute('''
+              CREATE TABLE device_slots(
+                device_serial TEXT NOT NULL,
+                slot INTEGER NOT NULL,
+                device_hash TEXT,
+
+                PRIMARY KEY(device_serial, slot),
+
+                FOREIGN KEY(device_serial)
+                  REFERENCES devices(serial)
+                  ON DELETE CASCADE
+              )
+            ''');
+          }
         }
       )
     );

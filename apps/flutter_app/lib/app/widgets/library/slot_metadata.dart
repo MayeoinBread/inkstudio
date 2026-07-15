@@ -147,9 +147,6 @@ class SlotMetadata {
     return {
       'type': type.name,
       
-      'syncState': syncState.name,
-      'pendingAction': pendingAction.name,
-      
       'text': text,
       
       'wifiSsid': wifiSsid,
@@ -195,14 +192,8 @@ class SlotMetadata {
         (e) => e.name == json['type'],
         orElse: () => SlotContentType.empty,
       ),
-      syncState: SlotSyncState.values.firstWhere(
-        (e) => e.name == json['syncState'],
-        orElse: () => SlotSyncState.clean,
-      ),
-      pendingAction: SlotPendingAction.values.firstWhere(
-        (e) => e.name == json['pendingAction'],
-        orElse: () => SlotPendingAction.none,
-      ),
+      syncState: SlotSyncState.clean,
+      pendingAction: SlotPendingAction.none,
       text: json['text'],
       wifiSsid: json['wifiSsid'],
       wifiPassword: json['wifiPassword'],

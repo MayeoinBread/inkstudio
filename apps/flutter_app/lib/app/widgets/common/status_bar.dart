@@ -44,7 +44,7 @@ class StatusBar extends StatelessWidget {
             children: [
               const Icon(Icons.battery_full, size: 12),
               const SizedBox(width: 4),
-              Text('${state.batteryPercent}%')
+              Text('${state.deviceInfo.battery}%')
             ]
           ),
           const SizedBox(width: 12),

@@ -1,5 +1,6 @@
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:inkstudio/app/repositories/device_slot_repository.dart';
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio/app/repositories/album_repository.dart';
 import 'package:inkstudio/app/repositories/image_repository.dart';
@@ -16,6 +17,7 @@ class LibraryController extends ChangeNotifier {
 
   final SlotRepository repository = SlotRepository();
   final AlbumRepository albumRepository = AlbumRepository();
+  final DeviceSlotRepository deviceSlotRepository = DeviceSlotRepository();
 
   Map<int, LibraryItem> items = {};
 
@@ -121,9 +123,40 @@ class LibraryController extends ChangeNotifier {
     await loadFromDatabase();
   }
 
-  void onAlbumSelected(String id) async {
+  Future<void> refreshSyncState(String? deviceSerial) async {
+    if (deviceSerial == null) return;
+
+    final deviceHashes = await DeviceSlotRepository().getDeviceSlotHashes(deviceSerial);
+
+    for (final entry in items.entries) {
+      final slotNumber = entry.key;
+      final item = entry.value;
+
+      final imageId = item.metadata.imageId;
+
+      SlotPendingAction pendingAction;
+
+      if (imageId == null) {
+        pendingAction = SlotPendingAction.none;
+      } else {
+        final image = await ImageRepository().getImage(imageId);
+
+        final deviceHash = deviceHashes[slotNumber];
+        pendingAction = image?.deviceHash == deviceHash ? SlotPendingAction.none : SlotPendingAction.upload;
+      }
+
+      updateSlot(slot: slotNumber, exists: true, metadata: item.metadata.copyWith(pendingAction: pendingAction));
+    }
+
+    commitAllSlots();
+    notifyListeners();
+  }
+
+  void onAlbumSelected(String id, String deviceSerial) async {
     final selectedAlbum = await albumRepository.getAlbumById(id);
     await setCurrentAlbum(selectedAlbum, false);
+
+    await refreshSyncState(deviceSerial);
 
     notifyListeners();
   }
@@ -174,7 +207,7 @@ class LibraryController extends ChangeNotifier {
     required BleManager ble,
     required DeviceSessionService session,
     required List<int> availableSlots,
-    required void Function(int slot, bool isDirty) onSlotReady
+    required void Function(int slot) onSlotReady
   }) async {
     
     session.state = session.state.copyWith(
@@ -196,16 +229,22 @@ class LibraryController extends ChangeNotifier {
 
       final deviceHash = await ble.requestSlotHash(slot);
 
-      final imageId = items[slot]!.metadata.imageId;
-      String? localHash;
-      if (imageId != null) {
-        final stored = await ImageRepository().getImage(imageId);
-        localHash = stored?.deviceHash;
-      }
+      await DeviceSlotRepository().saveSlot(
+        deviceSerial: session.state.deviceInfo.serial,
+        slot: slot,
+        deviceHash: deviceHash
+      );
 
-      final isDirty = localHash != deviceHash;
+      // final imageId = items[slot]!.metadata.imageId;
+      // String? localHash;
+      // if (imageId != null) {
+      //   final stored = await ImageRepository().getImage(imageId);
+      //   localHash = stored?.deviceHash;
+      // }
+
+      // final isDirty = localHash != deviceHash;
       
-      onSlotReady(slot, isDirty);
+      onSlotReady(slot);
     }
 
     session.state = session.state.copyWith(
@@ -233,6 +272,7 @@ class LibraryController extends ChangeNotifier {
         // TODO see what we get back for a Hash if an image doesn't exist/is deleted so we can check properly
         await ble.deleteImage(slot);
         await SlotRepository().saveSlot(slot: slot, imageId: null, metadata: SlotMetadataDefaults.empty(slot), albumId: currentAlbum!.id);
+        await DeviceSlotRepository().saveSlot(deviceSerial: session.state.deviceInfo.serial, slot: slot, deviceHash: null);
         items[slot] = items[slot]!.copyWith(exists: false, thumbnailBytes: null, metadata: SlotMetadataDefaults.empty(slot));
         notifyListeners();
         updates[0] += 1;
@@ -312,6 +352,7 @@ class LibraryController extends ChangeNotifier {
           case SlotContentType.empty:
             await ble.deleteImage(slot);
             await SlotRepository().saveSlot(slot: slot, imageId: null, metadata: SlotMetadataDefaults.empty(slot), albumId: currentAlbum!.id);
+            await DeviceSlotRepository().saveSlot(deviceSerial: session.state.deviceInfo.serial, slot: slot, deviceHash: null);
             continue;
         }
 
@@ -327,6 +368,7 @@ class LibraryController extends ChangeNotifier {
         if (deviceHash == appHash) {
           final updatedMetadata = dirtySlot.metadata.copyWith(syncState: SlotSyncState.clean, pendingAction: SlotPendingAction.none);
           await SlotRepository().saveSlot(slot: slot, imageId: imageId, metadata: updatedMetadata, albumId: currentAlbum!.id);
+          await DeviceSlotRepository().saveSlot(deviceSerial: session.state.deviceInfo.serial, slot: slot, deviceHash: deviceHash);
           final current = items[slot]!;
           items[slot] = current.copyWith(metadata: updatedMetadata);
           updates[1] += 1;

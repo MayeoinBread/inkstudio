@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkstudio/app/repositories/device_repository.dart';
 import 'package:inkstudio/app/services/ble_service.dart';
 import 'package:inkstudio/app/services/dashboard_actions.dart';
 import 'package:inkstudio/app/services/device_session_service.dart';
@@ -24,6 +25,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
   final ble = BleService.instance.manager;
 
+  final deviceRepository = DeviceRepository();
+
   void updateSession(DeviceSessionState Function(DeviceSessionState current) updater) {
     setState(() { session.state = updater(session.state);});
   }
@@ -32,14 +35,15 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     super.initState();
 
-    ble.onDeviceInfo = (info) {
+    ble.onDeviceInfo = (info) async {
       if (mounted) {
+        await deviceRepository.ensureExists(info.serial);
+        await deviceRepository.updateLastConnected(info.serial);
         setState(() {
-        session.state = session.state.copyWith(
-          batteryPercent: info.battery,
-          firmware: info.firmware
-        );
-      });
+          session.state = session.state.copyWith(
+            deviceInfo: info
+          );
+        });
       }
     };
 
