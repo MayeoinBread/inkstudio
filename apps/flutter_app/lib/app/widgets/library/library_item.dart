@@ -30,4 +30,19 @@ class LibraryItem {
       metadata: metadata ?? this.metadata
     );
   }
+
+  String dumpInfo() {
+    String ret = "\n---LIBRARY ITEM\n";
+
+    ret += "Slot: $slot\nExists: $exists\n";
+    if (thumbnailBytes == null) {
+      ret += "ThumnailBytesLength: null";
+    } else {
+      ret += "ThumnailBytesLength: ${thumbnailBytes!.length}";
+    }
+
+    ret += metadata.dumpInfo();
+
+    return ret;
+  }
 }

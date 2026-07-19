@@ -21,7 +21,7 @@ class DatabaseService {
     _db = await databaseFactoryFfi.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: 2,
+        version: 3,
         onCreate: (db, version) async {
           await db.execute('''
             CREATE TABLE devices(
@@ -103,19 +103,6 @@ class DatabaseService {
         },
         onUpgrade: (db, oldVersion, newVersion) async {
           if (oldVersion < 2) {
-            // Expand existing albums to 700 slots
-            for (int i=501; i<=700; i++) {
-              await db.insert(
-                'slots',
-                {
-                  'album_id': 'default',
-                  'slot': i,
-                  'image_id': null,
-                  'metadata_json': '{}'
-                }
-              );
-            }
-
             await db.execute('''
               CREATE TABLE devices(
                 serial TEXT PRIMARY KEY,
@@ -136,6 +123,32 @@ class DatabaseService {
                   ON DELETE CASCADE
               )
             ''');
+          }
+          
+          if (oldVersion < 3) {
+            final albums = await db.query(
+              'albums', columns: ['id']
+            );
+
+            for (final album in albums) {
+              final albumId = album['id'] as String;
+
+              final res = await db.rawQuery('SELECT MAX(slot) AS max_slot FROM slots WHERE album_id = ?', [albumId]);
+              final maxSlot = (res.first['max_slot'] as int?) ?? 0;
+
+              // Expand existing albums to 700 slots
+              for (int i=maxSlot + 1; i<=700; i++) {
+                await db.insert(
+                  'slots',
+                  {
+                    'album_id': albumId,
+                    'slot': i,
+                    'image_id': null,
+                    'metadata_json': '{}'
+                  }
+                );
+              }
+            }
           }
         }
       )

@@ -143,6 +143,14 @@ class SlotMetadata {
     );
   }
 
+  String dumpInfo() {
+    String ret = "";
+
+    ret += "\n---\nMETADATA\nType: ${type.name}\nimageId: $imageId";
+
+    return ret;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'type': type.name,

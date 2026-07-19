@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
@@ -101,7 +100,7 @@ class _LibraryPageState extends State<LibraryPage> {
       }
     );
 
-    controller.commitAllSlots();
+    await controller.commitAllSlots();
 
     await controller.refreshSyncState(session.state.deviceInfo.serial);
   }
@@ -179,12 +178,6 @@ class _LibraryPageState extends State<LibraryPage> {
         return;
       }
     }
-    if (item.exists) {
-      final existingImage = await ImageRepository().getImage(item.metadata.imageId!);
-      if (previewMd5 == existingImage?.deviceHash){
-        return;
-      }
-    }
 
     final thumbnail = ThumbnailService.createFromBytes(editorResult.previewBytes);
 
@@ -207,7 +200,7 @@ class _LibraryPageState extends State<LibraryPage> {
       metadata: newMetadata
     );
 
-    controller.commitSlot(slot);
+    await controller.commitSlot(albumId: controller.currentAlbum!.id, slot: slot);
   }
 
   Future<void> _onDeleteFromDevice(int slot) async {
@@ -226,7 +219,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
     controller.updateMetadata(slot, updatedMetadata);
 
-    controller.commitSlot(slot);
+    controller.commitSlot(albumId: controller.currentAlbum!.id, slot:slot);
   }
 
   Future<void> _onClearSlot(int slot) async {
@@ -237,7 +230,7 @@ class _LibraryPageState extends State<LibraryPage> {
     if (!item.exists) return;
 
     controller.updateSlot(slot: slot, exists: false, metadata: SlotMetadataDefaults.empty(slot));
-    controller.commitSlot(slot);
+    controller.commitSlot(albumId: controller.currentAlbum!.id, slot: slot);
   }
 
   Future<void> _pickMultipleImages() async {

@@ -14,7 +14,7 @@ class DeviceSessionService extends ValueNotifier<DeviceSessionState> {
     transfer: TransferState.idle,
     progress: 0.0,
     deviceName: 'Not Connected',
-    deviceInfo: DeviceInfo(battery: 0, hardware: '-', firmware: '-', serial: '-', flag: 0),
+    deviceInfo: DeviceInfo(battery: 0, hardware: null, firmware: null, serial: null, flag: 0),
     availableSlots: const[],
     settings: DeviceSettings(seconds: 3600, accelerometer: false)
   );

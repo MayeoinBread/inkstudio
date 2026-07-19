@@ -37,8 +37,8 @@ class _DashboardPageState extends State<DashboardPage> {
 
     ble.onDeviceInfo = (info) async {
       if (mounted) {
-        await deviceRepository.ensureExists(info.serial);
-        await deviceRepository.updateLastConnected(info.serial);
+        await deviceRepository.ensureExists(info.serial!);
+        await deviceRepository.updateLastConnected(info.serial!);
         setState(() {
           session.state = session.state.copyWith(
             deviceInfo: info
