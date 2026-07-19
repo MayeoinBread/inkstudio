@@ -203,7 +203,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     setState(() {
       rotation = (rotation + 90) % 360;
     });
-    debugPrint("Rotation: $rotation");
+    
     await _prepareWorkingImage();
     await _reprocess();
   }

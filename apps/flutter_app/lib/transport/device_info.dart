@@ -1,8 +1,8 @@
 class DeviceInfo {
   final int battery;
-  final String hardware;
-  final String firmware;
-  final String serial;
+  final String? hardware;
+  final String? firmware;
+  final String? serial;
   final int flag;
 
   DeviceInfo({
