@@ -81,99 +81,109 @@ class _CropOverlayState extends State<CropOverlay> {
     final imageH = widget.imageSize.height;
     final aspect = widget.aspectRatio;
 
-    Rect r = displayRect;
+    final r = displayRect;
 
-    double left = r.left;
-    double top = r.top;
-    double right = r.right;
-    double bottom = r.bottom;
+    // Fixed anchor corner (opposite of the dragged handle)
+    late final double anchorX;
+    late final double anchorY;
+
+    // Dragged corner position
+    double dragX;
+    double dragY;
 
     switch (handle) {
       case CropHandle.bottomRight:
-        right += delta.dx;
-        bottom += delta.dy;
+        anchorX = r.left;
+        anchorY = r.top;
+        dragX = r.right + delta.dx;
+        dragY = r.bottom + delta.dy;
         break;
 
       case CropHandle.bottomLeft:
-        left += delta.dx;
-        bottom += delta.dy;
+        anchorX = r.right;
+        anchorY = r.top;
+        dragX = r.left + delta.dx;
+        dragY = r.bottom + delta.dy;
         break;
 
       case CropHandle.topRight:
-        right += delta.dx;
-        top += delta.dy;
+        anchorX = r.left;
+        anchorY = r.bottom;
+        dragX = r.right + delta.dx;
+        dragY = r.top + delta.dy;
         break;
 
       case CropHandle.topLeft:
-        left += delta.dx;
-        top += delta.dy;
+        anchorX = r.right;
+        anchorY = r.bottom;
+        dragX = r.left + delta.dx;
+        dragY = r.top + delta.dy;
         break;
 
       case CropHandle.none:
         return;
     }
 
-    double width = right - left;
-    double height = bottom - top;
+    // Desired size from the anchor
+    double width = (dragX - anchorX).abs();
+    double height = (dragY - anchorY).abs();
 
-    // enforce aspect ratio FIRST (no vector projection nonsense)
-    final currentAspect = width / height;
-
-    if (currentAspect > aspect) {
-      // too wide → adjust width
+    // Enforce aspect ratio
+    if (width / height > aspect) {
       width = height * aspect;
     } else {
-      // too tall → adjust height
       height = width / aspect;
     }
 
-    // enforce minimum size
+    // Minimum size
     if (width < minSize) {
       width = minSize;
       height = width / aspect;
     }
 
-    if (height < minSize) {
-      height = minSize;
+    // Maximum size allowed from the anchor to image bounds
+    final maxWidth = handle == CropHandle.bottomRight || handle == CropHandle.topRight
+        ? imageW - anchorX
+        : anchorX;
+
+    final maxHeight = handle == CropHandle.bottomRight || handle == CropHandle.bottomLeft
+        ? imageH - anchorY
+        : anchorY;
+
+    // Clamp while preserving aspect ratio
+    if (width > maxWidth) {
+      width = maxWidth;
+      height = width / aspect;
+    }
+
+    if (height > maxHeight) {
+      height = maxHeight;
       width = height * aspect;
     }
 
-    // re-anchor based on handle
+    // Rebuild rect from anchor
+    late Rect updated;
+
     switch (handle) {
       case CropHandle.bottomRight:
-        right = left + width;
-        bottom = top + height;
+        updated = Rect.fromLTWH(anchorX, anchorY, width, height);
         break;
 
       case CropHandle.bottomLeft:
-        left = right - width;
-        bottom = top + height;
+        updated = Rect.fromLTWH(anchorX - width, anchorY, width, height);
         break;
 
       case CropHandle.topRight:
-        right = left + width;
-        top = bottom - height;
+        updated = Rect.fromLTWH(anchorX, anchorY - height, width, height);
         break;
 
       case CropHandle.topLeft:
-        left = right - width;
-        top = bottom - height;
+        updated = Rect.fromLTWH(anchorX - width, anchorY - height, width, height);
         break;
 
       case CropHandle.none:
         return;
     }
-
-    Rect updated = Rect.fromLTRB(left, top, right, bottom);
-
-    // SAFE clamp (no negative max)
-    final maxX = math.max(0.0, imageW - updated.width);
-    final maxY = math.max(0.0, imageH - updated.height);
-
-    final clampedLeft = updated.left.clamp(0.0, maxX);
-    final clampedTop = updated.top.clamp(0.0, maxY);
-
-    updated = Rect.fromLTWH(clampedLeft, clampedTop, updated.width, updated.height);
 
     setState(() {
       displayRect = updated;
