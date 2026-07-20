@@ -59,8 +59,9 @@ class ImagePipeline {
     }
 
     if (cropRect != null) {
+      // Catch if crop bounds are outside the 0..1 ratio we expect
       if (cropRect.right > 1 || cropRect.bottom > 1) {
-        cropRect = Rect.fromLTWH(cropRect.left / src.width, cropRect.top / src.height, cropRect.width / src.width, cropRect.height / src.height);
+        cropRect = Rect.fromLTWH(cropRect.left, cropRect.top, 1 - cropRect.left, 1 - cropRect.top);
       }
     }
 

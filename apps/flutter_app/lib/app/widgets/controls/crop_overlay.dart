@@ -61,18 +61,18 @@ class _CropOverlayState extends State<CropOverlay> {
   }
 
   CropHandle _hitTestHandle(Offset pos, Rect rect) {
-  const hitSize = 48.0; // bigger for touch devices
+    const hitSize = 48.0; // bigger for touch devices
 
-  Rect makeHandle(Offset c) =>
-      Rect.fromCenter(center: c, width: hitSize, height: hitSize);
+    Rect makeHandle(Offset c) =>
+        Rect.fromCenter(center: c, width: hitSize, height: hitSize);
 
-  if (makeHandle(rect.topLeft).contains(pos)) return CropHandle.topLeft;
-  if (makeHandle(rect.topRight).contains(pos)) return CropHandle.topRight;
-  if (makeHandle(rect.bottomLeft).contains(pos)) return CropHandle.bottomLeft;
-  if (makeHandle(rect.bottomRight).contains(pos)) return CropHandle.bottomRight;
+    if (makeHandle(rect.topLeft).contains(pos)) return CropHandle.topLeft;
+    if (makeHandle(rect.topRight).contains(pos)) return CropHandle.topRight;
+    if (makeHandle(rect.bottomLeft).contains(pos)) return CropHandle.bottomLeft;
+    if (makeHandle(rect.bottomRight).contains(pos)) return CropHandle.bottomRight;
 
-  return CropHandle.none;
-}
+    return CropHandle.none;
+  }
 
   void _resize(CropHandle handle, Offset delta) {
     const minSize = 48.0;

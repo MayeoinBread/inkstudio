@@ -265,7 +265,7 @@ class LibraryController extends ChangeNotifier {
 
     for (final dirtySlot in dirtySlots) {
       final slot = dirtySlot.slot;
-
+      
       session.state = session.state.copyWith(
         transferSlot: slot
       );

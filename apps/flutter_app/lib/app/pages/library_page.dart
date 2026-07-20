@@ -257,7 +257,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
       final metadata = SlotMetadata(
         type: SlotContentType.image,
-        pendingAction: SlotPendingAction.verifyHash,
         adjustments: ImageAdjustments(),
         dither: DitherMode.atkinson,
         filter: ImageFilter.normal,
@@ -276,7 +275,7 @@ class _LibraryPageState extends State<LibraryPage> {
       final packedBytes = FramebufferPacker.pack(flipVertical(pipeline.framebuffer!));
 
       EditorResult mResult = EditorResult(
-        metadata: SlotMetadataDefaults.empty(slot),
+        metadata: metadata,
         originalBytes: bytes,
         previewBytes: pipeline.previewBytes!,
         packedBytes: packedBytes
@@ -361,7 +360,11 @@ class _LibraryPageState extends State<LibraryPage> {
             onDeleteAlbum: controller.onDeleteAlbum
           ),
           SlotInspector(item: selectedSlot == null ? null : controller.items[selectedSlot], onSync: _sync),
-          FilledButton(onPressed: () async {await controller.pushToDevice(ble: ble, session: session);}, child: const Text('Push Updates')),
+          FilledButton(
+            onPressed: session.state.isConnected
+              ? () async {await controller.pushToDevice(ble: ble, session: session);}
+              : null,
+            child: const Text('Push Updates')),
           FilledButton(
             onPressed: () async {
               final deleted = await ImageRepository().cleanupUnusedImages();

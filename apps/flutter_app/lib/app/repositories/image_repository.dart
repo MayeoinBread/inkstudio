@@ -84,6 +84,18 @@ class ImageRepository {
     return File(image.originalPath).readAsBytes();
   }
 
+  Future<Uint8List?> loadThumbnailBytes(
+    String imageId
+  ) async {
+    final image = await getImage(imageId);
+
+    if (image == null) return null;
+
+    if (image.thumbnailPath == "N/A") return null;
+
+    return File(image.thumbnailPath).readAsBytes();
+  }
+
   Future<Uint8List?> loadProcessedBytes(
     String imageId
   ) async {

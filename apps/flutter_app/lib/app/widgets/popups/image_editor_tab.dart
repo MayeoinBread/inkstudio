@@ -1,7 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:image/image.dart' as img;
 import 'package:inkstudio/app/data/models/editor_result.dart';
 import 'package:inkstudio/app/repositories/image_repository.dart';
 import 'package:inkstudio/app/services/image_pipeline_controller.dart';
@@ -85,12 +84,14 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     // Reload the existing, processed image instead of reprocessing from scratch (ever so slightly faster on mobile)
     _originalImageBytes = await ImageRepository().loadOriginalBytes(imageId);
     if (_originalImageBytes == null) return;
-    final processedBytes = await ImageRepository().loadProcessedBytes(imageId);
-    final decodedBuffer = FramebufferDecoder.decode(processedBytes!);
-    final decodedBytes = PanelRerender.renderFramebuffer(decodedBuffer);
+    final thumbnailBytes = await ImageRepository().loadThumbnailBytes(imageId);
+    debugPrint("hydrateItem setState");
     setState(() {
-      widget.onPreviewChanged?.call(Uint8List.fromList(img.encodePng(decodedBytes)));
+      previewBytes = thumbnailBytes;
+      widget.onPreviewChanged?.call(thumbnailBytes!);
     });
+
+    await _prepareWorkingImage();
   }
 
   Future<void> _pickImage() async {
@@ -148,6 +149,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     if (version != _processVersion) return;
 
     setState((){
+      previewBytes = pipeline.previewBytes;
       widget.onPreviewChanged?.call(pipeline.previewBytes!);
     });
   }
@@ -411,7 +413,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                 ImagePreviewPanel(
                   title: 'Preview',
                   height: DeviceConstants.imageHeight,
-                  imageBytes: pipeline.previewBytes
+                  imageBytes: previewBytes,
                 ),
                 FilledButton(onPressed: () async {
                   _save();
