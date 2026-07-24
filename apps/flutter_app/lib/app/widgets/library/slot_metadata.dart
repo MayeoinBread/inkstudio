@@ -9,12 +9,6 @@ enum SlotContentType {
   generated
 }
 
-enum SlotSyncState {
-  clean,
-  uploading,
-  failed
-}
-
 enum SlotPendingAction {
   none,
   clear,
@@ -43,25 +37,15 @@ SlotStatusIndicator? getStatusIndicator(SlotMetadata metadata) {
       return const SlotStatusIndicator(icon: Icons.cloud_upload_outlined, colour: Colors.orange, size: 36);
     case SlotPendingAction.clear:
       return const SlotStatusIndicator(icon: Icons.image_not_supported_outlined, colour: Colors.red, size: 36);
-    case SlotPendingAction.none:
-      return null;
     case SlotPendingAction.verifyHash:
-      break;
-  }
-
-  switch (metadata.syncState) {
-    case SlotSyncState.uploading:
-      return const SlotStatusIndicator(icon: Icons.sync, colour: Colors.blue, size: 36);
-    case SlotSyncState.failed:
-      return const SlotStatusIndicator(icon: Icons.error_outline, colour: Colors.red, size: 36);
-    case SlotSyncState.clean:
+      return const SlotStatusIndicator(icon: Icons.verified_outlined, colour: Colors.orange, size: 36);
+    case SlotPendingAction.none:
       return null;
   }
 }
 
 class SlotMetadata {
   final SlotContentType type;
-  final SlotSyncState syncState;
   final SlotPendingAction pendingAction;
 
   final QrType? qrType;
@@ -87,7 +71,6 @@ class SlotMetadata {
 
   const SlotMetadata({
     required this.type,
-    this.syncState = SlotSyncState.clean,
     this.pendingAction = SlotPendingAction.none,
     this.qrType,
     this.text,
@@ -109,7 +92,6 @@ class SlotMetadata {
 
   SlotMetadata copyWith({
     SlotContentType? type,
-    SlotSyncState? syncState,
     SlotPendingAction? pendingAction,
     QrType? qrType,
     String? text,
@@ -126,7 +108,6 @@ class SlotMetadata {
   }) {
     return SlotMetadata(
       type: type ?? this.type,
-      syncState: syncState ?? this.syncState,
       pendingAction: pendingAction ?? this.pendingAction,
       qrType: qrType ?? this.qrType,
       text: text ?? this.text,
@@ -201,7 +182,6 @@ class SlotMetadata {
         (e) => e.name == json['type'],
         orElse: () => SlotContentType.empty,
       ),
-      syncState: SlotSyncState.clean,
       pendingAction: SlotPendingAction.none,
       text: json['text'],
       wifiSsid: json['wifiSsid'],
@@ -260,7 +240,6 @@ class SlotMetadataDefaults {
   static SlotMetadata empty(int slot) {
     return SlotMetadata(
       type: SlotContentType.empty,
-      syncState: SlotSyncState.clean,
       pendingAction: SlotPendingAction.none,
       adjustments: ImageAdjustments(),
       dither: DitherMode.atkinson,

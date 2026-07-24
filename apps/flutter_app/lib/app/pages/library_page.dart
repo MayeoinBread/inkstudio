@@ -189,7 +189,6 @@ class _LibraryPageState extends State<LibraryPage> {
 
     final newMetadata = editorResult.metadata.copyWith(
       imageId: image.id,
-      syncState: SlotSyncState.uploading,
       pendingAction: SlotPendingAction.upload
     );
 
