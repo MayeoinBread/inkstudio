@@ -130,7 +130,8 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
       filter: _filter,
       simulateDevice: _simulateDevice,
       adjustments: _adjustments,
-      paletteBias: _bias
+      paletteBias: _bias,
+      overlays: List.empty()  // TODO update when we persist the overlay data
     );
 
     if (version != _processVersion) return;

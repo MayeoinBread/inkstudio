@@ -268,6 +268,7 @@ class _LibraryPageState extends State<LibraryPage> {
 
       await pipeline.processMetadata(
         metadata: metadata,
+        overlays: List.empty(),
         simulateDevice: false
       );
 
@@ -277,7 +278,8 @@ class _LibraryPageState extends State<LibraryPage> {
         metadata: metadata,
         originalBytes: bytes,
         previewBytes: pipeline.previewBytes!,
-        packedBytes: packedBytes
+        packedBytes: packedBytes,
+        overlays: List.empty()
       );
 
       await _handleEditorResult(slot, controller.items[slot]!, mResult);

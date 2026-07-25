@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio_image/src/models/content_overlay.dart';
 
 img.Image runPrepareIsolate(PrepareRequest request) {
   final decoded = img.decodeImage(request.bytes)!;
@@ -26,7 +27,8 @@ PipelineResult runPipelineIsolate(dynamic data) {
     simulateDevice: req.simulateDevice,
     adjustments: req.adjustments,
     paletteBias: req.paletteBias,
-    dither: req.dither
+    dither: req.dither,
+    overlays: req.overlays
   );
 }
 
@@ -51,6 +53,7 @@ class PipelineRequest {
   final DitherMode dither;
   final ImageAdjustments adjustments;
   final PaletteBias paletteBias;
+  final List<ContentOverlay> overlays;
 
   PipelineRequest({
     required this.workingImage,
@@ -60,6 +63,7 @@ class PipelineRequest {
     required this.height,
     required this.dither,
     required this.adjustments,
-    required this.paletteBias
+    required this.paletteBias,
+    required this.overlays
   });
 }

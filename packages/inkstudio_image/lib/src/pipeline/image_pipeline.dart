@@ -4,9 +4,11 @@ import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_register.dart';
+import 'package:inkstudio_image/src/models/content_overlay.dart';
 import 'package:inkstudio_image/src/pipeline/framebuffer_preview_renderer.dart';
 import 'package:inkstudio_image/src/processing/image_adjustment_processor.dart';
 import 'package:inkstudio_image/src/processing/image_filter_processing.dart';
+import 'package:inkstudio_image/src/processing/overlay_renderer.dart';
 
 class ImagePipeline {
   final int targetWidth;
@@ -23,6 +25,7 @@ class ImagePipeline {
     required bool simulateDevice,
     required ImageAdjustments adjustments,
     required PaletteBias paletteBias,
+    required List<ContentOverlay> overlays,
     DitherMode dither = DitherMode.floydSteinberg,
   }) {
     final resized = workingImage;
@@ -37,17 +40,31 @@ class ImagePipeline {
 
     final framebuffer = DitherRegistry.create(dither).apply(sharpened, paletteBias);
 
+    final stickerlessFramebuffer = DitherRegistry.create(dither).apply(sharpened, paletteBias);
+
+    OverlayRenderer.apply(
+      framebuffer, overlays
+    );
+
     final preview = FramebufferPreviewRenderer.render(
       framebuffer, simulateDevice: simulateDevice
+    );
+    final stickerlessPreview = FramebufferPreviewRenderer.render(
+      stickerlessFramebuffer, simulateDevice: simulateDevice
     );
 
     final previewBytes = Uint8List.fromList(
       img.encodePng(preview)
     );
+    final stickerlessPreviewBytes = Uint8List.fromList(
+      img.encodePng(stickerlessPreview)
+    );
 
     return PipelineResult(
       framebuffer: framebuffer,
-      previewBytes: previewBytes
+      stickerlessFramebuffer: stickerlessFramebuffer,
+      previewBytes: previewBytes,
+      stickerlessPreviewBytes: stickerlessPreviewBytes
     );
   }
 

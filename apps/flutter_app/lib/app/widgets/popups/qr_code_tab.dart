@@ -111,14 +111,15 @@ class _QrCodeTabState extends State<QrCodeTab> {
     );
 
     await pipeline.prepare(previewBytes!, null, 0);
-    await pipeline.processMetadata(metadata: metadata);
+    await pipeline.processMetadata(metadata: metadata, overlays: List.empty());
     final packedBytes = FramebufferPacker.pack(pipeline.framebuffer!);
 
     final edRes = EditorResult(
       metadata: metadata,
       originalBytes: null,
       previewBytes: previewBytes!,
-      packedBytes: packedBytes
+      packedBytes: packedBytes,
+      overlays: List.empty()
     );
 
     widget.onSaved(edRes);

@@ -38,6 +38,8 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
 
   final ImagePipelineController pipeline = ImagePipelineController();
 
+  List<ContentOverlay> overlays = <ContentOverlay>[];
+
   @override
   void initState() {
     super.initState();
@@ -75,7 +77,7 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
     );
 
     await pipeline.prepare(previewBytes!, null, 0);
-    await pipeline.processMetadata(metadata: metadata);
+    await pipeline.processMetadata(metadata: metadata, overlays: overlays);
 
     final packedBytes = FramebufferPacker.pack(pipeline.framebuffer!);
 
@@ -83,7 +85,8 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
       metadata: metadata,
       originalBytes: null,
       previewBytes: previewBytes!,
-      packedBytes: packedBytes
+      packedBytes: packedBytes,
+      overlays: overlays
     );
 
     widget.onSaved(edRes);
