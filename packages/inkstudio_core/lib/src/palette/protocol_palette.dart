@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:inkstudio_core/inkstudio_core.dart';
 
 class ProtocolPaletteColour {
@@ -5,18 +6,21 @@ class ProtocolPaletteColour {
   final int r;
   final int g;
   final int b;
+  final String name;
 
   const ProtocolPaletteColour({
     required this.index,
     required this.r,
     required this.g,
-    required this.b
+    required this.b,
+    required this.name
   });
 }
 
 class ProtocolPalette {
   static const black = ProtocolPaletteColour(
     index: PaletteIndex.black,
+    name: "Black",
     r: 0,
     g: 0,
     b: 0
@@ -24,6 +28,7 @@ class ProtocolPalette {
 
   static const white = ProtocolPaletteColour(
     index: PaletteIndex.white,
+    name: "White",
     r: 255,
     g: 255,
     b: 255
@@ -31,6 +36,7 @@ class ProtocolPalette {
 
   static const yellow = ProtocolPaletteColour(
     index: PaletteIndex.yellow,
+    name: "Yellow",
     r: 255,
     g: 255,
     b: 0
@@ -38,6 +44,7 @@ class ProtocolPalette {
 
   static const red = ProtocolPaletteColour(
     index: PaletteIndex.red,
+    name: "Red",
     r: 255,
     g: 0,
     b: 0
@@ -60,5 +67,9 @@ class ProtocolPalette {
       default:
         return ProtocolPalette.black;
     }
+  }
+
+  static Color colorFromPalette(ProtocolPaletteColour colour) {
+    return Color.fromARGB(255, colour.r, colour.g, colour.b);
   }
 }

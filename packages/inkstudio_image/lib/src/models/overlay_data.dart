@@ -17,15 +17,19 @@ sealed class OverlayData {
         );
     }
   }
+
+  OverlayData copyWith();
 }
 
 class ShapeOverlayData extends OverlayData {
   final ShapeType shape;
   final OverlayStyle style;
+  final double strokeWidth;
 
   ShapeOverlayData({
     required this.shape,
-    required this.style
+    required this.style,
+    this.strokeWidth = 1.5
   });
 
   @override
@@ -36,8 +40,22 @@ class ShapeOverlayData extends OverlayData {
     return {
       'type': type,
       'shape': shape.name,
-      'style': style.name
+      'style': style.name,
+      'strokeWidth': strokeWidth
     };
+  }
+
+  @override
+  ShapeOverlayData copyWith({
+    ShapeType? shape,
+    OverlayStyle? style,
+    double? strokeWidth
+  }) {
+    return ShapeOverlayData(
+      shape: shape ?? this.shape,
+      style: style ?? this.style,
+      strokeWidth: strokeWidth ?? this.strokeWidth
+    );
   }
 
   factory ShapeOverlayData.fromJson(
@@ -45,7 +63,8 @@ class ShapeOverlayData extends OverlayData {
   ) {
     return ShapeOverlayData(
       shape: ShapeType.values.byName(json['shape'] as String),
-      style: OverlayStyle.values.byName(json['style'] as String)
+      style: OverlayStyle.values.byName(json['style'] as String),
+      strokeWidth: (json['strokeWidth'] as num?)?.toDouble() ?? 1.5
     );
   }
 }

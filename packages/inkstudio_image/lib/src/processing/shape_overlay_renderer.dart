@@ -1,7 +1,9 @@
 import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio_image/src/processing/shape_path_builder.dart';
 
 class ShapeOverlayRenderer {
   static void apply(
@@ -14,188 +16,27 @@ class ShapeOverlayRenderer {
 
     final colour = overlay.colour.index;
 
-    final x =
-        (overlay.x * framebuffer.width).round();
+    final x = overlay.x * framebuffer.width;
+    final y = overlay.y * framebuffer.height;
 
-    final y =
-        (overlay.y * framebuffer.height).round();
+    final width = overlay.width * framebuffer.width;
+    final height = overlay.height * framebuffer.height;
 
-    final width =
-        (overlay.width * framebuffer.width).round();
+    final path = ShapePathBuilder.create(data.shape);
 
-    final height =
-        (overlay.height * framebuffer.height).round();
+    final points = _pathToPoints(path, width, height);
 
-    switch (data.shape) {
-      case ShapeType.square:
-        _drawSquare(
-          framebuffer,
-          x,
-          y,
-          width,
-          height,
-          colour,
-          data.style,
-          overlay.rotation,
-        );
+    final centre = _Point(x: x + width / 2, y: y + height / 2);
 
-      case ShapeType.star:
-        _drawStar(
-          framebuffer,
-          x,
-          y,
-          width,
-          height,
-          colour,
-          data.style,
-          overlay.rotation,
-        );
-
-      default:
-        return;
-    }
-  }
-
-  static void _drawSquare(
-    PaletteFramebuffer framebuffer,
-    int x,
-    int y,
-    int width,
-    int height,
-    PaletteIndex colour,
-    OverlayStyle style,
-    double rotation,
-  ) {
-    final centre = _Point(
-      x: x + width / 2,
-      y: y + height / 2,
-    );
-
-    final points = <_Point>[
-      _Point(x: x.toDouble(), y: y.toDouble()),
-      _Point(
-        x: (x + width).toDouble(),
-        y: y.toDouble(),
-      ),
-      _Point(
-        x: (x + width).toDouble(),
-        y: (y + height).toDouble(),
-      ),
-      _Point(
-        x: x.toDouble(),
-        y: (y + height).toDouble(),
-      ),
-    ];
-
-    final transformed = points
-        .map(
-          (point) => _rotatePoint(
-            point,
-            centre,
-            rotation,
-          ),
-        )
-        .toList();
-
-    if (style == OverlayStyle.filled) {
-      _fillPolygon(
-        framebuffer,
-        transformed,
-        colour,
-      );
-    } else {
-      _drawPolygonOutline(
-        framebuffer,
-        transformed,
-        colour,
-      );
-    }
-  }
-
-  static void _drawStar(
-    PaletteFramebuffer framebuffer,
-    int x,
-    int y,
-    int width,
-    int height,
-    PaletteIndex colour,
-    OverlayStyle style,
-    double rotation,
-  ) {
-    final normalisedPoints =
-        _createStartPoints(
-      sides: 5,
-      innerRadius: 0.4,
-    );
-
-    final centre = _Point(
-      x: x + width / 2,
-      y: y + height / 2,
-    );
-
-    // First convert the normalised star into
-    // its actual framebuffer-space geometry.
-    final points = normalisedPoints.map(
-      (point) {
-        return _Point(
-          x: x + point.x * width,
-          y: y + point.y * height,
-        );
-      },
+    final transformed = points.map(
+      (point) => _rotatePoint(point, centre, overlay.rotation)
     ).toList();
 
-    // Then rotate the actual pixel geometry
-    // around the actual centre.
-    final transformed = points
-        .map(
-          (point) => _rotatePoint(
-            point,
-            centre,
-            rotation,
-          ),
-        )
-        .toList();
-
-    if (style == OverlayStyle.filled) {
-      _fillPolygon(
-        framebuffer,
-        transformed,
-        colour,
-      );
+    if (data.style == OverlayStyle.filled) {
+      _fillPolygon(framebuffer, transformed, colour);
     } else {
-      _drawPolygonOutline(
-        framebuffer,
-        transformed,
-        colour,
-      );
+      _drawPolygonOutline(framebuffer, transformed, colour, data.strokeWidth);
     }
-  }
-
-  static List<_Point> _createStartPoints({
-    required int sides,
-    required double innerRadius
-  }) {
-    final points = <_Point>[];
-
-    final outerRadius = 0.5;
-
-    // Start at the top
-    final startAngle = -math.pi / 2;
-    for (int i=0; i<sides*2; i++) {
-      final isOuter = i.isEven;
-
-      final radius = isOuter
-        ? outerRadius
-        : outerRadius * innerRadius;
-      
-      final angle = startAngle + (i * math.pi / sides);
-      final x = 0.5 + math.cos(angle) * radius;
-      final y = 0.5 + math.sin(angle) * radius;
-
-      points.add(_Point(x: x, y: y));
-    }
-
-    return points;
   }
 
   static void _fillPolygon(
@@ -224,13 +65,17 @@ class ShapeOverlayRenderer {
   static void _drawPolygonOutline(
     PaletteFramebuffer framebuffer,
     List<_Point> points,
-    PaletteIndex colour
+    PaletteIndex colour,
+    double strokeWidth
   ) {
+    final radius = math.max(0.5, strokeWidth / 2);
+
     for (int i=0; i<points.length; i++) {
       final start = points[i];
       final end = points[(i + 1) % points.length];
 
-      _drawLine(framebuffer, start, end, colour);
+      // _drawLine(framebuffer, start, end, colour);
+      _drawThickLine(framebuffer, start, end, colour, radius);
     }
   }
 
@@ -258,43 +103,96 @@ class ShapeOverlayRenderer {
     return inside;
   }
 
-  static void _drawLine(
+  static void _drawThickLine(
     PaletteFramebuffer framebuffer,
-    _Point start, _Point end,
-    PaletteIndex colour
+    _Point start,
+    _Point end,
+    PaletteIndex colour,
+    double radius,
   ) {
-    int x0 = start.x.round();
-    int y0 = start.y.round();
+    final minX =
+        math.min(start.x, end.x) - radius;
 
-    final x1 = end.x.round();
-    final y1 = end.y.round();
+    final maxX =
+        math.max(start.x, end.x) + radius;
 
-    final dx = (x1 - x0).abs();
-    final dy = (y1 - y0).abs();
+    final minY =
+        math.min(start.y, end.y) - radius;
 
-    final sx = x0 < x1 ? 1 : -1;
-    final sy = y0 < y1 ? 1 : -1;
+    final maxY =
+        math.max(start.y, end.y) + radius;
 
-    int err = dx - dy;
+    final startX =
+        minX.floor();
 
-    while (true) {
-      if (x0 >= 0 && y0 >= 0 &&
-          x0 < framebuffer.width && y0 < framebuffer.height) {
-        framebuffer.setPixel(x0, y0, colour);
-      }
+    final endX =
+        maxX.ceil();
 
-      if (x0 == x1 && y0 == y1) break;
+    final startY =
+        minY.floor();
 
-      final e2 = 2 * err;
+    final endY =
+        maxY.ceil();
 
-      if (e2 > -dy) {
-        err -= dy;
-        x0 += sx;
-      }
+    final dx =
+        end.x - start.x;
 
-      if (e2 < dx) {
-        err += dx;
-        y0 += sy;
+    final dy =
+        end.y - start.y;
+
+    final lengthSquared =
+        dx * dx + dy * dy;
+
+    for (int y = startY; y <= endY; y++) {
+      for (int x = startX; x <= endX; x++) {
+        if (x < 0 ||
+            y < 0 ||
+            x >= framebuffer.width ||
+            y >= framebuffer.height) {
+          continue;
+        }
+
+        final px = x + 0.5;
+        final py = y + 0.5;
+
+        double t;
+
+        if (lengthSquared == 0) {
+          t = 0;
+        } else {
+          t = (
+            (px - start.x) * dx +
+            (py - start.y) * dy
+          ) / lengthSquared;
+
+          t = t.clamp(0.0, 1.0);
+        }
+
+        final closestX =
+            start.x + t * dx;
+
+        final closestY =
+            start.y + t * dy;
+
+        final distance =
+            math.sqrt(
+              math.pow(
+                px - closestX,
+                2,
+              ) +
+              math.pow(
+                py - closestY,
+                2,
+              ),
+            );
+
+        if (distance <= radius) {
+          framebuffer.setPixel(
+            x,
+            y,
+            colour,
+          );
+        }
       }
     }
   }
@@ -324,6 +222,35 @@ class ShapeOverlayRenderer {
           dx * sinAngle +
           dy * cosAngle,
     );
+  }
+
+  static List<_Point> _pathToPoints(
+    Path path, double width, double height
+  ) {
+    final points = <_Point>[];
+
+    for (final metric in path.computeMetrics()) {
+      final length = metric.length;
+
+      // More samples = smoother curves
+      // 1 pixel is a reasonable starting point
+      final steps = math.max(16, length.ceil());
+
+      for (int i=0; i<=steps; i++) {
+        final distance = length * i / steps;
+        final tangent = metric.getTangentForOffset(distance);
+        
+        if(tangent == null) continue;
+
+        points.add(
+          _Point(
+            x: tangent.position.dx * width,
+            y: tangent.position.dy * height)
+        );
+      }
+    }
+
+    return points;
   }
 }
 

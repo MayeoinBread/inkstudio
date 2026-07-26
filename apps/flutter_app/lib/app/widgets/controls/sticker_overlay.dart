@@ -32,17 +32,14 @@ class StickerOverlay extends StatefulWidget {
   });
 
   @override
-  State<StickerOverlay> createState() =>
-      _StickerOverlayState();
+  State<StickerOverlay> createState() => _StickerOverlayState();
 }
 
-class _StickerOverlayState
-    extends State<StickerOverlay> {
+class _StickerOverlayState extends State<StickerOverlay> {
 
   late Rect displayRect;
 
-  StickerHandle _activeHandle =
-      StickerHandle.none;
+  StickerHandle _activeHandle = StickerHandle.none;
 
   double _rotationStart = 0;
   double _pointerAngleStart = 0;
@@ -59,10 +56,8 @@ class _StickerOverlayState
   ) {
     super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.overlay != widget.overlay ||
-        oldWidget.imageSize != widget.imageSize) {
-      displayRect =
-          _toDisplay(widget.overlay);
+    if (oldWidget.overlay != widget.overlay || oldWidget.imageSize != widget.imageSize) {
+      displayRect = _toDisplay(widget.overlay);
     }
   }
 
@@ -70,14 +65,10 @@ class _StickerOverlayState
     ContentOverlay overlay,
   ) {
     return Rect.fromLTWH(
-      overlay.x *
-          widget.imageSize.width,
-      overlay.y *
-          widget.imageSize.height,
-      overlay.width *
-          widget.imageSize.width,
-      overlay.height *
-          widget.imageSize.height,
+      overlay.x * widget.imageSize.width,
+      overlay.y * widget.imageSize.height,
+      overlay.width * widget.imageSize.width,
+      overlay.height * widget.imageSize.height
     );
   }
 
@@ -85,14 +76,10 @@ class _StickerOverlayState
     Rect rect,
   ) {
     return widget.overlay.copyWith(
-      x: rect.left /
-          widget.imageSize.width,
-      y: rect.top /
-          widget.imageSize.height,
-      width: rect.width /
-          widget.imageSize.width,
-      height: rect.height /
-          widget.imageSize.height,
+      x: rect.left / widget.imageSize.width,
+      y: rect.top / widget.imageSize.height,
+      width: rect.width / widget.imageSize.width,
+      height: rect.height / widget.imageSize.height
     );
   }
 
@@ -109,18 +96,12 @@ class _StickerOverlayState
     final dx = position.dx - centre.dx;
     final dy = position.dy - centre.dy;
 
-    final cosAngle =
-        math.cos(-widget.overlay.rotation);
-    final sinAngle =
-        math.sin(-widget.overlay.rotation);
+    final cosAngle = math.cos(-widget.overlay.rotation);
+    final sinAngle = math.sin(-widget.overlay.rotation);
 
     final unrotatedPosition = Offset(
-      centre.dx +
-          dx * cosAngle -
-          dy * sinAngle,
-      centre.dy +
-          dx * sinAngle +
-          dy * cosAngle,
+      centre.dx + dx * cosAngle - dy * sinAngle,
+      centre.dy + dx * sinAngle + dy * cosAngle
     );
 
     Rect makeHandle(
@@ -133,57 +114,37 @@ class _StickerOverlayState
       );
     }
 
-    if (makeHandle(
-      displayRect.topLeft,
-    ).contains(unrotatedPosition)) {
+    if (makeHandle(displayRect.topLeft).contains(unrotatedPosition)) {
       return StickerHandle.topLeft;
     }
 
-    if (makeHandle(
-      displayRect.topRight,
-    ).contains(unrotatedPosition)) {
+    if (makeHandle(displayRect.topRight).contains(unrotatedPosition)) {
       return StickerHandle.topRight;
     }
 
-    if (makeHandle(
-      displayRect.bottomLeft,
-    ).contains(unrotatedPosition)) {
+    if (makeHandle(displayRect.bottomLeft).contains(unrotatedPosition)) {
       return StickerHandle.bottomLeft;
     }
 
-    if (makeHandle(
-      displayRect.bottomRight,
-    ).contains(unrotatedPosition)) {
+    if (makeHandle(displayRect.bottomRight).contains(unrotatedPosition)) {
       return StickerHandle.bottomRight;
     }
 
-    if (makeHandle(
-      Offset(
-        displayRect.center.dx,
-        displayRect.top - 32,
-      ),
-    ).contains(unrotatedPosition)) {
+    if (makeHandle(Offset(displayRect.center.dx, displayRect.top - 32)).contains(unrotatedPosition)) {
       return StickerHandle.rotation;
     }
 
     return StickerHandle.none;
   }
 
-  void _move(
-    Offset delta,
-  ) {
-    final updated =
-        _clampToBounds(
-      displayRect.shift(delta),
-    );
+  void _move(Offset delta) {
+    final updated = _clampToBounds(displayRect.shift(delta));
 
     setState(() {
       displayRect = updated;
     });
 
-    widget.onChanged(
-      _fromDisplay(updated),
-    );
+    widget.onChanged(_fromDisplay(updated));
   }
 
   void _resize(
@@ -209,7 +170,7 @@ class _StickerOverlayState
 
       return Offset(
         dx * cosAngle - dy * sinAngle,
-        dx * sinAngle + dy * cosAngle,
+        dx * sinAngle + dy * cosAngle
       );
     }
 
@@ -220,35 +181,16 @@ class _StickerOverlayState
       final sinAngle = math.sin(angle);
 
       return Offset(
-        centre.dx +
-            point.dx * cosAngle -
-            point.dy * sinAngle,
-        centre.dy +
-            point.dx * sinAngle +
-            point.dy * cosAngle,
+        centre.dx + point.dx * cosAngle - point.dy * sinAngle,
+        centre.dy + point.dx * sinAngle + point.dy * cosAngle
       );
     }
 
     // The four corners in local coordinates.
-    final localTopLeft = Offset(
-      -rect.width / 2,
-      -rect.height / 2,
-    );
-
-    final localTopRight = Offset(
-      rect.width / 2,
-      -rect.height / 2,
-    );
-
-    final localBottomLeft = Offset(
-      -rect.width / 2,
-      rect.height / 2,
-    );
-
-    final localBottomRight = Offset(
-      rect.width / 2,
-      rect.height / 2,
-    );
+    final localTopLeft = Offset(-rect.width / 2, -rect.height / 2);
+    final localTopRight = Offset(rect.width / 2, -rect.height / 2);
+    final localBottomLeft = Offset(-rect.width / 2, rect.height / 2);
+    final localBottomRight = Offset(rect.width / 2, rect.height / 2);
 
     // The opposite corner is the fixed anchor.
     final localAnchor;
@@ -276,188 +218,129 @@ class _StickerOverlayState
     }
 
     // Convert the fixed anchor into world coordinates.
-    final worldAnchor =
-        toWorld(localAnchor);
+    final worldAnchor = toWorld(localAnchor);
 
     // Convert the current pointer position into
     // the sticker's local coordinate system.
     //
     // This must be relative to the CURRENT centre.
-    final localPointer =
-        toLocal(pointerPosition);
+    final localPointer = toLocal(pointerPosition);
 
     // Calculate the new dimensions from the fixed anchor
     // to the dragged pointer.
-    double width =
-        (localPointer.dx - localAnchor.dx).abs();
+    double width = (localPointer.dx - localAnchor.dx).abs();
 
-    double height =
-        (localPointer.dy - localAnchor.dy).abs();
+    double height = (localPointer.dy - localAnchor.dy).abs();
 
-    final aspect =
-        rect.width / rect.height;
+    final aspect = rect.width / rect.height;
 
     // Preserve aspect ratio.
     if (width / height > aspect) {
-      width =
-          height * aspect;
+      width = height * aspect;
     } else {
-      height =
-          width / aspect;
+      height = width / aspect;
     }
 
     // Minimum size.
     if (width < minSize) {
       width = minSize;
-      height =
-          width / aspect;
+      height = width / aspect;
     }
 
     if (height < minSize) {
       height = minSize;
-      width =
-          height * aspect;
+      width = height * aspect;
     }
 
     // Determine which side of the anchor the
     // dragged corner belongs to.
-    final isRight =
-        handle == StickerHandle.topRight ||
-        handle == StickerHandle.bottomRight;
-
-    final isBottom =
-        handle == StickerHandle.bottomLeft ||
-        handle == StickerHandle.bottomRight;
+    final isRight = handle == StickerHandle.topRight || handle == StickerHandle.bottomRight;
+    final isBottom = handle == StickerHandle.bottomLeft || handle == StickerHandle.bottomRight;
 
     // Build the new local rectangle around the
     // fixed local anchor.
-    final localLeft =
-        isRight
-            ? localAnchor.dx
-            : localAnchor.dx - width;
+    final localLeft = isRight
+      ? localAnchor.dx
+      : localAnchor.dx - width;
 
-    final localTop =
-        isBottom
-            ? localAnchor.dy
-            : localAnchor.dy - height;
+    final localTop = isBottom
+      ? localAnchor.dy
+      : localAnchor.dy - height;
 
-    final localNewRight =
-        localLeft + width;
+    final localNewRight = localLeft + width;
+    final localNewBottom = localTop + height;
 
-    final localNewBottom =
-        localTop + height;
-
-    final localNewCentre =
-        Offset(
+    final localNewCentre = Offset(
       (localLeft + localNewRight) / 2,
-      (localTop + localNewBottom) / 2,
+      (localTop + localNewBottom) / 2
     );
 
     // The local centre above is relative to the OLD centre.
     // Convert it to world coordinates.
-    final newCentre =
-        toWorld(localNewCentre);
+    final newCentre = toWorld(localNewCentre);
 
     // Calculate the new axis-aligned storage rect.
     //
     // The stored rect remains axis-aligned because x/y/width/height
     // are the unrotated bounds used by the renderer.
-    final updated =
-        Rect.fromCenter(
+    final updated = Rect.fromCenter(
       center: newCentre,
       width: width,
       height: height,
     );
 
     // Keep the unrotated storage rect inside the image.
-    final clamped =
-        _clampToBounds(updated);
+    final clamped = _clampToBounds(updated);
 
     setState(() {
       displayRect = clamped;
     });
 
-    widget.onChanged(
-      _fromDisplay(clamped),
-    );
+    widget.onChanged(_fromDisplay(clamped));
   }
 
-  void _startRotation(
-    Offset position,
-  ) {
-    final centre =
-        displayRect.center;
+  void _startRotation(Offset position) {
+    final centre = displayRect.center;
 
-    _pointerAngleStart =
-        math.atan2(
+    _pointerAngleStart = math.atan2(
       position.dy - centre.dy,
-      position.dx - centre.dx,
+      position.dx - centre.dx
     );
 
-    _rotationStart =
-        widget.overlay.rotation;
+    _rotationStart = widget.overlay.rotation;
   }
 
-  void _rotate(
-    Offset position,
-  ) {
-    final centre =
-        displayRect.center;
+  void _rotate(Offset position) {
+    final centre = displayRect.center;
 
-    final currentAngle =
-        math.atan2(
+    final currentAngle = math.atan2(
       position.dy - centre.dy,
-      position.dx - centre.dx,
+      position.dx - centre.dx
     );
 
-    var delta =
-        currentAngle -
-        _pointerAngleStart;
+    var delta = currentAngle - _pointerAngleStart;
 
     // Keep the angle difference continuous
     // when crossing -pi / pi.
     if (delta > math.pi) {
-      delta -=
-          math.pi * 2;
+      delta -= math.pi * 2;
     } else if (delta < -math.pi) {
-      delta +=
-          math.pi * 2;
+      delta += math.pi * 2;
     }
 
     widget.onChanged(
-      widget.overlay.copyWith(
-        rotation:
-            _rotationStart + delta,
-      ),
+      widget.overlay.copyWith(rotation: _rotationStart + delta)
     );
   }
 
-  Rect _clampToBounds(
-    Rect rect,
-  ) {
-    final maxX =
-        math.max(
-      0.0,
-      widget.imageSize.width -
-          rect.width,
-    );
+  Rect _clampToBounds(Rect rect) {
+    final maxX = math.max(0.0, widget.imageSize.width - rect.width);
 
-    final maxY =
-        math.max(
-      0.0,
-      widget.imageSize.height -
-          rect.height,
-    );
+    final maxY = math.max(0.0, widget.imageSize.height - rect.height);
 
     return Rect.fromLTWH(
-      rect.left.clamp(
-        0.0,
-        maxX,
-      ),
-      rect.top.clamp(
-        0.0,
-        maxY,
-      ),
+      rect.left.clamp(0.0, maxX),
+      rect.top.clamp(0.0, maxY),
       rect.width,
       rect.height,
     );
@@ -467,104 +350,101 @@ class _StickerOverlayState
   Widget build(
     BuildContext context,
   ) {
-    return SizedBox(
-      width:
-          widget.imageSize.width,
-      height:
-          widget.imageSize.height,
-      child: GestureDetector(
-        behavior:
-            HitTestBehavior.translucent,
+    final data = widget.overlay.data;
 
-        onTapDown: (details) {
-          if (displayRect.contains(
-            details.localPosition,
-          )) {
-            widget.onSelected();
-          }
-        },
+    if (data is! ShapeOverlayData) return const SizedBox.shrink();
 
-        onPanStart: (details) {
-          _activeHandle =
-              _hitTestHandle(
-            details.localPosition,
-          );
+    const hitPadding = 48.0;
 
-          if (_activeHandle ==
-              StickerHandle.rotation) {
-            _startRotation(
-              details.localPosition,
-            );
-            return;
-          }
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: displayRect.left - hitPadding,
+          top: displayRect.top - hitPadding,
+          width: displayRect.width + hitPadding * 2,
+          height: displayRect.height + hitPadding * 2,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onTapDown: (_) {
+              widget.onSelected();
+            },
+            onPanStart: (details) {
+              final pointerPosition = details.localPosition + Offset(
+                displayRect.left - hitPadding, displayRect.top - hitPadding
+              );
+              
+              _activeHandle = _hitTestHandle(pointerPosition);
 
-          if (_activeHandle ==
-              StickerHandle.none &&
-              !displayRect.contains(
-                details.localPosition,
-              )) {
-            return;
-          }
+              if (_activeHandle == StickerHandle.rotation) {
+                _startRotation(pointerPosition);
+                return;
+              }
 
-          widget.onSelected();
-        },
+              if (_activeHandle != StickerHandle.none) {
+                widget.onSelected();
+                return;
+              }
 
-        onPanUpdate: (details) {
-          if (_activeHandle ==
-              StickerHandle.rotation) {
-            _rotate(
-              details.localPosition,
-            );
-            return;
-          }
+              if (displayRect.contains(pointerPosition)) {
+                widget.onSelected();
+              }
+            },
+            onPanUpdate: (details) {
+              final pointerPosition = details.localPosition + Offset(displayRect.left - hitPadding, displayRect.top - hitPadding);
+              if (_activeHandle == StickerHandle.rotation) {
+                _rotate(pointerPosition);
+                return;
+              }
+              
+              if (_activeHandle != StickerHandle.none) {
+                _resize(_activeHandle, pointerPosition);
+                return;
+              }
 
-          if (_activeHandle !=
-              StickerHandle.none) {
-            _resize(
-              _activeHandle,
-              details.localPosition,
-            );
-            return;
-          }
+              _move(details.delta);
+            },
+            onPanEnd: (_) {
+              _activeHandle = StickerHandle.none;
+            },
+            // child: Transform.rotate(
+            //   angle: widget.overlay.rotation,
+            //   child: widget.child
+            // )
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Positioned(
+                  left: hitPadding,
+                  top: hitPadding,
+                  width: displayRect.width,
+                  height: displayRect.height,
+                  child: ShapeHitTest(
+                    shape: data.shape,
+                    child: Transform.rotate(
+                      angle: widget.overlay.rotation,
+                      child: widget.child
+                    )
+                  )
+                )
+              ]
+            )
+          )
+        ),
 
-          _move(
-            details.delta,
-          );
-        },
-
-        onPanEnd: (_) {
-          _activeHandle =
-              StickerHandle.none;
-        },
-
-        child: Stack(
-          clipBehavior:
-              Clip.none,
-          children: [
-            Positioned(
-              left: displayRect.left,
-              top: displayRect.top,
-              width: displayRect.width,
-              height: displayRect.height,
-              child: Transform.rotate(
-                angle:
-                    widget.overlay.rotation,
-                child: widget.child,
-              ),
-            ),
-
-            if (widget.selected)
-              CustomPaint(
+        if (widget.selected)
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
                 size: widget.imageSize,
-                painter:
-                    _StickerSelectionPainter(
+                painter: _StickerSelectionPainter(
                   rect: displayRect,
                   rotation: widget.overlay.rotation
-                ),
-              ),
-          ],
-        ),
-      ),
+                )
+              )
+            )
+          )
+      ]
     );
   }
 }

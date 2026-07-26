@@ -105,8 +105,7 @@ class _StickerEditorPreviewState extends State<StickerEditorPreview> {
     }
     return CustomPaint(
       painter: ShapeOverlayPainter(
-        shape: data.shape,
-        style: data.style,
+        data: data,
         colour: overlay.colour.index,
         selected: overlay.id == widget.selectedOverlayId
       ),

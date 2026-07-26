@@ -75,6 +75,17 @@ class _StickerEditorState extends State<StickerEditor> {
     });
   }
 
+  void _updateOverlay(ContentOverlay updatedOverlay) {
+    setState(() {
+      overlays = overlays.map((overlay) {
+        if (overlay.id == updatedOverlay.id) {
+          return updatedOverlay;
+        }
+        return overlay;
+      }).toList();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -106,7 +117,8 @@ class _StickerEditorState extends State<StickerEditor> {
             StickerEditorControls(
               selectedOverlay: selectedOverlay,
               onAddSticker: _addSticker,
-              onDeleteSticker: _deleteSelected
+              onDeleteSticker: _deleteSelected,
+              onOverlayChanged: _updateOverlay,
             ),
 
             const SizedBox(height: 16),
