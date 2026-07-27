@@ -25,6 +25,7 @@ class ImageEditorMobileControls extends StatelessWidget {
   final VoidCallback onCropSelected;
   final VoidCallback onAutoEnhanceSelected;
   final VoidCallback onRotateSelected;
+  final VoidCallback onStickerSelected;
 
   const ImageEditorMobileControls({
     super.key,
@@ -41,6 +42,7 @@ class ImageEditorMobileControls extends StatelessWidget {
     required this.onCropSelected,
     required this.onAutoEnhanceSelected,
     required this.onRotateSelected,
+    required this.onStickerSelected,
     required this.onLoadImageSelected,
     required this.onSave
   });
@@ -103,6 +105,14 @@ class ImageEditorMobileControls extends StatelessWidget {
                                 icon: const Icon(Icons.rotate_90_degrees_cw),
                                 tooltip: 'Rotate',
                                 onPressed: onRotateSelected
+                              )
+                            ),
+
+                            Expanded(
+                              child: IconButton(
+                                icon: const Icon(Icons.add_to_photos_outlined),
+                                tooltip: 'Stickers',
+                                onPressed: onStickerSelected
                               )
                             ),
 

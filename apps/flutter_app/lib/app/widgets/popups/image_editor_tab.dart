@@ -315,6 +315,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
         onRotateSelected: () async {
           await _handleRotateButton();
         },
+        onStickerSelected: () => _handleStickersButton(),
         onCropSelected: () => _handleCropButton(),
         onLoadImageSelected: _pickImage,
         onSave: () {
