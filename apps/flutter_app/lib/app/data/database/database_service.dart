@@ -21,7 +21,7 @@ class DatabaseService {
     _db = await databaseFactoryFfi.openDatabase(
       dbPath,
       options: OpenDatabaseOptions(
-        version: 3,
+        version: 4,
         onCreate: (db, version) async {
           await db.execute('''
             CREATE TABLE devices(
@@ -77,6 +77,20 @@ class DatabaseService {
               PRIMARY KEY (album_id, slot),
 
               FOREIGN KEY (album_id) REFERENCES albums(id) ON DELETE CASCADE
+            )
+            '''
+          );
+
+          await db.execute(
+            '''
+            CREATE TABLE overlays(
+              id TEXT PRIMARY KEY,
+              image_id TEXT NOT NULL,
+              data TEXT NOT NULL,
+
+              FOREIGN KEY(image_id)
+                REFERENCES images(id)
+                ON DELETE CASCADE
             )
             '''
           );
@@ -149,6 +163,22 @@ class DatabaseService {
                 );
               }
             }
+          }
+
+          if (oldVersion < 4) {
+            await db.execute(
+              '''
+              CREATE TABLE overlays(
+                id TEXT PRIMARY KEY,
+                image_id TEXT NOT NULL,
+                data TEXT NOT NULL,
+
+                FOREIGN KEY(image_id)
+                  REFERENCES images(id)
+                  ON DELETE CASCADE
+              )
+              '''
+            );
           }
         }
       )

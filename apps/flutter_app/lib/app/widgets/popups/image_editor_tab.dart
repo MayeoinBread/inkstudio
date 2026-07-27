@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:inkstudio/app/data/models/editor_result.dart';
 import 'package:inkstudio/app/repositories/image_repository.dart';
+import 'package:inkstudio/app/repositories/overlay_repository.dart';
 import 'package:inkstudio/app/services/image_pipeline_controller.dart';
 import 'package:inkstudio/app/widgets/common/image_preview_panel.dart';
 import 'package:inkstudio/app/widgets/controls/dithering_controls.dart';
@@ -13,6 +14,7 @@ import 'package:inkstudio/app/widgets/controls/palette_bias_controls.dart';
 import 'package:inkstudio/app/widgets/controls/filter_controls.dart';
 import 'package:inkstudio/app/widgets/library/library_item.dart';
 import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio/app/widgets/popups/sticker_editor.dart';
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio/app/widgets/popups/crop_dialog.dart';
@@ -40,6 +42,7 @@ class ImageEditorTab extends StatefulWidget {
 class _ImageEditorTabState extends State<ImageEditorTab> {
   Uint8List? _originalImageBytes;
   Uint8List? previewBytes;
+  Uint8List? stickerlessPreviewBytes;
 
   int _processVersion = 0;
 
@@ -55,6 +58,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   bool _simulateDeviceScreen = false;
   Rect? cropRect;
   int rotation = 0;
+
+  List<ContentOverlay> overlays = [];
 
   @override
   void initState() {
@@ -73,12 +78,18 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     final imageId = metadata.imageId;
     if (imageId == null) return;
 
+    debugPrint("ImageID: $imageId");
+
+    final existingOverlays = await OverlayRepository().getOverlays(imageId);
+    debugPrint("Overlays count: ${existingOverlays.length}");
+
     setState(() {
       algorithm = metadata.dither;
       adjustments = metadata.adjustments;
       _filter = metadata.filter;
       cropRect = metadata.cropRect;
       rotation = metadata.rotation;
+      overlays = existingOverlays;
     });
 
     // Reload the existing, processed image instead of reprocessing from scratch (ever so slightly faster on mobile)
@@ -92,6 +103,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     });
 
     await _prepareWorkingImage();
+    // TODO are we bloating this up again?
+    await _reprocess();
   }
 
   Future<void> _pickImage() async {
@@ -143,13 +156,15 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
       adjustments: adjustments,
-      paletteBias: paletteBias
+      paletteBias: paletteBias,
+      overlays: overlays
     );
 
     if (version != _processVersion) return;
 
     setState((){
       previewBytes = pipeline.previewBytes;
+      stickerlessPreviewBytes = pipeline.stickerlessPreviewBytes;
       widget.onPreviewChanged?.call(pipeline.previewBytes!);
     });
   }
@@ -161,7 +176,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
       adjustments: adjustments,
-      paletteBias: paletteBias
+      paletteBias: paletteBias,
+      overlays: overlays
     );
 
     final item = widget.item;
@@ -185,7 +201,8 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       metadata: retMetadata,
       originalBytes: _originalImageBytes!,
       previewBytes: pipeline.previewBytes!,
-      packedBytes: packedBytes);
+      packedBytes: packedBytes,
+      overlays: overlays);
 
     widget.onSaved(res);
   }
@@ -229,6 +246,26 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
 
     await _prepareWorkingImage();
     await _reprocess();
+  }
+
+  Future<void> _handleStickersButton() async {
+    if (stickerlessPreviewBytes == null) return;
+
+    final updatedOverlays = await showDialog<List<ContentOverlay>>(
+      context: context,
+      builder: (_) => StickerEditor(
+        backgroundBytes: stickerlessPreviewBytes!,
+        initialOverlays: overlays
+      )
+    );
+
+    if (updatedOverlays != null) {
+      setState(() {
+        overlays = updatedOverlays;
+      });
+
+      await _reprocess();
+    }
   }
 
   @override
@@ -278,6 +315,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
         onRotateSelected: () async {
           await _handleRotateButton();
         },
+        onStickerSelected: () => _handleStickersButton(),
         onCropSelected: () => _handleCropButton(),
         onLoadImageSelected: _pickImage,
         onSave: () {
@@ -321,6 +359,16 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                             tooltip: 'Rotate',
                             onPressed: () async {
                               await _handleRotateButton();
+                            }
+                          )
+                        ),
+
+                        Expanded(
+                          child: IconButton(
+                            icon: const Icon(Icons.add_to_photos_outlined),
+                            tooltip: 'Stickers',
+                            onPressed: () async {
+                              await _handleStickersButton();
                             }
                           )
                         ),

@@ -330,6 +330,7 @@ class LibraryController extends ChangeNotifier {
                 dither: DitherMode.none,
                 adjustments: ImageAdjustments(),
                 paletteBias: PaletteBias(),
+                overlays: List.empty()  // TODO update when we persist the overlay data
               )
             );
 
@@ -356,7 +357,8 @@ class LibraryController extends ChangeNotifier {
                 height: DeviceConstants.imageHeight,
                 dither: DitherMode.none,
                 adjustments: ImageAdjustments(),
-                paletteBias: PaletteBias()
+                paletteBias: PaletteBias(),
+                overlays: List.empty()  // TODO update when we persist the overlay data
               )
             );
 

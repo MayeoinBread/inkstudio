@@ -11,6 +11,7 @@ class ImagePipelineController {
   img.Image? sourceImage;
   PaletteFramebuffer? framebuffer;
   Uint8List? previewBytes;
+  Uint8List? stickerlessPreviewBytes;
 
   Future<void> prepare(Uint8List bytes, Rect? cropRect, int rotation) async {
     sourceImage = await compute(
@@ -26,6 +27,7 @@ class ImagePipelineController {
 
   Future<void> processMetadata({
     required SlotMetadata metadata,
+    required List<ContentOverlay> overlays,
     bool simulateDevice = false
     }) async {
     if (sourceImage == null) return;
@@ -40,12 +42,14 @@ class ImagePipelineController {
         height: DeviceConstants.imageHeight,
         dither: metadata.dither,
         adjustments: metadata.adjustments,
-        paletteBias: metadata.paletteBias
+        paletteBias: metadata.paletteBias,
+        overlays: overlays
       )
     );
 
     framebuffer = result.framebuffer;
     previewBytes = result.previewBytes;
+    stickerlessPreviewBytes = result.stickerlessPreviewBytes;
   }
 
   Future<void> process({
@@ -53,7 +57,8 @@ class ImagePipelineController {
     required ImageFilter filter,
     required bool simulateDevice,
     required ImageAdjustments adjustments,
-    required PaletteBias paletteBias
+    required PaletteBias paletteBias,
+    required List<ContentOverlay> overlays
   }) async {
     if (sourceImage == null) return;
 
@@ -67,17 +72,20 @@ class ImagePipelineController {
         height: DeviceConstants.imageHeight,
         dither: dither,
         adjustments: adjustments,
-        paletteBias: paletteBias
+        paletteBias: paletteBias,
+        overlays: overlays
       )
     );
 
     framebuffer = result.framebuffer;
     previewBytes = result.previewBytes;
+    stickerlessPreviewBytes = result.stickerlessPreviewBytes;
   }
 
   void clear() {
     sourceImage = null;
     framebuffer = null;
     previewBytes = null;
+    stickerlessPreviewBytes = null;
   }
 }
