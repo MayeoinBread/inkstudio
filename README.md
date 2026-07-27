@@ -10,9 +10,11 @@ InkStudio currently supports the PicPak panel only.
 
 ---
 
-# Latest Release
+# Latest Releases
 
-v0.2.0 introduces support for Albums (see below).
+v0.3.0 adds sticker support for images. Add basic shapes on top of the image, in device-native colours to make them pop. Can be scaled, rotated, moved and overlayed on top of each other.
+
+v0.2.2 introduces support for Albums (see below).
 
 If upgrading the app, ensure on first run to connect to the panel and press the "Sync" button so the App knows what images are currently on the panel.
 
