@@ -38,6 +38,7 @@ class StickerOverlay extends StatefulWidget {
 class _StickerOverlayState extends State<StickerOverlay> {
 
   late Rect displayRect;
+  late Offset _gestureOrigin;
 
   StickerHandle _activeHandle = StickerHandle.none;
 
@@ -151,7 +152,7 @@ class _StickerOverlayState extends State<StickerOverlay> {
     StickerHandle handle,
     Offset pointerPosition,
   ) {
-    const minSize = 48.0;
+    const minSize = 10.0;
 
     final rect = displayRect;
     final angle = widget.overlay.rotation;
@@ -193,7 +194,7 @@ class _StickerOverlayState extends State<StickerOverlay> {
     final localBottomRight = Offset(rect.width / 2, rect.height / 2);
 
     // The opposite corner is the fixed anchor.
-    final localAnchor;
+    final Offset localAnchor;
 
     switch (handle) {
       case StickerHandle.topLeft:
@@ -217,63 +218,129 @@ class _StickerOverlayState extends State<StickerOverlay> {
         return;
     }
 
-    // Convert the fixed anchor into world coordinates.
-    final worldAnchor = toWorld(localAnchor);
-
     // Convert the current pointer position into
     // the sticker's local coordinate system.
     //
     // This must be relative to the CURRENT centre.
     final localPointer = toLocal(pointerPosition);
 
-    // Calculate the new dimensions from the fixed anchor
-    // to the dragged pointer.
-    double width = (localPointer.dx - localAnchor.dx).abs();
+    // // Calculate the new dimensions from the fixed anchor
+    // // to the dragged pointer.
+    // double width = (localPointer.dx - localAnchor.dx).abs();
 
-    double height = (localPointer.dy - localAnchor.dy).abs();
+    // double height = (localPointer.dy - localAnchor.dy).abs();
 
-    final aspect = rect.width / rect.height;
+    // // final aspect = rect.width / rect.height;
 
-    // Preserve aspect ratio.
-    if (width / height > aspect) {
-      width = height * aspect;
-    } else {
-      height = width / aspect;
-    }
+    // // // Preserve aspect ratio.
+    // // if (width / height > aspect) {
+    // //   width = height * aspect;
+    // // } else {
+    // //   height = width / aspect;
+    // // }
+
+    // // Minimum size.
+    // if (width < minSize) {
+    //   width = minSize;
+    //   // height = width / aspect;
+    // }
+
+    // if (height < minSize) {
+    //   height = minSize;
+    //   // width = height * aspect;
+    // }
+
+    // // Determine which side of the anchor the
+    // // dragged corner belongs to.
+    // final isRight = handle == StickerHandle.topRight || handle == StickerHandle.bottomRight;
+    // final isBottom = handle == StickerHandle.bottomLeft || handle == StickerHandle.bottomRight;
+
+    // // Build the new local rectangle around the
+    // // fixed local anchor.
+    // final localLeft = isRight
+    //   ? localAnchor.dx
+    //   : localAnchor.dx - width;
+
+    // final localTop = isBottom
+    //   ? localAnchor.dy
+    //   : localAnchor.dy - height;
+
+    // final localNewRight = localLeft + width;
+    // final localNewBottom = localTop + height;
+
+    // final localNewCentre = Offset(
+    //   (localLeft + localNewRight) / 2,
+    //   (localTop + localNewBottom) / 2
+    // );
+
+    // Build the rectangle directly from the fixed anchor
+    // and the dragged pointer.
+
+    double localLeft = math.min(
+      localAnchor.dx,
+      localPointer.dx,
+    );
+
+    double localRight = math.max(
+      localAnchor.dx,
+      localPointer.dx,
+    );
+
+    double localTop = math.min(
+      localAnchor.dy,
+      localPointer.dy,
+    );
+
+    double localBottom = math.max(
+      localAnchor.dy,
+      localPointer.dy,
+    );
 
     // Minimum size.
-    if (width < minSize) {
-      width = minSize;
-      height = width / aspect;
+    //
+    // Only move the dragged edge.
+    // The anchor remains fixed.
+    if (localRight - localLeft < minSize) {
+      switch (handle) {
+        case StickerHandle.topLeft:
+        case StickerHandle.bottomLeft:
+          localLeft = localRight - minSize;
+          break;
+
+        case StickerHandle.topRight:
+        case StickerHandle.bottomRight:
+          localRight = localLeft + minSize;
+          break;
+
+        default:
+          break;
+      }
     }
 
-    if (height < minSize) {
-      height = minSize;
-      width = height * aspect;
+    if (localBottom - localTop < minSize) {
+      switch (handle) {
+        case StickerHandle.topLeft:
+        case StickerHandle.topRight:
+          localTop = localBottom - minSize;
+          break;
+
+        case StickerHandle.bottomLeft:
+        case StickerHandle.bottomRight:
+          localBottom = localTop + minSize;
+          break;
+
+        default:
+          break;
+      }
     }
-
-    // Determine which side of the anchor the
-    // dragged corner belongs to.
-    final isRight = handle == StickerHandle.topRight || handle == StickerHandle.bottomRight;
-    final isBottom = handle == StickerHandle.bottomLeft || handle == StickerHandle.bottomRight;
-
-    // Build the new local rectangle around the
-    // fixed local anchor.
-    final localLeft = isRight
-      ? localAnchor.dx
-      : localAnchor.dx - width;
-
-    final localTop = isBottom
-      ? localAnchor.dy
-      : localAnchor.dy - height;
-
-    final localNewRight = localLeft + width;
-    final localNewBottom = localTop + height;
 
     final localNewCentre = Offset(
-      (localLeft + localNewRight) / 2,
-      (localTop + localNewBottom) / 2
+      (localLeft + localRight) / 2,
+      (localTop + localBottom) / 2,
     );
+
+    final width = localRight - localLeft;
+    final height = localBottom - localTop;
 
     // The local centre above is relative to the OLD centre.
     // Convert it to world coordinates.
@@ -370,6 +437,10 @@ class _StickerOverlayState extends State<StickerOverlay> {
               widget.onSelected();
             },
             onPanStart: (details) {
+              _gestureOrigin = Offset(
+                displayRect.left - hitPadding,
+                displayRect.top - hitPadding
+              );
               final pointerPosition = details.localPosition + Offset(
                 displayRect.left - hitPadding, displayRect.top - hitPadding
               );
@@ -391,7 +462,8 @@ class _StickerOverlayState extends State<StickerOverlay> {
               }
             },
             onPanUpdate: (details) {
-              final pointerPosition = details.localPosition + Offset(displayRect.left - hitPadding, displayRect.top - hitPadding);
+              // final pointerPosition = details.localPosition + Offset(displayRect.left - hitPadding, displayRect.top - hitPadding);
+              final pointerPosition = details.localPosition + _gestureOrigin;
               if (_activeHandle == StickerHandle.rotation) {
                 _rotate(pointerPosition);
                 return;

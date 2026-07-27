@@ -22,15 +22,22 @@ class ShapeOverlayRenderer {
     final width = overlay.width * framebuffer.width;
     final height = overlay.height * framebuffer.height;
 
-    final path = ShapePathBuilder.create(data.shape);
+    // final path = ShapePathBuilder.create(data.shape);
 
-    final points = _pathToPoints(path, width, height);
+    // final points = _pathToPoints(path, width, height);
+    final points = ShapePathBuilder.flattenCommands(
+      ShapePathBuilder.commands(data.shape)
+    );
 
-    final centre = _Point(x: x + width / 2, y: y + height / 2);
+    final centre = ShapePoint(x: x + width / 2, y: y + height / 2);
 
-    final transformed = points.map(
-      (point) => _rotatePoint(point, centre, overlay.rotation)
-    ).toList();
+    // final transformed = points.map(
+    //   (point) => _rotatePoint(point, centre, overlay.rotation)
+    // ).toList();
+    final transformed = points.map((point) {
+      return _rotatePoint(
+        ShapePoint(x: x + point.x * width, y: y + point.y * height), centre, overlay.rotation);
+    }).toList();
 
     if (data.style == OverlayStyle.filled) {
       _fillPolygon(framebuffer, transformed, colour);
@@ -41,7 +48,7 @@ class ShapeOverlayRenderer {
 
   static void _fillPolygon(
     PaletteFramebuffer framebuffer,
-    List<_Point> points,
+    List<ShapePoint> points,
     PaletteIndex colour
   ) {
     if (points.length < 3) return;
@@ -64,7 +71,7 @@ class ShapeOverlayRenderer {
 
   static void _drawPolygonOutline(
     PaletteFramebuffer framebuffer,
-    List<_Point> points,
+    List<ShapePoint> points,
     PaletteIndex colour,
     double strokeWidth
   ) {
@@ -80,7 +87,7 @@ class ShapeOverlayRenderer {
   }
 
   static bool _isPointInsidePolygon(
-    double x, double y, List<_Point> points
+    double x, double y, List<ShapePoint> points
   ) {
     bool inside = false;
 
@@ -105,8 +112,8 @@ class ShapeOverlayRenderer {
 
   static void _drawThickLine(
     PaletteFramebuffer framebuffer,
-    _Point start,
-    _Point end,
+    ShapePoint start,
+    ShapePoint end,
     PaletteIndex colour,
     double radius,
   ) {
@@ -197,9 +204,9 @@ class ShapeOverlayRenderer {
     }
   }
 
-  static _Point _rotatePoint(
-    _Point point,
-    _Point centre,
+  static ShapePoint _rotatePoint(
+    ShapePoint point,
+    ShapePoint centre,
     double rotation,
   ) {
     final dx =
@@ -214,7 +221,7 @@ class ShapeOverlayRenderer {
     final sinAngle =
         math.sin(rotation);
 
-    return _Point(
+    return ShapePoint(
       x: centre.x +
           dx * cosAngle -
           dy * sinAngle,
@@ -224,10 +231,10 @@ class ShapeOverlayRenderer {
     );
   }
 
-  static List<_Point> _pathToPoints(
+  static List<ShapePoint> _pathToPoints(
     Path path, double width, double height
   ) {
-    final points = <_Point>[];
+    final points = <ShapePoint>[];
 
     for (final metric in path.computeMetrics()) {
       final length = metric.length;
@@ -243,7 +250,7 @@ class ShapeOverlayRenderer {
         if(tangent == null) continue;
 
         points.add(
-          _Point(
+          ShapePoint(
             x: tangent.position.dx * width,
             y: tangent.position.dy * height)
         );
@@ -252,14 +259,4 @@ class ShapeOverlayRenderer {
 
     return points;
   }
-}
-
-class _Point {
-  final double x;
-  final double y;
-
-  const _Point({
-    required this.x,
-    required this.y
-  });
 }
