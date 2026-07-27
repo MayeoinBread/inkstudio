@@ -74,8 +74,8 @@ class DeviceSessionState {
               : 'Uploading slot $slot';
           case TransferState.downloading:
             return (slot == null)
-              ? 'Downloading slot...'
-              : 'Downloading slot $slot';
+              ? 'Checking slot...'
+              : 'Checking slot $slot';
           case TransferState.importing:
             return 'Importing images...';
         }

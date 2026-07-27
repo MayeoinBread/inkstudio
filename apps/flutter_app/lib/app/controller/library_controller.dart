@@ -139,6 +139,9 @@ class LibraryController extends ChangeNotifier {
 
   Future<void> refreshSyncState(String? deviceSerial) async {
     if (deviceSerial == null) return;
+    
+    if (session.state.isBusy) return;
+
     final deviceHashes = await DeviceSlotRepository().getDeviceSlotHashes(deviceSerial);
 
     for (final entry in items.entries) {
@@ -151,6 +154,8 @@ class LibraryController extends ChangeNotifier {
 
       if (imageId == null) {
         pendingAction = SlotPendingAction.none;
+      } else if (item.metadata.pendingAction == SlotPendingAction.verifyHash) {
+        continue;
       } else {
         final image = await ImageRepository().getImage(imageId);
 
@@ -259,13 +264,20 @@ class LibraryController extends ChangeNotifier {
     required BleManager ble,
     required DeviceSessionService session
   }) async {
+    session.state = session.state.copyWith(
+      transfer: TransferState.uploading
+    );
+
     final dirtySlots = await getPendingItems();
 
     List<int> updates = [0, 0, 0];
 
+    Map<int, String> uploadedHashes = {};
+    Map<int, String?> uploadedImageIds = {};
+
     for (final dirtySlot in dirtySlots) {
       final slot = dirtySlot.slot;
-
+      
       session.state = session.state.copyWith(
         transferSlot: slot
       );
@@ -360,34 +372,56 @@ class LibraryController extends ChangeNotifier {
 
         final packets = UploadSession.build(imageNumber: slot, packedImageData: packed);
 
+        final appHash = md5.convert(packed).toString();
+
+        uploadedHashes.addAll({slot: appHash});
+        uploadedImageIds.addAll({slot: imageId});
+
         await ble.sendImage(packets);
         await ble.sendMd5Trigger(imageNumber: slot, imageData: packed);
 
-        final deviceHash = await ble.requestSlotHash(slot);
+        final updatedMetadata = dirtySlot.metadata.copyWith(pendingAction: SlotPendingAction.verifyHash);
+        final current = items[slot]!;
+        items[slot] = current.copyWith(metadata: updatedMetadata);
 
-        final appHash = md5.convert(packed).toString();
-
-        if (deviceHash == appHash) {
-          final updatedMetadata = dirtySlot.metadata.copyWith(syncState: SlotSyncState.clean, pendingAction: SlotPendingAction.none);
-          await SlotRepository().saveSlot(slot: slot, imageId: imageId, metadata: updatedMetadata, albumId: currentAlbum!.id);
-          await DeviceSlotRepository().saveSlot(deviceSerial: session.state.deviceInfo.serial!, slot: slot, deviceHash: deviceHash);
-          final current = items[slot]!;
-          items[slot] = current.copyWith(metadata: updatedMetadata);
-          updates[1] += 1;
-        } else {
-          debugPrint("Uploaded hash does not match expected");
-          updates[2] += 1;
-        }
         notifyListeners();
 
         await Future.delayed(const Duration(milliseconds: 100));
       }
+    }
 
+    for (final appHashEntry in uploadedHashes.entries) {
+      final slot = appHashEntry.key;
+
+      final deviceHash = await ble.requestSlotHash(slot);
+
+      final appHash = appHashEntry.value;
+      final imageId = uploadedImageIds[slot];
+
+      final dirtySlot = dirtySlots.where((item) => item.slot == slot).first;
+
+      if (deviceHash == appHash) {
+        final updatedMetadata = dirtySlot.metadata.copyWith(pendingAction: SlotPendingAction.none);
+        await SlotRepository().saveSlot(slot: slot, imageId: imageId, metadata: updatedMetadata, albumId: currentAlbum!.id);
+        await DeviceSlotRepository().saveSlot(deviceSerial: session.state.deviceInfo.serial!, slot: slot, deviceHash: deviceHash);
+        final current = items[slot]!;
+        items[slot] = current.copyWith(metadata: updatedMetadata);
+        updates[1] += 1;
+      } else {
+        debugPrint("Uploaded hash does not match expected");
+        final updatedMetadata = dirtySlot.metadata.copyWith(pendingAction: SlotPendingAction.upload);
+        await SlotRepository().saveSlot(albumId: currentAlbum!.id, slot: slot, imageId: imageId, metadata: updatedMetadata);
+        final current = items[slot]!;
+        items[slot] = current.copyWith(metadata: updatedMetadata);
+        updates[2] += 1;
+      }
     }
 
     session.state = session.state.copyWith(
-        transferSlot: null
-      );
+      transfer: TransferState.idle
+    );
+
+    notifyListeners();
 
     return "Updated: ${updates[1]} - Failed: ${updates[2]} - Deleted: ${updates[0]}";
   }

@@ -170,6 +170,10 @@ class BleManager {
       case 0x04:
         _parseSlotHash(data);
         break;
+      case 0x30:
+      case 0x01:
+        // Responsese we're not concerned about (just from messages we send out normally)
+        break;
       default:
         debugPrint("Unknown opcode: $opcode (Data: $data)");
     }

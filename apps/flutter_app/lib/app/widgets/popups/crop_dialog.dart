@@ -91,7 +91,8 @@ class _CropDialogState extends State<CropDialog> {
                             Positioned.fill(
                               child: Image.memory(
                                 rotatedBytes,
-                                fit: BoxFit.fill
+                                fit: BoxFit.fill,
+                                cacheWidth: 800,
                               )
                             ),
 
