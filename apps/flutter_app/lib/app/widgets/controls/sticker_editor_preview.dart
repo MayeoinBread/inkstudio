@@ -70,9 +70,7 @@ class _StickerEditorPreviewState extends State<StickerEditorPreview> {
     double imageWidth,
     double imageHeight,
   ) {
-    final isSelected =
-        overlay.id ==
-        widget.selectedOverlayId;
+    final isSelected = overlay.id == widget.selectedOverlayId;
 
     return StickerOverlay(
       overlay: overlay,
@@ -81,18 +79,12 @@ class _StickerEditorPreviewState extends State<StickerEditorPreview> {
         imageHeight,
       ),
       selected: isSelected,
-      child: _buildOverlayVisual(
-        overlay,
-      ),
+      child: _buildOverlayVisual(overlay),
       onSelected: () {
-        widget.onOverlaySelected(
-          overlay.id,
-        );
+        widget.onOverlaySelected(overlay.id);
       },
       onChanged: (updatedOverlay) {
-        widget.onOverlayChanged(
-          updatedOverlay,
-        );
+        widget.onOverlayChanged(updatedOverlay);
       },
     );
   }

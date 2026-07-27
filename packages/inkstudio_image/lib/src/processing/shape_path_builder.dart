@@ -53,9 +53,16 @@ class ShapePathBuilder {
         return _createSquareCommands();
       case ShapeType.heart:
         return _createHeartCommands();
+      case ShapeType.circle:
+        return _createCircleCommands();
+      case ShapeType.triangle:
+        return _createTriangleCommands();
+      case ShapeType.diamond:
+        return _createDiamondCommands();
       case ShapeType.star:
-      default:
         return _createStarCommands(sides: 5, innerRadius: 0.4);
+      case ShapeType.roundedRectangle:
+        return _createRoundedRectangleCommands();
     }
   }
 
@@ -141,6 +148,35 @@ class ShapePathBuilder {
     ];
   }
 
+  static List<ShapeCommand> _createCircleCommands() {
+    const kappa = 0.5522847498;
+
+    return const [
+      MoveTo(0.5, 0.0),
+      CubicTo(
+        0.5 + kappa * 0.5, 0.0,
+        1.0, 0.5 - kappa * 0.5,
+        1.0, 0.5
+      ),
+      CubicTo(
+        1.0, 0.5 + kappa * 0.5,
+        0.5 + kappa * 0.5, 1.0,
+        0.5, 1.0
+      ),
+      CubicTo(
+        0.5 - kappa * 0.5, 1.0,
+        0.0, 0.5 + kappa * 0.5,
+        0.0, 0.5
+      ),
+      CubicTo(
+        0.0, 0.5 - kappa * 0.5,
+        0.5 - kappa * 0.5, 0.0,
+        0.5, 0.0
+      ),
+      Close()
+    ];
+  }
+
   static List<ShapeCommand> _createStarCommands({
     required int sides,
     required double innerRadius
@@ -177,52 +213,97 @@ class ShapePathBuilder {
     return const [
       // Bottom point
       MoveTo(0.5, 0.95),
-
       // Left lower curve -> left lobe outer edge
       CubicTo(
         0.42, 0.82,
         0.08, 0.62,
-        0.08, 0.35,
+        0.08, 0.35
       ),
-
       // Left lobe up and into centre cleft
       CubicTo(
         0.08, 0.12,
         0.32, -0.03,
-        0.5, 0.25,
+        0.5, 0.25
       ),
-
       // Centre cleft -> right lobe
       CubicTo(
         0.68, -0.03,
         0.92, 0.12,
-        0.92, 0.35,
+        0.92, 0.35
       ),
-
       // Right lobe -> bottom point
       CubicTo(
         0.92, 0.62,
         0.58, 0.82,
-        0.5, 0.95,
+        0.5, 0.95
       ),
-
-      Close(),
+      Close()
     ];
   }
 
-  static Path _createCircle() {
-    return Path()
-      ..addOval(const Rect.fromLTWH(0, 0, 1, 1));
+  static List<ShapeCommand> _createTriangleCommands() {
+    return const [
+      MoveTo(0.0, 1.0),
+      LineTo(0.5, 0.0),
+      LineTo(1.0, 1.0),
+      Close()
+    ];
   }
 
-  static Path _createTriangle() {
-    final path = Path();
+  static List<ShapeCommand> _createDiamondCommands() {
+    return const [
+      MoveTo(0.5, 1.0),
+      LineTo(1.0, 0.5),
+      LineTo(0.5, 0.0),
+      LineTo(0.0, 0.5),
+      Close()
+    ];
+  }
 
-    path.moveTo(0.5, 0);
-    path.lineTo(1, 1);
-    path.lineTo(0, 1);
-    path.close();
+  static List<ShapeCommand> _createRoundedRectangleCommands() {
+    const radius = 0.2;
+    const kappa = 0.5522847498;
 
-    return path;
+    // Cubic Bézier control-point offset for approximating
+    // a quarter-circle.
+    const curve = radius * kappa;
+
+    return const [
+      // Start at the top-left corner, after the radius.
+      MoveTo(radius, 0.0),
+      // Top edge.
+      LineTo(1.0 - radius, 0.0),
+      // Top-right corner.
+      CubicTo(
+        1.0 - radius + curve, 0.0,
+        1.0, radius - curve,
+        1.0, radius
+      ),
+      // Right edge.
+      LineTo(1.0, 1.0 - radius),
+      // Bottom-right corner.
+      CubicTo(
+        1.0, 1.0 - radius + curve,
+        1.0 - radius + curve, 1.0,
+        1.0 - radius, 1.0
+      ),
+      // Bottom edge.
+      LineTo(radius, 1.0),
+      // Bottom-left corner.
+      CubicTo(
+        radius - curve, 1.0,
+        0.0, 1.0 - radius + curve,
+        0.0, 1.0 - radius
+      ),
+      // Left edge.
+      LineTo(0.0, radius),
+      // Top-left corner.
+      CubicTo(
+        0.0, radius - curve,
+        radius - curve, 0.0,
+        radius, 0.0
+      ),
+      Close()
+    ];
   }
 }

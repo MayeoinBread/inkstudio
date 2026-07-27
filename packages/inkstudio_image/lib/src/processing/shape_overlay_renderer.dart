@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
@@ -229,34 +228,5 @@ class ShapeOverlayRenderer {
           dx * sinAngle +
           dy * cosAngle,
     );
-  }
-
-  static List<ShapePoint> _pathToPoints(
-    Path path, double width, double height
-  ) {
-    final points = <ShapePoint>[];
-
-    for (final metric in path.computeMetrics()) {
-      final length = metric.length;
-
-      // More samples = smoother curves
-      // 1 pixel is a reasonable starting point
-      final steps = math.max(16, length.ceil());
-
-      for (int i=0; i<=steps; i++) {
-        final distance = length * i / steps;
-        final tangent = metric.getTangentForOffset(distance);
-        
-        if(tangent == null) continue;
-
-        points.add(
-          ShapePoint(
-            x: tangent.position.dx * width,
-            y: tangent.position.dy * height)
-        );
-      }
-    }
-
-    return points;
   }
 }

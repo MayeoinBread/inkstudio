@@ -57,6 +57,54 @@ class ImageRepository {
     return image;
   }
 
+  Future<StoredImage> updateImage({
+    required String imageId,
+    required Uint8List? originalBytes,
+    required Uint8List thumbnailBytes,
+    required Uint8List packedBytes
+  }) async {
+    final existingImage = await getImage(imageId);
+
+    if (existingImage == null) {
+      throw StateError('Cannot update image "$imageId": image does not exist');
+    }
+
+    final imageDir = Directory(dirname(existingImage.processedPath));
+
+    await imageDir.create(recursive: true);
+
+    String originalPath = existingImage.originalPath;
+    String sourceHash = existingImage.sourceHash;
+
+    if (originalBytes != null) {
+      originalPath = join(imageDir.path, 'original.png');
+      await File(originalPath).writeAsBytes(originalBytes);
+      sourceHash = md5.convert(originalBytes).toString();
+    }
+
+    final thumbnailPath = join(imageDir.path, 'thumb.png');
+    final processedPath = join(imageDir.path, 'processed.bin');
+    await File(thumbnailPath).writeAsBytes(thumbnailBytes);
+    await File(processedPath).writeAsBytes(packedBytes);
+    
+    final deviceHash = md5.convert(packedBytes).toString();
+
+    final image = StoredImage(
+      id: existingImage.id,
+      originalPath: originalPath,
+      thumbnailPath: thumbnailPath,
+      processedPath: processedPath,
+      sourceHash: sourceHash,
+      deviceHash: deviceHash
+    );
+
+    final database = await db.database;
+
+    await database.update('images', image.toMap(), where: 'id = ?', whereArgs: [imageId]);
+
+    return image;
+  }
+
   Future<StoredImage?> getImage(
     String imageId
   ) async {

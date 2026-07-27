@@ -6,7 +6,9 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:inkstudio/app/controller/library_controller.dart';
 import 'package:inkstudio/app/data/models/editor_result.dart';
+import 'package:inkstudio/app/data/models/stored_image.dart';
 import 'package:inkstudio/app/repositories/image_repository.dart';
+import 'package:inkstudio/app/repositories/overlay_repository.dart';
 import 'package:inkstudio/app/services/ble_service.dart';
 import 'package:inkstudio/app/services/device_session_service.dart';
 import 'package:inkstudio/app/services/image_pipeline_controller.dart';
@@ -172,32 +174,37 @@ class _LibraryPageState extends State<LibraryPage> {
   Future<void> _handleEditorResult(int slot, LibraryItem item, EditorResult editorResult) async {
     final previewMd5 = md5.convert(editorResult.packedBytes).toString();
 
+    final imageRepository = ImageRepository();
+    final overlayRepository = OverlayRepository();
+
+    StoredImage image;
+    Uint8List thumbnail;
+
     if (item.exists) {
-      final existingImage = await ImageRepository().getImage(item.metadata.imageId!);
-      if (previewMd5 == existingImage?.deviceHash){
+      final existingImage = await imageRepository.getImage(item.metadata.imageId!);
+
+      if (existingImage == null) {
+        throw StateError('Slot references missing image: ${item.metadata.imageId}');
+      }
+
+      // Nothing has changed in the rendered image, keep existing image and its ID
+      if (previewMd5 == existingImage.deviceHash) {
+        await overlayRepository.saveOverlays(imageId: existingImage.id, overlays: editorResult.overlays);
         return;
       }
+
+      // The image has changed, so update existing image while preserving its ID
+      thumbnail = ThumbnailService.createFromBytes(editorResult.previewBytes);
+      image = await imageRepository.updateImage(imageId: existingImage.id, originalBytes: editorResult.originalBytes, thumbnailBytes: thumbnail, packedBytes: editorResult.packedBytes);
+    } else {
+      // This is a genuinely new image
+      thumbnail = ThumbnailService.createFromBytes(editorResult.previewBytes);
+      image = await imageRepository.storeImage(originalBytes: editorResult.originalBytes, thumbnailBytes: thumbnail, packedBytes: editorResult.packedBytes);
     }
 
-    final thumbnail = ThumbnailService.createFromBytes(editorResult.previewBytes);
-
-    final image = await ImageRepository().storeImage(
-      originalBytes: editorResult.originalBytes,
-      thumbnailBytes: thumbnail,
-      packedBytes: editorResult.packedBytes
-    );
-
-    final newMetadata = editorResult.metadata.copyWith(
-      imageId: image.id,
-      pendingAction: SlotPendingAction.upload
-    );
-
-    controller.updateSlot(
-      slot: slot,
-      exists: true,
-      thumbnailBytes: thumbnail,
-      metadata: newMetadata
-    );
+    await overlayRepository.saveOverlays(imageId: image.id, overlays: editorResult.overlays);
+    final newMetadata = editorResult.metadata.copyWith(imageId: image.id, pendingAction: SlotPendingAction.upload);
+    controller.updateSlot(slot: slot, exists: true, thumbnailBytes: thumbnail, metadata: newMetadata);
 
     await controller.commitSlot(albumId: controller.currentAlbum!.id, slot: slot);
   }

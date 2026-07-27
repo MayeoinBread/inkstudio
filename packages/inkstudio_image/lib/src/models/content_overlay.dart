@@ -38,7 +38,7 @@ class ContentOverlay {
       'width': width,
       'height': height,
       'rotation': rotation,
-      'colour': colour.index,
+      'colour': colour.index.index,
       'data': data.toJson()
     };
   }
@@ -53,8 +53,8 @@ class ContentOverlay {
       width: (json['width'] as num).toDouble(),
       height: (json['height'] as num).toDouble(),
       data: OverlayData.fromJson(json['data'] as Map<String, dynamic>),
-      rotation: json['rotation'],
-      colour: ProtocolPalette.paletteFromIndex((json['colour'] as num).toInt())
+      rotation: (json['rotation'] as num?)?.toDouble() ?? 0,
+      colour: ProtocolPalette.paletteFromIndex((json['colour'] as num?)?.toInt() ?? 3)
     );
   }
 

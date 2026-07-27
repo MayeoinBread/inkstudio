@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:inkstudio/app/data/models/editor_result.dart';
 import 'package:inkstudio/app/repositories/image_repository.dart';
+import 'package:inkstudio/app/repositories/overlay_repository.dart';
 import 'package:inkstudio/app/services/image_pipeline_controller.dart';
 import 'package:inkstudio/app/widgets/common/image_preview_panel.dart';
 import 'package:inkstudio/app/widgets/controls/dithering_controls.dart';
@@ -77,12 +78,18 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     final imageId = metadata.imageId;
     if (imageId == null) return;
 
+    debugPrint("ImageID: $imageId");
+
+    final existingOverlays = await OverlayRepository().getOverlays(imageId);
+    debugPrint("Overlays count: ${existingOverlays.length}");
+
     setState(() {
       algorithm = metadata.dither;
       adjustments = metadata.adjustments;
       _filter = metadata.filter;
       cropRect = metadata.cropRect;
       rotation = metadata.rotation;
+      overlays = existingOverlays;
     });
 
     // Reload the existing, processed image instead of reprocessing from scratch (ever so slightly faster on mobile)
