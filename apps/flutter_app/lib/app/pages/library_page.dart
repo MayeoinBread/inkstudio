@@ -203,7 +203,8 @@ class _LibraryPageState extends State<LibraryPage> {
     }
 
     await overlayRepository.saveOverlays(imageId: image.id, overlays: editorResult.overlays);
-    final newMetadata = editorResult.metadata.copyWith(imageId: image.id, pendingAction: SlotPendingAction.upload);
+    // final newMetadata = editorResult.metadata.copyWith(imageId: image.id, pendingAction: SlotPendingAction.upload);
+    final newMetadata = editorResult.metadata.copyWith(imageId: image.id);
     controller.updateSlot(slot: slot, exists: true, thumbnailBytes: thumbnail, metadata: newMetadata);
 
     await controller.commitSlot(albumId: controller.currentAlbum!.id, slot: slot);
