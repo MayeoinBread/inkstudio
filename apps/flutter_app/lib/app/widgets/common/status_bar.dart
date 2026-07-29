@@ -36,8 +36,10 @@ class StatusBar extends StatelessWidget {
           Text(state.deviceName, style: const TextStyle(fontWeight: FontWeight.w600)),
           const SizedBox(width: 12),
           // Status text
+          Text(state.statusText, overflow: TextOverflow.ellipsis),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(state.statusText, overflow: TextOverflow.ellipsis)
+            child: Text(state.activeSlot == null ? "Slot: N/A" : "Slot: ${state.activeSlot}")
           ),
           // Battery
           Row(

@@ -17,7 +17,6 @@ import 'package:inkstudio/app/state/device_session_state.dart';
 import 'package:inkstudio/app/widgets/library/album_selector.dart';
 import 'package:inkstudio/app/widgets/library/library_grid.dart';
 import 'package:inkstudio/app/widgets/library/library_item.dart';
-import 'package:inkstudio/app/widgets/library/slot_inspector.dart';
 import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
 import 'package:inkstudio/app/widgets/popups/content_editor_dialog.dart';
 import 'package:inkstudio/app/widgets/popups/mobile_editor_layout.dart';
@@ -346,54 +345,24 @@ class _LibraryPageState extends State<LibraryPage> {
       child: LibraryGrid(
         items: controller.items,
         selectedSlot: selectedSlot,
-        onSelected: (slot) { setState(() => selectedSlot = slot);},
+        onSelected: (slot) {
+          setState(
+            () {
+              selectedSlot = slot;
+              updateSession((s) => s.copyWith(
+                activeSlot: selectedSlot)
+              );
+            }
+          );
+        },
         onEdit: _onEdit, onDeleteFromDevice: _onDeleteFromDevice,
         onClearSlot: _onClearSlot)
-    );
-  }
-
-  Widget _buildDesktopSidebar(BuildContext context) {
-    return SizedBox(
-      width: 200,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          AlbumSelector(
-            albums: controller.albums,
-            currentAlbum: controller.currentAlbum!,
-            onAlbumSelected: (album) {
-              controller.onAlbumSelected(album, session.state.deviceInfo.serial);
-            }, 
-            onCreateAlbum: controller.onCreateAlbum,
-            onRenameAlbum: controller.onRenameAlbum,
-            onDeleteAlbum: controller.onDeleteAlbum
-          ),
-          SlotInspector(item: selectedSlot == null ? null : controller.items[selectedSlot], onSync: _sync),
-          FilledButton(
-            onPressed: session.state.isConnected
-              ? () async {await controller.pushToDevice(ble: ble, session: session);}
-              : null,
-            child: const Text('Push Updates')),
-          FilledButton(
-            onPressed: () async {
-              final deleted = await ImageRepository().cleanupUnusedImages();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Deleted $deleted unused images'))
-                );
-              }
-            },
-            child: const Text('Cleanup Storage')
-          )
-        ]
-      )
     );
   }
 
   Widget _buildDesktopLayout(BuildContext context) {
     return Row (
       children: [
-        _buildDesktopSidebar(context),
         Expanded(child: _buildGrid(context))
       ]
     );
@@ -406,20 +375,14 @@ class _LibraryPageState extends State<LibraryPage> {
         items: controller.items,
         selectedSlot: selectedSlot,
         onSelected: (slot) {
-          setState(() => selectedSlot = slot);
-          if (controller.items[slot] != null) {
-            showModalBottomSheet(
-              context: context,
-              isScrollControlled: true,
-              useSafeArea: true,
-              builder: (_) {
-                return FractionallySizedBox(
-                  heightFactor: 0.4,
-                  child: SlotInspector(item: controller.items[slot], onSync: _sync)
-                );
-              }
-            );
-          }
+          setState(
+            () {
+              selectedSlot = slot;
+              updateSession((s) => s.copyWith(
+                activeSlot: selectedSlot)
+              );
+            }
+          );
         },
         onEdit: _onEdit,
         onDeleteFromDevice: _onDeleteFromDevice,
@@ -436,6 +399,15 @@ class _LibraryPageState extends State<LibraryPage> {
       appBar: AppBar(
         title: const Text('InkStudio'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.edit),
+            onPressed: selectedSlot == null
+              ? null
+              : () async {
+                if (selectedSlot == null) return;
+                await _onEdit(selectedSlot!);
+              },
+          ),
           IconButton(
             icon: const Icon(Icons.image_search_outlined),
             onPressed: () async {
@@ -457,6 +429,17 @@ class _LibraryPageState extends State<LibraryPage> {
             onPressed: session.state.isConnected
               ? _sync
               : null,
+          ),
+          IconButton(
+            icon: const Icon(Icons.cleaning_services_outlined),
+            onPressed: () async {
+              final deleted = await ImageRepository().cleanupUnusedImages();
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Deleted $deleted unused images'))
+                );
+              }
+            }
           )
         ]
       ),
@@ -475,17 +458,15 @@ class _LibraryPageState extends State<LibraryPage> {
               );
         },
       ),
-      floatingActionButton: isMobile
-        ? ble.bleSession.isConnected
-          ? FloatingActionButton.extended(
-              onPressed: () async {
-                await controller.pushToDevice(ble: ble, session: session);
-              },
-              icon: const Icon(Icons.upload),
-              label: const Text('Push')
-            )
-          : null
-        : null
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: ble.bleSession.isConnected
+          ? () async {
+            await controller.pushToDevice(ble: ble, session: session);
+          }
+          : null,
+        icon: const Icon(Icons.upload),
+        label: const Text('Push')
+      ),
     );
   }
 } 

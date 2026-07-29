@@ -7,6 +7,7 @@ class StickerEditorControls extends StatelessWidget {
 
   final VoidCallback onAddSticker;
   final VoidCallback onDeleteSticker;
+  final VoidCallback onDeleteAllStickers;
 
   final ValueChanged<ContentOverlay> onOverlayChanged;
 
@@ -16,6 +17,7 @@ class StickerEditorControls extends StatelessWidget {
     required this.onAddSticker,
     required this.onDeleteSticker,
     required this.onOverlayChanged,
+    required this.onDeleteAllStickers
   });
 
   ShapeOverlayData? get _shapeData {
@@ -175,6 +177,12 @@ class StickerEditorControls extends StatelessWidget {
               icon: const Icon(Icons.delete),
               label: const Text('Delete'),
             ),
+
+            ElevatedButton.icon(
+              onPressed: onDeleteAllStickers,
+              icon: const Icon(Icons.delete_forever),
+              label: const Text('Delete All'),
+            ),
           ],
         )
       );
@@ -297,6 +305,12 @@ class StickerEditorControls extends StatelessWidget {
               onPressed: onDeleteSticker,
               icon: const Icon(Icons.delete),
               label: const Text('Delete'),
+            ),
+
+            ElevatedButton.icon(
+              onPressed: onDeleteAllStickers,
+              icon: const Icon(Icons.delete_forever),
+              label: const Text('Delete All'),
             ),
           ],
         )

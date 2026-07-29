@@ -75,6 +75,13 @@ class _StickerEditorState extends State<StickerEditor> {
     });
   }
 
+  void _deleteAllStickers() {
+    setState(() {
+      overlays = <ContentOverlay>[];
+      selectedOverlayId = null;
+    });
+  }
+
   void _updateOverlay(ContentOverlay updatedOverlay) {
     setState(() {
       overlays = overlays.map((overlay) {
@@ -119,6 +126,7 @@ class _StickerEditorState extends State<StickerEditor> {
               onAddSticker: _addSticker,
               onDeleteSticker: _deleteSelected,
               onOverlayChanged: _updateOverlay,
+              onDeleteAllStickers: _deleteAllStickers,
             ),
 
             const SizedBox(height: 16),

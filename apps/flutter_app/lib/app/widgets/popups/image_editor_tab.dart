@@ -162,11 +162,13 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
 
     if (version != _processVersion) return;
 
-    setState((){
-      previewBytes = pipeline.previewBytes;
-      stickerlessPreviewBytes = pipeline.stickerlessPreviewBytes;
-      widget.onPreviewChanged?.call(pipeline.previewBytes!);
-    });
+    if (mounted) {
+      setState((){
+        previewBytes = pipeline.previewBytes;
+        stickerlessPreviewBytes = pipeline.stickerlessPreviewBytes;
+        widget.onPreviewChanged?.call(pipeline.previewBytes!);
+      });
+    }
   }
 
   void _save() async {
