@@ -36,9 +36,9 @@ class SierraLiteDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       for (int x=0; x<width; x++) {
-        final oldR = r[y][x].clamp(0, 255).toInt();
-        final oldG = g[y][x].clamp(0, 255).toInt();
-        final oldB = b[y][x].clamp(0, 255).toInt();
+        final oldR = r[y][x].clamp(0.0, 255.0);
+        final oldG = g[y][x].clamp(0.0, 255.0);
+        final oldB = b[y][x].clamp(0.0, 255.0);
 
         final mapped = PaletteMapper.map(oldR, oldG, oldB, bias);
 
@@ -46,9 +46,9 @@ class SierraLiteDither implements DitherEngine {
 
         final c = ProtocolPalette.all.firstWhere((e) => e.index == mapped);
 
-        final errR = oldR - c.r;
-        final errG = oldG - c.g;
-        final errB = oldB - c.b;
+        final errR = ((oldR - c.r.toDouble()) * ditherErrorStrength);
+        final errG = ((oldG - c.g.toDouble()) * ditherErrorStrength);
+        final errB = ((oldB - c.b.toDouble()) * ditherErrorStrength);
 
         _spread(r, g, b, x+1, y, errR, errG, errB, 2 / 4, width, height);
         _spread(r, g, b, x-1, y+1, errR, errG, errB, 1 / 4, width, height);
@@ -65,9 +65,9 @@ class SierraLiteDither implements DitherEngine {
     List<List<double>> b,
     int x,
     int y,
-    int errR,
-    int errG,
-    int errB,
+    double errR,
+    double errG,
+    double errB,
     double factor,
     int width,
     int height

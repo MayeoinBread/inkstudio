@@ -2,7 +2,7 @@ import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 
 class PaletteMapper {
-  static PaletteIndex map(int r, int g, int b, PaletteBias bias) {
+  static PaletteIndex map(double r, double g, double b, PaletteBias bias) {
     ProtocolPaletteColour best = ProtocolPalette.all.first;
     double bestDist = _dist(r, g, b, best, bias);
 
@@ -18,12 +18,12 @@ class PaletteMapper {
     return best.index;
   }
 
-  static double _dist(int r, int g, int b, ProtocolPaletteColour c, PaletteBias bias) {
+  static double _dist(double r, double g, double b, ProtocolPaletteColour c, PaletteBias bias) {
     final dr = r - c.r;
     final dg = g - c.g;
     final db = b - c.b;
 
-    double distance = (dr * dr + dg * dg + db * db).toDouble();
+    double distance = (dr * dr + dg * dg + db * db);
 
     switch (c.index) {
       case PaletteIndex.black:

@@ -33,9 +33,9 @@ class FloydSteinbergDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       for (int x=0; x<width; x++) {
-        final oldR = r[y][x].clamp(0, 255).toInt();
-        final oldG = g[y][x].clamp(0, 255).toInt();
-        final oldB = b[y][x].clamp(0, 255).toInt();
+        final oldR = r[y][x].clamp(0.0, 255.0);
+        final oldG = g[y][x].clamp(0.0, 255.0);
+        final oldB = b[y][x].clamp(0.0, 255.0);
 
         final mapped = PaletteMapper.map(oldR, oldG, oldB, bias);
 
@@ -45,10 +45,9 @@ class FloydSteinbergDither implements DitherEngine {
 
         output.setPixel(x, y, mapped);
 
-
-        final errR = oldR - paletteColour.r;
-        final errG = oldG - paletteColour.g;
-        final errB = oldB - paletteColour.b;
+        final errR = ((oldR - paletteColour.r) * ditherErrorStrength);
+        final errG = ((oldG - paletteColour.g) * ditherErrorStrength);
+        final errB = ((oldB - paletteColour.b) * ditherErrorStrength);
 
         _distributed(r, g, b, x + 1, y,     errR, errG, errB, width, height, 7 / 16);
         _distributed(r, g, b, x - 1, y + 1, errR, errG, errB, width, height, 3 / 16);
@@ -65,7 +64,7 @@ class FloydSteinbergDither implements DitherEngine {
     List<List<double>> g,
     List<List<double>> b,
     int x, int y,
-    int errR, int errG, int errB,
+    double errR, double errG, double errB,
     int width, int height,
     double factor
   ) {

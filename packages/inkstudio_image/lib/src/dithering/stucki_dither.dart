@@ -31,9 +31,9 @@ class StuckiDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       for (int x=0; x<width; x++) {
-        final oldR = r[y][x].clamp(0, 255).toInt();
-        final oldG = g[y][x].clamp(0, 255).toInt();
-        final oldB = b[y][x].clamp(0, 255).toInt();
+        final oldR = r[y][x].clamp(0.0, 255.0);
+        final oldG = g[y][x].clamp(0.0, 255.0);
+        final oldB = b[y][x].clamp(0.0, 255.0);
 
         final mapped = PaletteMapper.map(oldR, oldG, oldB, bias);
 
@@ -43,9 +43,9 @@ class StuckiDither implements DitherEngine {
 
         output.setPixel(x, y, mapped);
 
-        final errR = (oldR - paletteColour.r) / 42.0;
-        final errG = (oldG - paletteColour.g) / 42.0;
-        final errB = (oldB - paletteColour.b) / 42.0;
+        final errR = (oldR - paletteColour.r) * ditherErrorStrength / 42.0;
+        final errG = (oldG - paletteColour.g) * ditherErrorStrength / 42.0;
+        final errB = (oldB - paletteColour.b) * ditherErrorStrength / 42.0;
 
         _distributed(r,g,b,x+1,y,errR*8,errG*8,errB*8,width,height);
         _distributed(r,g,b,x+2,y,errR*4,errG*4,errB*4,width,height);

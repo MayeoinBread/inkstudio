@@ -31,9 +31,9 @@ class AtkinsonDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       for (int x=0; x<width; x++) {
-        final oldR = r[y][x].clamp(0, 255).toInt();
-        final oldG = g[y][x].clamp(0, 255).toInt();
-        final oldB = b[y][x].clamp(0, 255).toInt();
+        final oldR = r[y][x].clamp(0.0, 255.0);
+        final oldG = g[y][x].clamp(0.0, 255.0);
+        final oldB = b[y][x].clamp(0.0, 255.0);
 
         final mapped = PaletteMapper.map(oldR, oldG, oldB, bias);
 

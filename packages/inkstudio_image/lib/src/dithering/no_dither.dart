@@ -22,9 +22,9 @@ class NoDither implements DitherEngine {
         final pixel = image.getPixel(x, y);
 
         final mapped = PaletteMapper.map(
-          pixel.r.toInt(),
-          pixel.g.toInt(),
-          pixel.b.toInt(),
+          pixel.r.toDouble(),
+          pixel.g.toDouble(),
+          pixel.b.toDouble(),
           bias
         );
 

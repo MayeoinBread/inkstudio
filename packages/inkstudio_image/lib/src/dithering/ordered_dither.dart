@@ -32,9 +32,9 @@ class OrderedDither implements DitherEngine {
         final threshold =
             (matrix[y % 4][x % 4] / 16.0 - 0.5) * 48.0;
 
-        final r = (pixel.r + threshold).clamp(0, 255).toInt();
-        final g = (pixel.g + threshold).clamp(0, 255).toInt();
-        final b = (pixel.b + threshold).clamp(0, 255).toInt();
+        final r = (pixel.r + threshold).clamp(0.0, 255.0);
+        final g = (pixel.g + threshold).clamp(0.0, 255.0);
+        final b = (pixel.b + threshold).clamp(0.0, 255.0);
 
         final mapped = PaletteMapper.map(r, g, b, bias);
 
