@@ -52,7 +52,8 @@ class StatusBar extends StatelessWidget {
           const SizedBox(width: 12),
           // Transfer state
           Text(
-            'State: ${state.transfer.name.toUpperCase()}',
+            // 'State: ${state.transfer.name.toUpperCase()}',
+            state.transfer.name.toUpperCase(),
             style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color)
           ),
           const SizedBox(width: 12),
