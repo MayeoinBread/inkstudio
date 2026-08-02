@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 
 import '../palette/palette_mapper.dart';
 import 'dither_engine.dart';
@@ -11,7 +12,7 @@ class SierraLiteDither implements DitherEngine {
   String get name => "Sierra Lite";
 
   @override
-  PaletteFramebuffer apply(img.Image image, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image image, PaletteBias bias, DitherOptions dOps) {
     final width = image.width;
     final height = image.height;
 
@@ -46,9 +47,9 @@ class SierraLiteDither implements DitherEngine {
 
         final c = ProtocolPalette.all.firstWhere((e) => e.index == mapped);
 
-        final errR = ((oldR - c.r.toDouble()) * ditherErrorStrength);
-        final errG = ((oldG - c.g.toDouble()) * ditherErrorStrength);
-        final errB = ((oldB - c.b.toDouble()) * ditherErrorStrength);
+        final errR = ((oldR - c.r.toDouble()) * dOps.errorStrength);
+        final errG = ((oldG - c.g.toDouble()) * dOps.errorStrength);
+        final errB = ((oldB - c.b.toDouble()) * dOps.errorStrength);
 
         _spread(r, g, b, x+1, y, errR, errG, errB, 2 / 4, width, height);
         _spread(r, g, b, x-1, y+1, errR, errG, errB, 1 / 4, width, height);

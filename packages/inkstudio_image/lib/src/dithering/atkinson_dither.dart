@@ -3,13 +3,14 @@ import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_engine.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import '../palette/palette_mapper.dart';
 
 class AtkinsonDither implements DitherEngine {
   String get name => "Atkinson";
 
   @override
-  PaletteFramebuffer apply(img.Image input, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image input, PaletteBias bias, DitherOptions dOps) {
     final width = input.width;
     final height = input.height;
 
@@ -43,9 +44,9 @@ class AtkinsonDither implements DitherEngine {
 
         output.setPixel(x, y, mapped);
 
-        final errR = (oldR - paletteColour.r) / 8.0;
-        final errG = (oldG - paletteColour.g) / 8.0;
-        final errB = (oldB - paletteColour.b) / 8.0;
+        final errR = (oldR - paletteColour.r) * dOps.errorStrength / 8.0;
+        final errG = (oldG - paletteColour.g) * dOps.errorStrength/ 8.0;
+        final errB = (oldB - paletteColour.b) * dOps.errorStrength / 8.0;
 
         _distributed(r, g, b, x + 1, y,     errR, errG, errB, width, height);
         _distributed(r, g, b, x + 2, y,     errR, errG, errB, width, height);

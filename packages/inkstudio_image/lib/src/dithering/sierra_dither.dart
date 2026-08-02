@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 
 import '../palette/palette_mapper.dart';
 import 'dither_engine.dart';
@@ -11,7 +12,7 @@ class SierraDither implements DitherEngine {
   String get name => "Sierra";
 
   @override
-  PaletteFramebuffer apply(img.Image input, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image input, PaletteBias bias, DitherOptions dOps) {
     final width = input.width;
     final height = input.height;
 
@@ -46,9 +47,9 @@ class SierraDither implements DitherEngine {
         final paletteColour = ProtocolPalette.all.firstWhere((c) => c.index == mapped);
 
         // Sierra currently uses full error diffusion
-        final errR = (oldR - paletteColour.r.toDouble()) * ditherErrorStrength / 32.0;
-        final errG = (oldG - paletteColour.g.toDouble()) * ditherErrorStrength / 32.0;
-        final errB = (oldB - paletteColour.b.toDouble()) * ditherErrorStrength / 32.0;
+        final errR = (oldR - paletteColour.r.toDouble()) * dOps.errorStrength / 32.0;
+        final errG = (oldG - paletteColour.g.toDouble()) * dOps.errorStrength / 32.0;
+        final errB = (oldB - paletteColour.b.toDouble()) * dOps.errorStrength / 32.0;
 
         
         _distribute(r, g, b, x + 1, y, errR * 5, errG * 5, errB * 5, width, height);

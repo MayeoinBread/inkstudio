@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:image/image.dart' as img;
+import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 
 class ImageFilterProcessor {
@@ -19,9 +20,15 @@ class ImageFilterProcessor {
       
       case ImageFilter.halftone:
         return _halftone(input, adjustments.halftoneScale);
+      
+      case ImageFilter.halftoneColour:
+        return _halftoneColour(input, adjustments.halftoneScale);
 
       case ImageFilter.crossHatch:
         return _crossHatch(input, adjustments.hatchDensity);
+      
+      case ImageFilter.crossHatchColour:
+        return _crossHatchColour(input, adjustments.hatchDensity);
       
       case ImageFilter.pencilSketch:
         return _pencilSketch(input, adjustments.sketchStrength);
@@ -98,6 +105,123 @@ class ImageFilterProcessor {
     return out;
   }
 
+  static img.Image _crossHatchColour(
+    img.Image input,
+    double density,
+  ) {
+    final out = img.Image.from(input);
+
+    final width = out.width;
+    final height = out.height;
+
+    final spacing = density.clamp(2.0, 12.0);
+
+    for (int y = 0; y < height; y++) {
+      for (int x = 0; x < width; x++) {
+        final p = input.getPixel(x, y);
+
+        final r = p.r.toDouble();
+        final g = p.g.toDouble();
+        final b = p.b.toDouble();
+
+        // Luminance controls how much hatching is applied.
+        final lum =
+            (0.299 * r +
+            0.587 * g +
+            0.114 * b) / 255.0;
+
+        // Determine the colour of the hatch.
+        final hatchColour = _crossHatchPaletteColour(
+          r,
+          g,
+          b,
+        );
+
+        // Start with a white background.
+        int outputR = 255;
+        int outputG = 255;
+        int outputB = 255;
+
+        // First hatch direction.
+        if (lum < 0.75) {
+          final hatchSpacing = spacing.round();
+
+          if ((x + y) % hatchSpacing == 0) {
+            outputR = hatchColour.r;
+            outputG = hatchColour.g;
+            outputB = hatchColour.b;
+          }
+        }
+
+        // Second hatch direction.
+        if (lum < 0.5) {
+          final hatchSpacing = spacing.round();
+
+          if ((x - y) % hatchSpacing == 0) {
+            outputR = hatchColour.r;
+            outputG = hatchColour.g;
+            outputB = hatchColour.b;
+          }
+        }
+
+        // Dense crosshatching for dark areas.
+        if (lum < 0.25) {
+          final denseSpacing =
+              math.max(1, (spacing / 2).round());
+
+          if (x % denseSpacing == 0 &&
+              y % denseSpacing == 0) {
+            outputR = hatchColour.r;
+            outputG = hatchColour.g;
+            outputB = hatchColour.b;
+          }
+        }
+
+        out.setPixelRgb(
+          x,
+          y,
+          outputR,
+          outputG,
+          outputB,
+        );
+      }
+    }
+
+    return out;
+  }
+
+  static ProtocolPaletteColour _crossHatchPaletteColour(
+    double r,
+    double g,
+    double b,
+  ) {
+    final redStrength =
+        r - (g + b) / 2.0;
+
+    final yellowStrength =
+        (r + g) / 2.0 - b;
+
+    // Red-dominant areas.
+    if (redStrength > 30.0 &&
+        redStrength > yellowStrength) {
+      return ProtocolPalette.all.firstWhere(
+        (c) => c.index == PaletteIndex.red,
+      );
+    }
+
+    // Yellow-dominant areas.
+    if (yellowStrength > 30.0) {
+      return ProtocolPalette.all.firstWhere(
+        (c) => c.index == PaletteIndex.yellow,
+      );
+    }
+
+    // Neutral/dark areas.
+    return ProtocolPalette.all.firstWhere(
+      (c) => c.index == PaletteIndex.black,
+    );
+  }
+
   static img.Image _crossHatch(img.Image input, double density) {
     final out = img.Image.from(input);
 
@@ -152,6 +276,149 @@ class ImageFilterProcessor {
     }
 
     return out;
+  }
+
+  static img.Image _halftoneColour(
+    img.Image input,
+    double density,
+  ) {
+    final out = img.Image.from(input);
+
+    final width = out.width;
+    final height = out.height;
+
+    // final cellSize = density.round().clamp(2, 30);
+    final cellSize = density;
+
+    for (double cellY = 0; cellY < height; cellY += cellSize) {
+      for (double cellX = 0; cellX < width; cellX += cellSize) {
+        final startX = cellX.floor();
+        final startY = cellY.floor();
+        final endX = math.min((cellX + cellSize).floor(), width);
+        final endY = math.min((cellY + cellSize).floor(), height);
+
+        double totalR = 0;
+        double totalG = 0;
+        double totalB = 0;
+
+        int count = 0;
+
+        // Average the colour within the cell.
+        for (int y = startY; y < endY; y++) {
+          for (int x = startX; x < endX; x++) {
+            final p = input.getPixel(x, y);
+
+            totalR += p.r.toDouble();
+            totalG += p.g.toDouble();
+            totalB += p.b.toDouble();
+
+            count++;
+          }
+        }
+
+        if (count == 0) continue;
+
+        final r = totalR / count;
+        final g = totalG / count;
+        final b = totalB / count;
+
+        // Determine which display colour best represents
+        // the dominant colour of this cell.
+        final paletteColour = _halftonePaletteColour(r, g, b);
+
+        // Calculate luminance.
+        final luminance =
+            (0.299 * r +
+            0.587 * g +
+            0.114 * b) / 255.0;
+
+        // Darker areas produce larger dots.
+        final intensity = 1.0 - luminance;
+
+        final cellWidth = endX - cellX;
+        final cellHeight = endY - cellY;
+
+        final centerX = cellX + cellWidth / 2.0;
+        final centerY = cellY + cellHeight / 2.0;
+
+        final maxRadius =
+            math.min(cellWidth, cellHeight) / 2.0;
+
+        final radius = intensity * maxRadius;
+
+        // Render the cell.
+        for (int y = startY; y < endY; y++) {
+          for (int x = startX; x < endX; x++) {
+            final dx = x - centerX;
+            final dy = y - centerY;
+
+            final distanceSquared =
+                dx * dx + dy * dy;
+
+            if (distanceSquared <= radius * radius) {
+              out.setPixelRgb(
+                x,
+                y,
+                paletteColour.r,
+                paletteColour.g,
+                paletteColour.b,
+              );
+            } else {
+              out.setPixelRgb(
+                x,
+                y,
+                255,
+                255,
+                255,
+              );
+            }
+          }
+        }
+      }
+    }
+
+    return out;
+  }
+
+  static ProtocolPaletteColour _halftonePaletteColour(
+    double r,
+    double g,
+    double b,
+  ) {
+    // Determine how strongly each colour is represented.
+
+    final redStrength = r - (g + b) / 2.0;
+
+    final yellowStrength =
+        (r + g) / 2.0 - b;
+
+    final brightness =
+        (r + g + b) / 3.0;
+
+    // Strong red.
+    if (redStrength > 30.0 && redStrength > yellowStrength) {
+      return ProtocolPalette.all.firstWhere(
+        (c) => c.index == PaletteIndex.red,
+      );
+    }
+
+    // Strong yellow.
+    if (yellowStrength > 30.0) {
+      return ProtocolPalette.all.firstWhere(
+        (c) => c.index == PaletteIndex.yellow,
+      );
+    }
+
+    // Otherwise use black/white based on brightness.
+    if (brightness < 128.0) {
+      return ProtocolPalette.all.firstWhere(
+        (c) => c.index == PaletteIndex.black,
+      );
+    }
+
+    return ProtocolPalette.all.firstWhere(
+      (c) => c.index == PaletteIndex.white,
+    );
   }
 
   static img.Image _halftone(img.Image input, double density) {

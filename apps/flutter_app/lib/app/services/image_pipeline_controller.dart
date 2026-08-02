@@ -42,6 +42,7 @@ class ImagePipelineController {
         height: DeviceConstants.imageHeight,
         dither: metadata.dither,
         adjustments: metadata.adjustments,
+        ditherOptions: metadata.ditherOptions,
         paletteBias: metadata.paletteBias,
         overlays: overlays
       )
@@ -57,6 +58,7 @@ class ImagePipelineController {
     required ImageFilter filter,
     required bool simulateDevice,
     required ImageAdjustments adjustments,
+    required DitherOptions ditherOptions,
     required PaletteBias paletteBias,
     required List<ContentOverlay> overlays
   }) async {
@@ -72,6 +74,7 @@ class ImagePipelineController {
         height: DeviceConstants.imageHeight,
         dither: dither,
         adjustments: adjustments,
+        ditherOptions: ditherOptions,
         paletteBias: paletteBias,
         overlays: overlays
       )

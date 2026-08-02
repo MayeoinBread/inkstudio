@@ -3,12 +3,11 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import 'package:inkstudio_image/src/dithering/dither_register.dart';
-import 'package:inkstudio_image/src/models/content_overlay.dart';
 import 'package:inkstudio_image/src/pipeline/framebuffer_preview_renderer.dart';
 import 'package:inkstudio_image/src/processing/image_adjustment_processor.dart';
 import 'package:inkstudio_image/src/processing/image_filter_processing.dart';
-import 'package:inkstudio_image/src/processing/overlay_renderer.dart';
 
 class ImagePipeline {
   final int targetWidth;
@@ -24,6 +23,7 @@ class ImagePipeline {
     required ImageFilter filter,
     required bool simulateDevice,
     required ImageAdjustments adjustments,
+    required DitherOptions dOps,
     required PaletteBias paletteBias,
     required List<ContentOverlay> overlays,
     DitherMode dither = DitherMode.floydSteinberg,
@@ -38,9 +38,9 @@ class ImagePipeline {
 
     final sharpened = ImageAdjustmentProcessor.applySharpen(adjusted, adjustments.sharpen);
 
-    final framebuffer = DitherRegistry.create(dither).apply(sharpened, paletteBias);
+    final framebuffer = DitherRegistry.create(dither).apply(sharpened, paletteBias, dOps);
 
-    final stickerlessFramebuffer = DitherRegistry.create(dither).apply(sharpened, paletteBias);
+    final stickerlessFramebuffer = DitherRegistry.create(dither).apply(sharpened, paletteBias, dOps);
 
     OverlayRenderer.apply(
       framebuffer, overlays

@@ -3,13 +3,14 @@ import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_engine.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import '../palette/palette_mapper.dart';
 
 class BurkesDither implements DitherEngine {
   String get name => "Burkes";
 
   @override
-  PaletteFramebuffer apply(img.Image input, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image input, PaletteBias bias, DitherOptions dOps) {
     final width = input.width;
     final height = input.height;
 
@@ -43,9 +44,9 @@ class BurkesDither implements DitherEngine {
 
         output.setPixel(x, y, mapped);
 
-        final errR = (oldR - paletteColour.r) * ditherErrorStrength / 32.0;
-        final errG = (oldG - paletteColour.g) * ditherErrorStrength / 32.0;
-        final errB = (oldB - paletteColour.b) * ditherErrorStrength / 32.0;
+        final errR = (oldR - paletteColour.r) * dOps.errorStrength / 32.0;
+        final errG = (oldG - paletteColour.g) * dOps.errorStrength / 32.0;
+        final errB = (oldB - paletteColour.b) * dOps.errorStrength / 32.0;
 
         _distributed(r,g,b,x+1,y,errR*8,errG*8,errB*8,width,height);
         _distributed(r,g,b,x+2,y,errR*4,errG*4,errB*4,width,height);

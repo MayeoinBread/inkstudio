@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inkstudio/app/widgets/controls/dither_options_controls.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio/app/widgets/controls/dithering_controls.dart';
 import 'package:inkstudio/app/widgets/controls/filter_controls.dart';
@@ -9,6 +10,7 @@ import 'package:inkstudio/app/widgets/controls/palette_bias_controls.dart';
 class ImageEditorMobileControls extends StatelessWidget {
   final DitherMode alg;
   final ImageAdjustments adjustments;
+  final DitherOptions ditherOptions;
   final PaletteBias bias;
   final ImageFilter filter;
   final bool simulateDevice;
@@ -18,6 +20,7 @@ class ImageEditorMobileControls extends StatelessWidget {
   
   final ValueChanged<DitherMode> onAlgChanged;
   final ValueChanged<ImageAdjustments> onAdjustmentsChanged;
+  final ValueChanged<DitherOptions> onDOpsChanged;
   final ValueChanged<PaletteBias> onPaletteBiasChanged;
   final ValueChanged<ImageFilter> onFilterChanged;
   final ValueChanged<bool> onSimulateDeviceChanged;
@@ -31,11 +34,13 @@ class ImageEditorMobileControls extends StatelessWidget {
     super.key,
     required this.alg,
     required this.adjustments,
+    required this.ditherOptions,
     required this.bias,
     required this.filter,
     required this.simulateDevice,
     required this.onAlgChanged,
     required this.onAdjustmentsChanged,
+    required this.onDOpsChanged,
     required this.onPaletteBiasChanged,
     required this.onFilterChanged,
     required this.onSimulateDeviceChanged,
@@ -146,9 +151,19 @@ class ImageEditorMobileControls extends StatelessWidget {
 
                 SingleChildScrollView(
                   padding: const EdgeInsets.all(8),
-                  child: DitheringControls(
-                    selectedAlgorithm: alg,
-                    onAlgorithmChanged: onAlgChanged
+                  child: Column(
+                    children: [
+                      DitheringControls(
+                        selectedAlgorithm: alg,
+                        onAlgorithmChanged: onAlgChanged
+                      ),
+                      SizedBox(height: 8),
+                      DitherOptionsControls(
+                        ditherMode: alg,
+                        ditherOptions: ditherOptions,
+                        onChanged: onDOpsChanged
+                      )
+                    ]
                   )
                 ),
 

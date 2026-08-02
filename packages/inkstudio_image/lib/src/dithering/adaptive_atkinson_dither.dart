@@ -3,13 +3,14 @@ import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_engine.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import '../palette/palette_mapper.dart';
 
 class AdaptiveAtkinsonDither implements DitherEngine {
   String get name => "Adaptive Atkinson";
 
   @override
-  PaletteFramebuffer apply(img.Image input, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image input, PaletteBias bias, DitherOptions dOps) {
     final width = input.width;
     final height = input.height;
 
@@ -58,11 +59,12 @@ class AdaptiveAtkinsonDither implements DitherEngine {
 
         final strength = edges[y][x];
 
-        final diffusion = strength > 0.20 ? 1.0 : 0.35;
+        final diffusion = strength > dOps.edgeDetectionThreshold ? 1.0 : dOps.smoothAreaDiffusion;
+        final effectiveStrength = diffusion * dOps.errorStrength;
 
-        final errR = (oldR - paletteColour.r) * diffusion / 8.0;
-        final errG = (oldG - paletteColour.g) * diffusion / 8.0;
-        final errB = (oldB - paletteColour.b) * diffusion / 8.0;
+        final errR = (oldR - paletteColour.r) * effectiveStrength / 8.0;
+        final errG = (oldG - paletteColour.g) * effectiveStrength / 8.0;
+        final errB = (oldB - paletteColour.b) * effectiveStrength / 8.0;
 
         _distributed(r, g, b, x + 1, y,     errR, errG, errB, width, height);
         _distributed(r, g, b, x + 2, y,     errR, errG, errB, width, height);

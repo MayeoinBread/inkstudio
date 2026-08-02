@@ -22,3 +22,4 @@ export 'src/processing/overlay_renderer.dart';
 export 'src/processing/shape_overlay_renderer.dart';
 export 'src/processing/shape_overlay_painter.dart';
 export 'src/models/shape_hit_test.dart';
+export 'src/dithering/dither_options.dart';

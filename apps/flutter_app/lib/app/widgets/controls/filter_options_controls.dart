@@ -120,7 +120,7 @@ class FilterOptionsControls extends StatelessWidget {
                     min: 2.0, max: 12.0, divisions: 20,
                     value: adjustments.halftoneScale,
                     label: adjustments.halftoneScale.toStringAsFixed(2),
-                    onChanged: filter == ImageFilter.halftone
+                    onChanged: (filter == ImageFilter.halftone || filter == ImageFilter.halftoneColour)
                       ? (value) {onChanged(adjustments.copyWith(halftoneScale: value));}
                       : null
                   )
@@ -139,7 +139,7 @@ class FilterOptionsControls extends StatelessWidget {
                     min: 4.0, max: 16.0, divisions: 24,
                     value: adjustments.hatchDensity,
                     label: adjustments.hatchDensity.toStringAsFixed(2),
-                    onChanged: filter == ImageFilter.crossHatch
+                    onChanged: (filter == ImageFilter.crossHatch || filter == ImageFilter.crossHatchColour)
                       ? (value) {onChanged(adjustments.copyWith(hatchDensity: value));}
                       : null
                   )

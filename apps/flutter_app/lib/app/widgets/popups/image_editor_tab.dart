@@ -6,6 +6,7 @@ import 'package:inkstudio/app/repositories/image_repository.dart';
 import 'package:inkstudio/app/repositories/overlay_repository.dart';
 import 'package:inkstudio/app/services/image_pipeline_controller.dart';
 import 'package:inkstudio/app/widgets/common/image_preview_panel.dart';
+import 'package:inkstudio/app/widgets/controls/dither_options_controls.dart';
 import 'package:inkstudio/app/widgets/controls/dithering_controls.dart';
 import 'package:inkstudio/app/widgets/controls/filter_options_controls.dart';
 import 'package:inkstudio/app/widgets/controls/image_adjustment_controls.dart';
@@ -53,6 +54,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   // Image Adjustments/Dithering, etc.
   DitherMode algorithm = DitherMode.atkinson;
   ImageAdjustments adjustments = ImageAdjustments();
+  DitherOptions ditherOptions = DitherOptions();
   PaletteBias paletteBias = PaletteBias();
   ImageFilter _filter = ImageFilter.normal;
   bool _simulateDeviceScreen = false;
@@ -86,6 +88,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     setState(() {
       algorithm = metadata.dither;
       adjustments = metadata.adjustments;
+      ditherOptions = metadata.ditherOptions;
       _filter = metadata.filter;
       cropRect = metadata.cropRect;
       rotation = metadata.rotation;
@@ -156,6 +159,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
       adjustments: adjustments,
+      ditherOptions: ditherOptions,
       paletteBias: paletteBias,
       overlays: overlays
     );
@@ -178,6 +182,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       filter: _filter,
       simulateDevice: _simulateDeviceScreen,
       adjustments: adjustments,
+      ditherOptions: ditherOptions,
       paletteBias: paletteBias,
       overlays: overlays
     );
@@ -187,7 +192,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
 
     final retMetadata = SlotMetadata(
       type: SlotContentType.image,
-      pendingAction: SlotPendingAction.verifyHash,
       adjustments: adjustments,
       dither: algorithm,
       filter: _filter,
@@ -278,6 +282,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
       return ImageEditorMobileControls(
         alg: algorithm,
         adjustments: adjustments,
+        ditherOptions: ditherOptions,
         bias: paletteBias,
         filter: _filter,
         simulateDevice: _simulateDeviceScreen,
@@ -290,6 +295,12 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
         onAdjustmentsChanged: (newAdjustments) async {
           setState(() {
             adjustments = newAdjustments;
+          });
+          _reprocess();
+        },
+        onDOpsChanged: (newOptions) async {
+          setState(() {
+            ditherOptions = newOptions;
           });
           _reprocess();
         },
@@ -420,6 +431,17 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                     }
                   ),
                   const SizedBox(height: 8),
+                  DitherOptionsControls(
+                    ditherMode: algorithm,
+                    ditherOptions: ditherOptions,
+                    onChanged: (newOptions) async {
+                      setState(() {
+                        ditherOptions = newOptions;
+                      });
+                      _reprocess();
+                    }
+                  ),
+                  const SizedBox(height: 8),
                   FilterControls(
                     selectedFilter: _filter,
                     onFilterChanged: (filter) async {
@@ -460,10 +482,30 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
                     _reprocess();
                   },
                 ),
-                ImagePreviewPanel(
-                  title: 'Preview',
-                  height: DeviceConstants.imageHeight,
-                  imageBytes: previewBytes,
+                Stack(
+                  children: [
+                    ImagePreviewPanel(
+                      title: 'Preview',
+                      height: DeviceConstants.imageHeight,
+                      imageBytes: previewBytes
+                    ),
+
+                    if (!pipelinePrepared)
+                      Positioned.fill(
+                        child: Padding(
+                          padding: EdgeInsetsGeometry.all(4),
+                          child: ClipRRect(
+                            borderRadius: BorderRadiusGeometry.circular(16),
+                            child: Container(
+                              color: Colors.black54,
+                              child: const Center(
+                                child: CircularProgressIndicator()
+                              )
+                            )
+                          )
+                        )
+                      )
+                  ]
                 ),
                 FilledButton(onPressed: () async {
                   _save();

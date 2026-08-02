@@ -3,13 +3,14 @@ import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_engine.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import '../palette/palette_mapper.dart';
 
 class JjnDither implements DitherEngine {
   String get name => "JJN";
 
   @override
-  PaletteFramebuffer apply(img.Image input, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image input, PaletteBias bias, DitherOptions dOps) {
     final width = input.width;
     final height = input.height;
 
@@ -43,9 +44,9 @@ class JjnDither implements DitherEngine {
 
         output.setPixel(x, y, mapped);
 
-        final errR = (oldR - paletteColour.r) * ditherErrorStrength / 48.0;
-        final errG = (oldG - paletteColour.g) * ditherErrorStrength / 48.0;
-        final errB = (oldB - paletteColour.b) * ditherErrorStrength / 48.0;
+        final errR = (oldR - paletteColour.r) * dOps.errorStrength / 48.0;
+        final errG = (oldG - paletteColour.g) * dOps.errorStrength / 48.0;
+        final errB = (oldB - paletteColour.b) * dOps.errorStrength / 48.0;
 
         _distributed(r,g,b,x+1,y,errR*7,errG*7,errB*7,width,height);
         _distributed(r,g,b,x+2,y,errR*5,errG*5,errB*5,width,height);

@@ -4,13 +4,14 @@ import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_engine.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import '../palette/palette_mapper.dart';
 
 class FloydSteinbergDither implements DitherEngine {
   String get name => "Floyd-Steinberg";
 
   @override
-  PaletteFramebuffer apply(img.Image input, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image input, PaletteBias bias, DitherOptions dOps) {
     final width = input.width;
     final height = input.height;
 
@@ -45,9 +46,9 @@ class FloydSteinbergDither implements DitherEngine {
 
         output.setPixel(x, y, mapped);
 
-        final errR = ((oldR - paletteColour.r) * ditherErrorStrength);
-        final errG = ((oldG - paletteColour.g) * ditherErrorStrength);
-        final errB = ((oldB - paletteColour.b) * ditherErrorStrength);
+        final errR = ((oldR - paletteColour.r) * dOps.errorStrength);
+        final errG = ((oldG - paletteColour.g) * dOps.errorStrength);
+        final errB = ((oldB - paletteColour.b) * dOps.errorStrength);
 
         _distributed(r, g, b, x + 1, y,     errR, errG, errB, width, height, 7 / 16);
         _distributed(r, g, b, x - 1, y + 1, errR, errG, errB, width, height, 3 / 16);

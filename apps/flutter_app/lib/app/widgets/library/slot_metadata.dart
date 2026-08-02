@@ -57,6 +57,7 @@ class SlotMetadata {
   final String? wifiSecurity;
 
   final ImageAdjustments adjustments;
+  final DitherOptions ditherOptions;
 
   final DitherMode dither;
   final ImageFilter filter;
@@ -79,6 +80,7 @@ class SlotMetadata {
     this.wifiSecurity,
 
     this.adjustments = const ImageAdjustments(),
+    this.ditherOptions = const DitherOptions(),
     this.dither = DitherMode.none,
     this.filter = ImageFilter.normal,
 
@@ -99,6 +101,7 @@ class SlotMetadata {
     String? wifiPassword,
     String? wifiSecurity,
     ImageAdjustments? adjustments,
+    DitherOptions? ditherOptions,
     PaletteBias? paletteBias,
     DitherMode? dither,
     ImageFilter? filter,
@@ -115,6 +118,7 @@ class SlotMetadata {
       wifiPassword: wifiPassword ?? this.wifiPassword,
       wifiSecurity: wifiSecurity ?? this.wifiSecurity,
       adjustments: adjustments ?? this.adjustments,
+      ditherOptions: ditherOptions ?? this.ditherOptions,
       paletteBias: paletteBias ?? this.paletteBias,
       dither: dither ?? this.dither,
       filter: filter ?? this.filter,
@@ -155,6 +159,8 @@ class SlotMetadata {
       'hatchDensity': adjustments.hatchDensity,
       'sketchStrength': adjustments.sketchStrength,
       'thresholdRadius': adjustments.thresholdRadius,
+
+      'errorStrength': ditherOptions.errorStrength,
 
       'blackBias': paletteBias.black,
       'whiteBias': paletteBias.white,
@@ -201,6 +207,10 @@ class SlotMetadata {
         hatchDensity: (json['hatchDensity'] as num?)?.toDouble() ?? 8.0,
         sketchStrength: (json['sketchStrength'] as num?)?.toDouble() ?? 1.0,
         thresholdRadius: (json['thresholdRadius'] as num?)?.toInt() ?? 1
+      ),
+
+      ditherOptions: DitherOptions(
+        errorStrength: (json['errorStrength'] as num?)?.toDouble() ?? 0.8
       ),
 
       paletteBias: PaletteBias(

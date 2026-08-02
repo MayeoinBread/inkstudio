@@ -8,6 +8,8 @@ enum ImageFilter {
   posterise,
   comic,
   halftone,
+  halftoneColour,
   crossHatch,
+  crossHatchColour,
   pencilSketch
 }

@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
+import 'package:inkstudio/app/widgets/controls/dither_options_controls.dart';
+import 'package:inkstudio/app/widgets/popups/sticker_editor.dart';
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio/app/services/ble_service.dart';
@@ -38,11 +40,13 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
   Uint8List? _originalImageBytes;
   Uint8List? _previewBytes;
+  Uint8List? _stickerlessPreviewBytes;
 
   DitherMode _ditherMode = DitherMode.floydSteinberg;
   // SwatchType _swatchType = SwatchType.noise;
 
   ImageAdjustments _adjustments = ImageAdjustments();
+  DitherOptions _ditherOptions = DitherOptions();
   PaletteBias _bias = PaletteBias();
 
   ImageFilter _filter = ImageFilter.normal;
@@ -50,6 +54,8 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
   Rect? cropRect;
   int rotation = 0;
+
+  List<ContentOverlay> overlays = [];
 
   int _processVersion = 0;
 
@@ -83,6 +89,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
         );
 
         _previewBytes = pipeline.previewBytes!;
+        _stickerlessPreviewBytes = pipeline.stickerlessPreviewBytes!;
       });
     });
 
@@ -130,6 +137,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
       filter: _filter,
       simulateDevice: _simulateDevice,
       adjustments: _adjustments,
+      ditherOptions: _ditherOptions,
       paletteBias: _bias,
       overlays: List.empty()  // TODO update when we persist the overlay data
     );
@@ -138,6 +146,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
     setState(() {
       _previewBytes = pipeline.previewBytes!;
+      _stickerlessPreviewBytes = pipeline.stickerlessPreviewBytes!;
     });
   }
 
@@ -223,6 +232,26 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
       rotation = (rotation + 90) % 360;
     });
     await _reprocess();
+  }
+
+  Future<void> _handleStickersButton() async {
+    if (_stickerlessPreviewBytes == null) return;
+
+    final updatedOverlays = await showDialog<List<ContentOverlay>>(
+      context: context,
+      builder: (_) => StickerEditor(
+        backgroundBytes: _stickerlessPreviewBytes!,
+        initialOverlays: overlays
+      )
+    );
+
+    if (updatedOverlays != null) {
+      setState(() {
+        overlays = updatedOverlays;
+      });
+
+      await _reprocess();
+    }
   }
 
   // Future<void> _loadSwatch() async {
@@ -313,6 +342,16 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
 
                   Expanded(
                     child: IconButton(
+                      icon: const Icon(Icons.add_to_photos_outlined),
+                      tooltip: 'Stickers',
+                      onPressed: () async {
+                        await _handleStickersButton();
+                      }
+                    )
+                  ),
+
+                  Expanded(
+                    child: IconButton(
                       icon: const Icon(Icons.diamond_sharp),
                       tooltip: 'Auto-Enhance',
                       onPressed: () async {
@@ -329,6 +368,17 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
               onAlgorithmChanged: (newAlg) async {
                 setState(() {
                   _ditherMode = newAlg;
+                });
+                _reprocess();
+              }
+            ),
+            const SizedBox(height: 8),
+            DitherOptionsControls(
+              ditherMode: _ditherMode,
+              ditherOptions: _ditherOptions,
+              onChanged: (newOptions) async {
+                setState(() {
+                  _ditherOptions = newOptions;
                 });
                 _reprocess();
               }

@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_engine.dart';
+import 'package:inkstudio_image/src/dithering/dither_options.dart';
 
 import '../palette/palette_mapper.dart';
 
@@ -10,7 +11,7 @@ class NoDither implements DitherEngine {
   String get name => "None";
   
   @override
-  PaletteFramebuffer apply(img.Image image, PaletteBias bias) {
+  PaletteFramebuffer apply(img.Image image, PaletteBias bias, DitherOptions dOps) {
     final output = PaletteFramebuffer(
       width: image.width,
       height: image.height,

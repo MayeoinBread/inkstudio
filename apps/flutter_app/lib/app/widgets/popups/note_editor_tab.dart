@@ -72,7 +72,6 @@ class _NoteEditorTabState extends State<NoteEditorTab> {
 
     final metadata = SlotMetadata(
       type: SlotContentType.note,
-      pendingAction: SlotPendingAction.verifyHash,
       text: textController.text
     );
 
