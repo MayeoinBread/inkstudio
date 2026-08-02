@@ -33,7 +33,11 @@ class FloydSteinbergDither implements DitherEngine {
     final output = PaletteFramebuffer(width: width, height: height, pixels: Uint8List(width * height));
 
     for (int y=0; y<height; y++) {
-      for (int x=0; x<width; x++) {
+      final reverse = dOps.serpentine && y.isOdd;
+
+      for (int i=0; i<width; i++) {
+        final x = reverse ? width - i - 1 : i;
+
         final oldR = r[y][x].clamp(0.0, 255.0);
         final oldG = g[y][x].clamp(0.0, 255.0);
         final oldB = b[y][x].clamp(0.0, 255.0);
@@ -50,10 +54,12 @@ class FloydSteinbergDither implements DitherEngine {
         final errG = ((oldG - paletteColour.g) * dOps.errorStrength);
         final errB = ((oldB - paletteColour.b) * dOps.errorStrength);
 
-        _distributed(r, g, b, x + 1, y,     errR, errG, errB, width, height, 7 / 16);
-        _distributed(r, g, b, x - 1, y + 1, errR, errG, errB, width, height, 3 / 16);
+        final direction = reverse ? -1 : 1;
+
+        _distributed(r, g, b, x + direction, y,     errR, errG, errB, width, height, 7 / 16);
+        _distributed(r, g, b, x - direction, y + 1, errR, errG, errB, width, height, 3 / 16);
         _distributed(r, g, b, x,     y + 1, errR, errG, errB, width, height, 5 / 16);
-        _distributed(r, g, b, x + 1, y + 1, errR, errG, errB, width, height, 1 / 16);
+        _distributed(r, g, b, x + direction, y + 1, errR, errG, errB, width, height, 1 / 16);
       }
     }
 

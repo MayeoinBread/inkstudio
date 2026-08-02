@@ -31,7 +31,11 @@ class JjnDither implements DitherEngine {
     final output = PaletteFramebuffer(width: width, height: height, pixels: Uint8List(width * height));
 
     for (int y=0; y<height; y++) {
-      for (int x=0; x<width; x++) {
+      final reverse = dOps.serpentine && y.isOdd;
+
+      for (int i=0; i<width; i++) {
+        final x = reverse ? width - i - 1 : i;
+
         final oldR = r[y][x].clamp(0.0, 255.0);
         final oldG = g[y][x].clamp(0.0, 255.0);
         final oldB = b[y][x].clamp(0.0, 255.0);
@@ -48,20 +52,22 @@ class JjnDither implements DitherEngine {
         final errG = (oldG - paletteColour.g) * dOps.errorStrength / 48.0;
         final errB = (oldB - paletteColour.b) * dOps.errorStrength / 48.0;
 
-        _distributed(r,g,b,x+1,y,errR*7,errG*7,errB*7,width,height);
-        _distributed(r,g,b,x+2,y,errR*5,errG*5,errB*5,width,height);
+        final direction = reverse ? -1 : 1;
 
-        _distributed(r,g,b,x-2,y+1,errR*3,errG*3,errB*3,width,height);
-        _distributed(r,g,b,x-1,y+1,errR*5,errG*5,errB*5,width,height);
+        _distributed(r,g,b,x+direction,y,errR*7,errG*7,errB*7,width,height);
+        _distributed(r,g,b,x+(direction*2),y,errR*5,errG*5,errB*5,width,height);
+
+        _distributed(r,g,b,x-(direction*2),y+1,errR*3,errG*3,errB*3,width,height);
+        _distributed(r,g,b,x-direction,y+1,errR*5,errG*5,errB*5,width,height);
         _distributed(r,g,b,x,y+1,errR*7,errG*7,errB*7,width,height);
-        _distributed(r,g,b,x+1,y+1,errR*5,errG*5,errB*5,width,height);
-        _distributed(r,g,b,x+2,y+1,errR*3,errG*3,errB*3,width,height);
+        _distributed(r,g,b,x+direction,y+1,errR*5,errG*5,errB*5,width,height);
+        _distributed(r,g,b,x+(direction*2),y+1,errR*3,errG*3,errB*3,width,height);
 
-        _distributed(r,g,b,x-2,y+2,errR*1,errG*1,errB*1,width,height);
-        _distributed(r,g,b,x-1,y+2,errR*3,errG*3,errB*3,width,height);
+        _distributed(r,g,b,x-(direction*2),y+2,errR*1,errG*1,errB*1,width,height);
+        _distributed(r,g,b,x-direction,y+2,errR*3,errG*3,errB*3,width,height);
         _distributed(r,g,b,x,y+2,errR*5,errG*5,errB*5,width,height);
-        _distributed(r,g,b,x+1,y+2,errR*3,errG*3,errB*3,width,height);
-        _distributed(r,g,b,x+2,y+2,errR*1,errG*1,errB*1,width,height);
+        _distributed(r,g,b,x+direction,y+2,errR*3,errG*3,errB*3,width,height);
+        _distributed(r,g,b,x+(direction*2),y+2,errR*1,errG*1,errB*1,width,height);
       }
     }
 

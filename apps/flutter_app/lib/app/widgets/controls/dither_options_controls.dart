@@ -16,7 +16,6 @@ class DitherOptionsControls extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -34,7 +33,9 @@ class DitherOptionsControls extends StatelessWidget {
                 Expanded(
                   child: Checkbox(
                     value: ditherOptions.serpentine,
-                    onChanged: (ditherMode == DitherMode.atkinson)
+                    onChanged: (ditherMode == DitherMode.atkinson || ditherMode == DitherMode.adaptiveAtkinson || ditherMode == DitherMode.burkes
+                                || ditherMode == DitherMode.floydSteinberg || ditherMode == DitherMode.jjn || ditherMode == DitherMode.sierra
+                                || ditherMode == DitherMode.sierraLite || ditherMode == DitherMode.stucki)
                     ? (value) {
                       onChanged(ditherOptions.copyWith(serpentine: value));
                     }

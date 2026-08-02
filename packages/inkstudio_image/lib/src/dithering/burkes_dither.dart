@@ -3,7 +3,6 @@ import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
 import 'package:inkstudio_image/src/dithering/dither_engine.dart';
-import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import '../palette/palette_mapper.dart';
 
 class BurkesDither implements DitherEngine {
@@ -31,7 +30,11 @@ class BurkesDither implements DitherEngine {
     final output = PaletteFramebuffer(width: width, height: height, pixels: Uint8List(width * height));
 
     for (int y=0; y<height; y++) {
-      for (int x=0; x<width; x++) {
+      final reverse = dOps.serpentine && y.isOdd;
+
+      for (int i=0; i<width; i++) {
+        final x = reverse ? width - i - 1 : i;
+
         final oldR = r[y][x].clamp(0.0, 255.0);
         final oldG = g[y][x].clamp(0.0, 255.0);
         final oldB = b[y][x].clamp(0.0, 255.0);
@@ -48,14 +51,16 @@ class BurkesDither implements DitherEngine {
         final errG = (oldG - paletteColour.g) * dOps.errorStrength / 32.0;
         final errB = (oldB - paletteColour.b) * dOps.errorStrength / 32.0;
 
-        _distributed(r,g,b,x+1,y,errR*8,errG*8,errB*8,width,height);
-        _distributed(r,g,b,x+2,y,errR*4,errG*4,errB*4,width,height);
+        final direction = reverse ? -1 : 1;
 
-        _distributed(r,g,b,x-2,y+1,errR*2,errG*2,errB*2,width,height);
-        _distributed(r,g,b,x-1,y+1,errR*4,errG*4,errB*4,width,height);
+        _distributed(r,g,b,x+direction,y,errR*8,errG*8,errB*8,width,height);
+        _distributed(r,g,b,x+(direction * 2),y,errR*4,errG*4,errB*4,width,height);
+
+        _distributed(r,g,b,x-(direction * 2),y+1,errR*2,errG*2,errB*2,width,height);
+        _distributed(r,g,b,x-direction,y+1,errR*4,errG*4,errB*4,width,height);
         _distributed(r,g,b,x,y+1,errR*8,errG*8,errB*8,width,height);
-        _distributed(r,g,b,x+1,y+1,errR*4,errG*4,errB*4,width,height);
-        _distributed(r,g,b,x+2,y+1,errR*2,errG*2,errB*2,width,height);
+        _distributed(r,g,b,x+direction,y+1,errR*4,errG*4,errB*4,width,height);
+        _distributed(r,g,b,x+(direction * 2),y+1,errR*2,errG*2,errB*2,width,height);
       }
     }
 

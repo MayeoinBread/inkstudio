@@ -36,7 +36,11 @@ class SierraLiteDither implements DitherEngine {
     );
 
     for (int y=0; y<height; y++) {
-      for (int x=0; x<width; x++) {
+      final reverse = dOps.serpentine && y.isOdd;
+
+      for (int i=0; i<width; i++) {
+        final x = reverse ? width - i - 1 : 1;
+
         final oldR = r[y][x].clamp(0.0, 255.0);
         final oldG = g[y][x].clamp(0.0, 255.0);
         final oldB = b[y][x].clamp(0.0, 255.0);
@@ -51,8 +55,10 @@ class SierraLiteDither implements DitherEngine {
         final errG = ((oldG - c.g.toDouble()) * dOps.errorStrength);
         final errB = ((oldB - c.b.toDouble()) * dOps.errorStrength);
 
-        _spread(r, g, b, x+1, y, errR, errG, errB, 2 / 4, width, height);
-        _spread(r, g, b, x-1, y+1, errR, errG, errB, 1 / 4, width, height);
+        final direction = reverse ? -1 : 1;
+
+        _spread(r, g, b, x+direction, y, errR, errG, errB, 2 / 4, width, height);
+        _spread(r, g, b, x-direction, y+1, errR, errG, errB, 1 / 4, width, height);
         _spread(r, g, b, x, y+1, errR, errG, errB, 1 / 4, width, height);
       }
     }
