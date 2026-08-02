@@ -44,6 +44,8 @@ class AdaptiveAtkinsonDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       final reverse = dOps.serpentine && y.isOdd;
+      final direction = reverse ? -1 : 1;
+
       for (int i=0; i<width; i++) {
         final x = reverse ? width - i - 1 : i;
 
@@ -67,8 +69,6 @@ class AdaptiveAtkinsonDither implements DitherEngine {
         final errR = (oldR - paletteColour.r) * effectiveStrength / 8.0;
         final errG = (oldG - paletteColour.g) * effectiveStrength / 8.0;
         final errB = (oldB - paletteColour.b) * effectiveStrength / 8.0;
-
-        final direction = reverse ? -1 : 1;
 
         _distributed(r, g, b, x + direction, y,     errR, errG, errB, width, height);
         _distributed(r, g, b, x + (direction * 2), y,     errR, errG, errB, width, height);

@@ -31,6 +31,7 @@ class BurkesDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       final reverse = dOps.serpentine && y.isOdd;
+      final direction = reverse ? -1 : 1;
 
       for (int i=0; i<width; i++) {
         final x = reverse ? width - i - 1 : i;
@@ -50,8 +51,6 @@ class BurkesDither implements DitherEngine {
         final errR = (oldR - paletteColour.r) * dOps.errorStrength / 32.0;
         final errG = (oldG - paletteColour.g) * dOps.errorStrength / 32.0;
         final errB = (oldB - paletteColour.b) * dOps.errorStrength / 32.0;
-
-        final direction = reverse ? -1 : 1;
 
         _distributed(r,g,b,x+direction,y,errR*8,errG*8,errB*8,width,height);
         _distributed(r,g,b,x+(direction * 2),y,errR*4,errG*4,errB*4,width,height);

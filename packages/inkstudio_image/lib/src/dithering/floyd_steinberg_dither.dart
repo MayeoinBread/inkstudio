@@ -33,6 +33,7 @@ class FloydSteinbergDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       final reverse = dOps.serpentine && y.isOdd;
+      final direction = reverse ? -1 : 1;
 
       for (int i=0; i<width; i++) {
         final x = reverse ? width - i - 1 : i;
@@ -52,8 +53,6 @@ class FloydSteinbergDither implements DitherEngine {
         final errR = ((oldR - paletteColour.r) * dOps.errorStrength);
         final errG = ((oldG - paletteColour.g) * dOps.errorStrength);
         final errB = ((oldB - paletteColour.b) * dOps.errorStrength);
-
-        final direction = reverse ? -1 : 1;
 
         _distributed(r, g, b, x + direction, y,     errR, errG, errB, width, height, 7 / 16);
         _distributed(r, g, b, x - direction, y + 1, errR, errG, errB, width, height, 3 / 16);

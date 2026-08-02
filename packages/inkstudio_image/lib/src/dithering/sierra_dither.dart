@@ -35,6 +35,7 @@ class SierraDither implements DitherEngine {
 
     for (int y=0; y<height; y++) {
       final reverse = dOps.serpentine && y.isOdd;
+      final direction = reverse ? -1 : 1;
 
       for (int i=0; i<width; i++) {
         final x = reverse ? width - i - 1 : i;
@@ -53,8 +54,6 @@ class SierraDither implements DitherEngine {
         final errR = (oldR - paletteColour.r.toDouble()) * dOps.errorStrength / 32.0;
         final errG = (oldG - paletteColour.g.toDouble()) * dOps.errorStrength / 32.0;
         final errB = (oldB - paletteColour.b.toDouble()) * dOps.errorStrength / 32.0;
-
-        final direction = reverse ? -1 : 1;
 
         _distribute(r, g, b, x + direction, y, errR * 5, errG * 5, errB * 5, width, height);
         _distribute(r, g, b, x + (direction * 2), y, errR * 3, errG * 3, errB * 3, width, height);
