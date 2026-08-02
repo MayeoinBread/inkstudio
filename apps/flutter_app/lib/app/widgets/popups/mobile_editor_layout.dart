@@ -7,6 +7,7 @@ import 'package:inkstudio/app/widgets/library/library_item.dart';
 import 'package:inkstudio/app/widgets/popups/image_editor_tab.dart';
 import 'package:inkstudio/app/widgets/popups/note_editor_tab.dart';
 import 'package:inkstudio/app/widgets/popups/qr_code_tab.dart';
+import 'package:inkstudio_core/inkstudio_core.dart';
 
 class MobileEditorLayout extends StatefulWidget {
   final LibraryItem item;
@@ -27,6 +28,8 @@ class MobileEditorLayout extends StatefulWidget {
 class _MobileEditorLayoutState extends State<MobileEditorLayout> {
   Uint8List? previewBytes;
 
+  bool pipelinePrepared = false;
+
   List<Tab> tabs = [
     Tab(text: 'Image'),
     Tab(text: 'Note'),
@@ -44,7 +47,12 @@ class _MobileEditorLayoutState extends State<MobileEditorLayout> {
       ImageEditorTab(
         item: widget.item,
         onSaved: widget.onSaved,
-        onPreviewChanged: _updatePreview
+        onPreviewChanged: _updatePreview,
+        onPipelinePrepared: () {
+          setState(() {
+            pipelinePrepared = true;
+          });
+        },
       ),
 
       NoteEditorTab(
@@ -69,13 +77,39 @@ class _MobileEditorLayoutState extends State<MobileEditorLayout> {
       ),
       body: Column(
         children: [
-          SizedBox(
-            height: 350,
-            child: ImagePreviewPanel(
-              height: 300,
-              imageBytes: previewBytes
-            )
+          Stack(
+            children: [
+              ImagePreviewPanel(
+                title:  null,
+                height: DeviceConstants.imageHeight,
+                imageBytes: previewBytes
+              ),
+
+              if (!pipelinePrepared)
+                Positioned.fill(
+                  child: Padding(
+                    padding: EdgeInsetsGeometry.all(4),
+                    child: ClipRRect(
+                      borderRadius: BorderRadiusGeometry.circular(16),
+                      child: Container(
+                        color: Colors.black54,
+                        child: const Center(
+                          child: CircularProgressIndicator()
+                        )
+                      )
+                    )
+                  )
+                )
+            ],
           ),
+
+          // SizedBox(
+          //   height: 350,
+          //   child: ImagePreviewPanel(
+          //     height: 300,
+          //     imageBytes: previewBytes
+          //   )
+          // ),
       
           Expanded(
             child: DefaultTabController(

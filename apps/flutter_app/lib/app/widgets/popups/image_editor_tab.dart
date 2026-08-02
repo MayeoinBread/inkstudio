@@ -27,13 +27,16 @@ class ImageEditorTab extends StatefulWidget {
     EditorResult editorResult
   ) onSaved;
 
+  final Function()? onPipelinePrepared;
+
   final ValueChanged<Uint8List>? onPreviewChanged;
 
   const ImageEditorTab({
     super.key,
     required this.item,
     required this.onSaved,
-    this.onPreviewChanged
+    this.onPreviewChanged,
+    this.onPipelinePrepared
   });
 
   @override
@@ -66,8 +69,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
   @override
   void initState() {
     super.initState();
-    // TODO can we just load the processed bytes directly into the frame, rather than setting up the processing pipeline immediately?
-
     _hydrateFromItem();
   }
 
@@ -106,7 +107,6 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     });
 
     await _prepareWorkingImage();
-    // TODO are we bloating this up again?
     await _reprocess();
   }
 
@@ -148,6 +148,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     if (!pipelinePrepared) {
       await _prepareWorkingImage();
       pipelinePrepared = true;
+      widget.onPipelinePrepared?.call();
     }
     final bytes = _originalImageBytes;
     if (bytes == null) return;

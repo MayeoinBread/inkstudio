@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_core/inkstudio_core.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';
-import 'package:inkstudio_image/src/dithering/dither_options.dart';
 import 'package:inkstudio_image/src/dithering/dither_register.dart';
 import 'package:inkstudio_image/src/pipeline/framebuffer_preview_renderer.dart';
 import 'package:inkstudio_image/src/processing/image_adjustment_processor.dart';

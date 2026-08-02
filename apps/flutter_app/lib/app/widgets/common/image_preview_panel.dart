@@ -9,7 +9,7 @@ class ImagePreviewPanel extends StatelessWidget {
 
   const ImagePreviewPanel({
     super.key,
-    String? this.title,
+    required this.title,
     required this.height,
     required this.imageBytes
   });

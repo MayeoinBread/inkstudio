@@ -139,7 +139,7 @@ class _DevWorkbenchPageState extends State<DevWorkbenchPage> {
       adjustments: _adjustments,
       ditherOptions: _ditherOptions,
       paletteBias: _bias,
-      overlays: List.empty()  // TODO update when we persist the overlay data
+      overlays: List.empty()
     );
 
     if (version != _processVersion) return;

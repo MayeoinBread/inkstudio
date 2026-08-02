@@ -17,22 +17,6 @@ class ImageAdjustmentProcessor {
         double g = p.g.toDouble();
         double b = p.b.toDouble();
 
-        // // brightness
-        // r = (r + (adj.brightness * 255)).toInt();
-        // g = (g + (adj.brightness * 255)).toInt();
-        // b = (b + (adj.brightness * 255)).toInt();
-
-        // // contrast
-        // r = (((r - 127.5) * adj.contrast) + 127.5).toInt();
-        // g = (((g - 127.5) * adj.contrast) + 127.5).toInt();
-        // b = (((b - 127.5) * adj.contrast) + 127.5).toInt();
-
-        // r = r.clamp(0, 255);
-        // g = g.clamp(0, 255);
-        // b = b.clamp(0, 255);
-
-        // out.setPixelRgb(x, y, r, g, b);
-
         // brightness
         r += adj.brightness;
         g += adj.brightness;

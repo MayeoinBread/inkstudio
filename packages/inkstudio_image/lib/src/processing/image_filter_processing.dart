@@ -606,10 +606,9 @@ class ImageFilterProcessor {
         final nx = x + dx;
         final ny = y + dy;
 
-        if (nx < 0 ||
-            ny < 0 ||
-            nx >= img.width ||
-            ny >= img.height) continue;
+        if (nx < 0 || ny < 0 || nx >= img.width || ny >= img.height) {
+          continue;
+        }
 
         img.setPixelRgb(nx, ny, 0, 0, 0);
       }

@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:inkstudio/app/widgets/controls/sticker_editor_controls.dart';
 import 'package:inkstudio/app/widgets/controls/sticker_editor_preview.dart';
 import 'package:inkstudio_core/inkstudio_core.dart';

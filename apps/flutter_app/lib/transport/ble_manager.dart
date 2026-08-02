@@ -7,7 +7,6 @@ import 'package:inkstudio/app/services/device_session_service.dart';
 import 'package:inkstudio/app/state/device_session_state.dart';
 import 'package:inkstudio/transport/ble_session.dart';
 import 'package:inkstudio/transport/device_info.dart';
-// import 'package:flutter_blue_plus_windows/flutter_blue_plus_windows.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:inkstudio_protocol/inkstudio_protocol.dart';
 import 'package:inkstudio_image/inkstudio_image.dart';

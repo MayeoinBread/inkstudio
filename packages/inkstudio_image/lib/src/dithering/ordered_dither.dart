@@ -2,10 +2,8 @@ import 'dart:typed_data';
 
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_image/inkstudio_image.dart';
-import 'package:inkstudio_image/src/dithering/dither_options.dart';
 
 import '../palette/palette_mapper.dart';
-import '../pipeline/palette_framebuffer.dart';
 import 'dither_engine.dart';
 
 class OrderedDither implements DitherEngine {

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:inkstudio_image/src/models/content_overlay.dart';
 import 'package:inkstudio/app/widgets/library/slot_metadata.dart';
+import 'package:inkstudio_image/inkstudio_image.dart';
 
 class EditorResult {
   final SlotMetadata metadata;

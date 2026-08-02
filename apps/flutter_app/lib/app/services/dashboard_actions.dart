@@ -57,7 +57,6 @@ class DashboardActions {
     required int? slot,
     required void Function(DeviceSessionState Function(DeviceSessionState)) updateSession
   }) async {
-    // TODO some sort of warning/error handling here
     if (slot == null) {
       return;
     }

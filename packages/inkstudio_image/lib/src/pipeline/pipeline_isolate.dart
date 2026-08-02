@@ -3,8 +3,6 @@ import 'dart:ui';
 
 import 'package:image/image.dart' as img;
 import 'package:inkstudio_image/inkstudio_image.dart';
-import 'package:inkstudio_image/src/dithering/dither_options.dart';
-import 'package:inkstudio_image/src/models/content_overlay.dart';
 
 img.Image runPrepareIsolate(PrepareRequest request) {
   final decoded = img.decodeImage(request.bytes)!;

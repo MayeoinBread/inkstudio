@@ -237,7 +237,7 @@ class _QrCodeTabState extends State<QrCodeTab> {
           Expanded(
             child: previewBytes == null
               ? const Center(child: Text('No Preview'))
-              : ImagePreviewPanel(height: DeviceConstants.imageHeight, imageBytes: previewBytes!)
+              : ImagePreviewPanel(title: null, height: DeviceConstants.imageHeight, imageBytes: previewBytes!)
           )
         ]
       )

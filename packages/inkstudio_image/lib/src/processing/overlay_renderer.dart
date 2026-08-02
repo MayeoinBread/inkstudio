@@ -1,6 +1,4 @@
 import 'package:inkstudio_image/inkstudio_image.dart';
-import 'package:inkstudio_image/src/models/overlay_data.dart';
-import 'package:inkstudio_image/src/processing/shape_overlay_renderer.dart';
 
 class OverlayRenderer {
   static void apply(
