@@ -102,14 +102,14 @@ class DitherOptionsControls extends StatelessWidget {
                 ),
                 Expanded(
                   child: Slider(
-                    value: ditherOptions.orderedStrength,
-                    min: 0.0,
-                    max: 100.0,
+                    value: ditherOptions.orderedStrength.toDouble(),
+                    min: 0,
+                    max: 100,
                     divisions: 20,
                     label: ditherOptions.orderedStrength.round().toString(),
                     onChanged: ditherMode == DitherMode.ordered
                       ? (value) {
-                        onChanged(ditherOptions.copyWith(orderedStrength: value));
+                        onChanged(ditherOptions.copyWith(orderedStrength: value.toInt()));
                       }
                       : null,
                   )

@@ -161,6 +161,11 @@ class SlotMetadata {
       'thresholdRadius': adjustments.thresholdRadius,
 
       'errorStrength': ditherOptions.errorStrength,
+      'serpentine': ditherOptions.serpentine,
+      'orderedMatrixSize': ditherOptions.orderedMatrixSize,
+      'orderedStrength': ditherOptions.orderedStrength,
+      'edgeDetectionThreshold': ditherOptions.edgeDetectionThreshold,
+      'smoothAreaDiffusion': ditherOptions.smoothAreaDiffusion,
 
       'blackBias': paletteBias.black,
       'whiteBias': paletteBias.white,
@@ -210,7 +215,12 @@ class SlotMetadata {
       ),
 
       ditherOptions: DitherOptions(
-        errorStrength: (json['errorStrength'] as num?)?.toDouble() ?? 0.8
+        errorStrength: (json['errorStrength'] as num?)?.toDouble() ?? 0.8,
+        serpentine: (json['serpentine'] as bool?) ?? false,
+        orderedMatrixSize: (json['orderedMatrixSize'] as num?)?.toInt() ?? 4,
+        orderedStrength: (json['orderedStrength'] as num?)?.toInt() ?? 45,
+        edgeDetectionThreshold: (json['edgeDetectionThreshold'] as num?)?.toDouble() ?? 0.2,
+        smoothAreaDiffusion: (json['smoothAreaDiffusion'] as num?)?.toDouble() ?? 0.35
       ),
 
       paletteBias: PaletteBias(

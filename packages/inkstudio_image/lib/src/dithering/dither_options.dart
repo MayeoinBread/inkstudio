@@ -6,7 +6,8 @@ class DitherOptions {
   // For ordered algs
   // Must be 2, 4, or 8
   final int orderedMatrixSize;
-  final double orderedStrength;
+  // 0-100
+  final int orderedStrength;
 
   // Adaptive Atkinson
   // 0.05-0.4
@@ -18,7 +19,7 @@ class DitherOptions {
     this.serpentine = false,
     this.errorStrength = 0.8,
     this.orderedMatrixSize = 4,
-    this.orderedStrength = 48.0,
+    this.orderedStrength = 45,
     this.edgeDetectionThreshold = 0.2,
     this.smoothAreaDiffusion = 0.35
   });
@@ -27,7 +28,7 @@ class DitherOptions {
     bool? serpentine,
     double? errorStrength,
     int? orderedMatrixSize,
-    double? orderedStrength,
+    int? orderedStrength,
     double? edgeDetectionThreshold,
     double? smoothAreaDiffusion
   }) {

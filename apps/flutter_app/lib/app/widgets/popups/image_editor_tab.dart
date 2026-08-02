@@ -194,6 +194,7 @@ class _ImageEditorTabState extends State<ImageEditorTab> {
     final retMetadata = SlotMetadata(
       type: SlotContentType.image,
       adjustments: adjustments,
+      ditherOptions: ditherOptions,
       dither: algorithm,
       filter: _filter,
       imageId: metadata.imageId,
