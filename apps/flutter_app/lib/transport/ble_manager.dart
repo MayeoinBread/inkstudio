@@ -246,6 +246,13 @@ class BleManager {
     await ff01!.write([0xAA, 0x32, lo, hi, 0xFF]);
   }
 
+  Future<void> setDisplayImage(int slotNumber) async {
+    final lo = slotNumber & 0xFF;
+    final hi = (slotNumber >> 8) & 0xFF;
+
+    await ff01!.write([0xAA, 0x36, lo, hi, 0xFF]);
+  }
+
   Future<void> getImageInSlot(int slotNumber) async {
     _readSession = ImageReadSession();
 

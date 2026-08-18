@@ -395,10 +395,21 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.sizeOf(context).width < 700;
 
+    // TODO find a better way to handle/support this
+    final supportsSetDisplay = session.state.deviceInfo.firmware == "V1.1.21";
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('InkStudio'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.smart_display_outlined),
+            onPressed: supportsSetDisplay
+            ? () async {
+                await ble.setDisplayImage(session.state.activeSlot!);
+              }
+            : null,
+          ),
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: selectedSlot == null
