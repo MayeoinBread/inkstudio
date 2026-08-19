@@ -403,54 +403,73 @@ class _LibraryPageState extends State<LibraryPage> {
         title: const Text('InkStudio'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.smart_display_outlined),
-            onPressed: supportsSetDisplay
-            ? () async {
-                await ble.setDisplayImage(session.state.activeSlot!);
-              }
-            : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: selectedSlot == null
-              ? null
-              : () async {
-                if (selectedSlot == null) return;
-                await _onEdit(selectedSlot!);
-              },
-          ),
-          IconButton(
-            icon: const Icon(Icons.image_search_outlined),
+            icon: const Icon(Icons.add_photo_alternate_outlined),
             onPressed: () async {
               await _pickMultipleImages();
             }
           ),
           IconButton(
-            icon: const Icon(Icons.folder_open),
-            onPressed: () {
-              _showAlbumPicker(context);
-            }
+            icon: const Icon(Icons.edit),
+            onPressed: selectedSlot == null
+              ? null
+              : () async => await _onEdit(selectedSlot!),
           ),
-          IconButton(
-            icon: const Icon(Icons.dark_mode),
-            onPressed: widget.onToggleTheme
-          ),
-          IconButton(
-            icon: const Icon(Icons.sync_rounded),
-            onPressed: session.state.isConnected
-              ? _sync
-              : null,
-          ),
-          IconButton(
-            icon: const Icon(Icons.cleaning_services_outlined),
-            onPressed: () async {
-              final deleted = await ImageRepository().cleanupUnusedImages();
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Deleted $deleted unused images'))
-                );
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert),
+            onSelected: (value) async {
+              switch (value) {
+                case 'display':
+                  if (selectedSlot != null) {
+                    await ble.setDisplayImage(selectedSlot!);
+                  }
+                  break;
+                case 'sync':
+                  await _sync();
+                  break;
+                case 'cleanup':
+                  () async {
+                    final deleted = await ImageRepository().cleanupUnusedImages();
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Deleted $deleted unused images'))
+                      );
+                    }
+                  }();
+                  break;
+                case 'album':
+                  _showAlbumPicker(context);
+                  break;
+                case 'theme':
+                  widget.onToggleTheme();
+                  break;
               }
-            }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'display',
+                enabled: selectedSlot != null && supportsSetDisplay,
+                child: const Text('Set as display image')
+              ),
+              const PopupMenuDivider(),
+              PopupMenuItem(
+                enabled: ble.bleSession.isConnected,
+                value: 'sync',
+                child: Text('Sync device')
+              ),
+              const PopupMenuItem(
+                value: 'cleanup',
+                child: Text('Cleanup unused images')
+              ),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'album',
+                child: Text('Select album')
+              ),
+              const PopupMenuItem(
+                value: 'theme',
+                child: Text('Dark/light mode')
+              )
+            ]
           )
         ]
       ),
