@@ -450,20 +450,19 @@ class _LibraryPageState extends State<LibraryPage> {
                 enabled: selectedSlot != null && supportsSetDisplay,
                 child: const Text('Set as display image')
               ),
-              const PopupMenuDivider(),
               PopupMenuItem(
                 enabled: ble.bleSession.isConnected,
                 value: 'sync',
                 child: Text('Sync device')
               ),
-              const PopupMenuItem(
-                value: 'cleanup',
-                child: Text('Cleanup unused images')
-              ),
               const PopupMenuDivider(),
               const PopupMenuItem(
                 value: 'album',
                 child: Text('Select album')
+              ),
+              const PopupMenuItem(
+                value: 'cleanup',
+                child: Text('Cleanup unused images')
               ),
               const PopupMenuItem(
                 value: 'theme',
