@@ -293,7 +293,7 @@ class BleManager {
     if (data.length < 10) return null;
 
     final battery = data[2];
-    final flag = data[3];
+    final imageCount = data[3];
 
     String readString(int start, int length) {
       final bytes = data
@@ -312,11 +312,11 @@ class BleManager {
       hardware: hardware,
       firmware: firmware,
       serial: serial,
-      flag: flag
+      imageCount: imageCount
     );
 
     debugPrint("Battery: $battery%");
-    debugPrint("Flag: 0x${flag.toRadixString(16)}");
+    debugPrint("Image Count: $imageCount");
     debugPrint("Hardware: $hardware");
     debugPrint("Firmware: $firmware");
     debugPrint("Serial: $serial");

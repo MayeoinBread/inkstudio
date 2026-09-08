@@ -490,7 +490,13 @@ class _LibraryPageState extends State<LibraryPage> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: ble.bleSession.isConnected
           ? () async {
-            await controller.pushToDevice(ble: ble, session: session);
+            final result = await controller.pushToDevice(ble: ble, session: session);
+
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(result))
+              );
+            }
           }
           : null,
         icon: const Icon(Icons.upload),
